@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { RocketLaunch } from "lucide-react";
+import { Rocket } from "lucide-react";
 
 export const CTA = () => {
   return (
@@ -18,7 +18,7 @@ export const CTA = () => {
           <div className="mt-10 flex items-center justify-center gap-x-6">
             <Button size="lg" className="bg-accent text-primary hover:bg-accent/90">
               Get Started
-              <RocketLaunch className="ml-2 h-4 w-4" />
+              <Rocket className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </div>
