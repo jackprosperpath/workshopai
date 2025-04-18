@@ -28,6 +28,7 @@ export default {
         primary: "#2D3142",
         secondary: "#7209B7",
         accent: "#4CC9F0",
+        turquoise: "#23C4E7", // New turquoise color added
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
@@ -56,3 +57,4 @@ export default {
   },
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;
+
