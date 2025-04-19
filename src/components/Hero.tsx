@@ -1,5 +1,6 @@
 
 import { Button } from "./ui/button";
+import { Link } from "react-router-dom";
 
 export const Hero = () => {
   return (
@@ -15,14 +16,16 @@ export const Hero = () => {
           WorkshopAI transforms any meeting into an interactive AI co‑creation workshop that drives instant team buy‑in.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg" className="bg-primary hover:bg-secondary text-white">
-            Request Early Access
-          </Button>
-          <a href="#workshop">
+          <Link to="/auth">
+            <Button size="lg" className="bg-primary hover:bg-secondary text-white">
+              Request Early Access
+            </Button>
+          </Link>
+          <Link to="/auth">
             <Button size="lg" variant="outline" className="hover:bg-secondary/10">
               Try It Now
             </Button>
-          </a>
+          </Link>
         </div>
       </div>
     </section>
