@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import type { AiModel } from "./usePromptCanvas";
 import type { OutputFormat } from "@/types/OutputFormat";
+import { useSearchParams } from "react-router-dom";
 
 export type SectionFeedback = {
   text: string;
@@ -17,6 +18,8 @@ export type DraftVersion = {
 };
 
 export function useDraftWorkspace() {
+  const [searchParams] = useSearchParams();
+  const workshopId = searchParams.get('id');
   const [versions, setVersions] = useState<DraftVersion[]>([]);
   const [currentIdx, setCurrentIdx] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -27,68 +30,74 @@ export function useDraftWorkspace() {
     ? versions[currentIdx] 
     : null;
 
-  // Load drafts from localStorage
-  const loadDrafts = (workshopId: string) => {
+  // Load drafts from Supabase
+  const loadDrafts = async () => {
+    if (!workshopId) return;
+
     try {
-      const savedDrafts = localStorage.getItem(`workshop-drafts-${workshopId}`);
-      if (savedDrafts) {
-        const parsedDrafts = JSON.parse(savedDrafts) as {
-          versions: DraftVersion[];
-          currentIdx: number | null;
-        };
-        setVersions(parsedDrafts.versions);
-        setCurrentIdx(parsedDrafts.currentIdx);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('workshop_drafts')
+        .select('*')
+        .eq('workshop_id', workshopId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        // No existing drafts, which is fine
+        console.log('No existing drafts found:', error);
+        return;
+      }
+
+      if (data) {
+        const parsedVersions = JSON.parse(data.versions);
+        setVersions(parsedVersions);
+        setCurrentIdx(data.current_idx);
       }
     } catch (error) {
-      console.error('Error loading drafts from localStorage:', error);
+      console.error('Error loading drafts from Supabase:', error);
     }
   };
 
-  // Save drafts to localStorage whenever versions or currentIdx changes
+  // Save drafts to Supabase whenever versions or currentIdx changes
   useEffect(() => {
-    if (versions.length > 0) {
-      const workshopId = new URLSearchParams(window.location.search).get('id');
-      if (workshopId) {
-        localStorage.setItem(`workshop-drafts-${workshopId}`, JSON.stringify({
-          versions,
-          currentIdx
-        }));
-      }
-    }
-  }, [versions, currentIdx]);
+    const saveDraftsToSupabase = async () => {
+      if (!workshopId || versions.length === 0) return;
 
-  // Set up real-time updates for draft editing
-  useEffect(() => {
-    if (!currentDraft) return;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
-    const workshopId = new URLSearchParams(window.location.search).get('id');
-    if (!workshopId) return;
+        const { error } = await supabase
+          .from('workshop_drafts')
+          .upsert({
+            workshop_id: workshopId,
+            user_id: user.id,
+            versions: JSON.stringify(versions),
+            current_idx: currentIdx
+          }, {
+            onConflict: 'workshop_id, user_id'
+          });
 
-    const channel = supabase.channel(`draft-edits-${workshopId}`);
-    
-    channel
-      .on('broadcast', { event: 'draft_edit' }, (payload) => {
-        const { draftId, sectionIdx, content, userId } = payload.payload as any;
-        
-        if (draftId === currentDraft.id) {
-          setVersions(prev => 
-            prev.map(v => {
-              if (v.id === draftId) {
-                const newOutput = [...v.output];
-                newOutput[sectionIdx] = content;
-                return { ...v, output: newOutput };
-              }
-              return v;
-            })
-          );
+        if (error) {
+          console.error('Error saving drafts to Supabase:', error);
         }
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
+      } catch (error) {
+        console.error('Error saving drafts to Supabase:', error);
+      }
     };
-  }, [currentDraft]);
+
+    // Debounce to prevent too many writes
+    const timeoutId = setTimeout(saveDraftsToSupabase, 500);
+    return () => clearTimeout(timeoutId);
+  }, [versions, currentIdx, workshopId]);
+
+  // Load drafts when component mounts or workshopId changes
+  useEffect(() => {
+    loadDrafts();
+  }, [workshopId]);
 
   const generateDraft = async (
     problem: string,
