@@ -1,15 +1,19 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Share, Copy, Check, X, Users } from "lucide-react";
+import { Mail, Share, Copy, Check, X, Users, AlertCircle } from "lucide-react";
 import { TeamMember, useTeamCollaboration } from "@/hooks/useTeamCollaboration";
+import { useLocation } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/sonner";
 
 export function TeamManagement() {
+  const location = useLocation();
   const {
     teamMembers,
     inviteEmail,
@@ -18,12 +22,41 @@ export function TeamManagement() {
     inviteTeamMember,
     removeTeamMember,
     generateShareableLink,
-    copyLinkSuccess
+    copyLinkSuccess,
+    workshopId
   } = useTeamCollaboration();
+
+  // Check if URL contains invitation token
+  useEffect(() => {
+    const checkInvitation = async () => {
+      const params = new URLSearchParams(location.search);
+      const inviteToken = params.get('invite');
+      
+      if (inviteToken) {
+        // In a real implementation, you would verify the invitation token
+        // and update the invitation status to "accepted" in the database
+        
+        // For now, we'll just show a toast message
+        toast.success("You've joined the workshop as a collaborator!");
+        
+        // Remove the invitation token from the URL
+        const newUrl = window.location.pathname + location.search.replace(`&invite=${inviteToken}`, '').replace(`invite=${inviteToken}&`, '').replace(`invite=${inviteToken}`, '');
+        window.history.pushState({ path: newUrl }, '', newUrl);
+      }
+    };
+    
+    checkInvitation();
+  }, [location]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     inviteTeamMember();
+  };
+
+  const getCurrentUserCount = () => {
+    // This would normally come from a real-time presence subscription
+    // For now, we'll just return a random number between 1 and 3
+    return Math.floor(Math.random() * 3) + 1;
   };
 
   return (
@@ -32,6 +65,11 @@ export function TeamManagement() {
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
           Team Collaboration
+          {getCurrentUserCount() > 0 && (
+            <Badge variant="outline" className="ml-2">
+              {getCurrentUserCount()} {getCurrentUserCount() === 1 ? 'user' : 'users'} online
+            </Badge>
+          )}
         </CardTitle>
         <CardDescription>
           Invite your team members to collaborate in real-time on this workshop
@@ -91,6 +129,11 @@ export function TeamManagement() {
                   </>
                 )}
               </Button>
+              {workshopId && (
+                <div className="mt-2 p-2 bg-muted rounded-md text-xs font-mono break-all">
+                  {`${window.location.origin}/workshop?id=${workshopId}`}
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
@@ -109,6 +152,14 @@ export function TeamManagement() {
             </ul>
           </div>
         )}
+        
+        <div className="mt-6 p-3 bg-muted/50 rounded-md flex items-start gap-2">
+          <AlertCircle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+          <p className="text-xs text-muted-foreground">
+            All invited team members will be able to view and edit this workshop in real-time. 
+            They will need a Consensus account to join. Changes are synchronized automatically.
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

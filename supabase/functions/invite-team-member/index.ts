@@ -14,10 +14,10 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
     // Get request body
     const { workshopId, email, inviterId } = await req.json();
@@ -35,29 +35,29 @@ serve(async (req) => {
       );
     }
 
-    // Get workshop details (would implement in a real system)
-    // const { data: workshop, error: workshopError } = await supabaseClient
-    //   .from("workshops")
-    //   .select("*")
-    //   .eq("id", workshopId)
-    //   .single();
+    // Check if user exists in auth.users
+    const { data: existingUsers, error: userLookupError } = await supabaseClient.auth
+      .admin.listUsers({
+        search: email,
+      });
 
-    // Get inviter details (would implement in a real system)
-    // const { data: inviter, error: inviterError } = await supabaseClient
-    //   .from("profiles")
-    //   .select("*")
-    //   .eq("id", inviterId)
-    //   .single();
+    if (userLookupError) {
+      console.error("Error looking up user:", userLookupError);
+    }
 
-    // In a real implementation:
-    // 1. We would use a service like Resend to send the email
-    // 2. We would store the invitation in a database table
-    // 3. We would generate a unique token for the invitation
+    let userId = null;
+    if (existingUsers && existingUsers?.users.length > 0) {
+      // Find the exact match
+      const exactMatch = existingUsers.users.find(user => user.email === email);
+      if (exactMatch) {
+        userId = exactMatch.id;
+      }
+    }
 
-    // Simulate sending an email
-    console.log(`Sending invitation email to ${email} for workshop ${workshopId}`);
+    // Generate a unique invitation token
+    const invitationToken = crypto.randomUUID();
 
-    // Record the invitation in the database (would implement in a real system)
+    // Store the invitation in the database (would implement in a real system)
     // const { data: invitation, error: invitationError } = await supabaseClient
     //   .from("workshop_invitations")
     //   .insert({
@@ -65,9 +65,29 @@ serve(async (req) => {
     //     email: email,
     //     inviter_id: inviterId,
     //     status: "pending",
+    //     invitation_token: invitationToken,
+    //     user_id: userId,
     //   })
     //   .select()
     //   .single();
+    
+    // if (invitationError) {
+    //   throw invitationError;
+    // }
+
+    // Generate login link
+    let loginLink = `${supabaseUrl.replace('.supabase.co', '.supabase.in')}/auth/v1/invite/invite_via_email`;
+    loginLink += `?redirect_to=${encodeURIComponent(`${Deno.env.get("SITE_URL") || ""}/workshop?id=${workshopId}`)}`;
+
+    // Compose email content
+    const invitationLink = `${Deno.env.get("SITE_URL") || ""}/workshop?id=${workshopId}&invite=${invitationToken}`;
+    
+    console.log(`Sending invitation email to ${email} for workshop ${workshopId}`);
+    console.log(`Invitation link: ${invitationLink}`);
+    
+    // Send email (would implement in a real system)
+    // In a real implementation, we would use a service like Resend, SendGrid, etc.
+    // to send the actual email with the invitation link
 
     // Return success response
     return new Response(

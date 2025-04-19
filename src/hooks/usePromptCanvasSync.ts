@@ -19,6 +19,16 @@ export function usePromptCanvasSync(
   const { shareId, isLoadingShared, updateSharedWorkshop } = useSharedWorkshop();
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [workshopId, setWorkshopId] = useState<string | null>(null);
+
+  // Get workshop ID from URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    if (id) {
+      setWorkshopId(id);
+    }
+  }, []);
 
   // Initial load of shared data
   useEffect(() => {
@@ -52,12 +62,12 @@ export function usePromptCanvasSync(
     }
   }, [shareId]);
 
-  // Set up real-time updates
+  // Set up real-time updates for workshop data
   useEffect(() => {
-    if (!shareId) return;
+    if (!workshopId) return;
 
     const channel = supabase
-      .channel(`workshop:${shareId}`)
+      .channel(`workshop:${workshopId}`)
       .on('broadcast', { event: 'workshop_update' }, (payload) => {
         console.log('Received update:', payload);
         if (payload.payload) {
@@ -78,20 +88,17 @@ export function usePromptCanvasSync(
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [shareId, lastSynced]);
+  }, [workshopId, lastSynced]);
 
   // Sync data to other users
   const syncData = async (data: PromptCanvasData) => {
-    if (!shareId) return;
+    if (!workshopId) return;
     
     setIsSyncing(true);
     try {
-      // Update the workshop in the database
-      await updateSharedWorkshop(data);
-      
       // Send real-time update to other users
       await supabase
-        .channel(`workshop:${shareId}`)
+        .channel(`workshop:${workshopId}`)
         .send({
           type: 'broadcast',
           event: 'workshop_update',
