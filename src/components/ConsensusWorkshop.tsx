@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,7 +16,6 @@ export default function ConsensusWorkshop() {
   const [activeTab, setActiveTab] = useState("draft");
   const [loading, setLoading] = useState(false);
   
-  // Initialize hooks for workshop data
   const {
     problem,
     setProblem,
@@ -55,7 +53,6 @@ export default function ConsensusWorkshop() {
   } = useStakeholders();
 
   useEffect(() => {
-    // Set initial tab based on URL hash
     const hash = window.location.hash.replace('#', '');
     if (hash && ['draft', 'prompt', 'stakeholders', 'team', 'share'].includes(hash)) {
       setActiveTab(hash);
@@ -83,8 +80,8 @@ export default function ConsensusWorkshop() {
       <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="team">Team</TabsTrigger>
-          <TabsTrigger value="prompt">Prompt Canvas</TabsTrigger>
-          <TabsTrigger value="draft">Draft</TabsTrigger>
+          <TabsTrigger value="prompt">Topic</TabsTrigger>
+          <TabsTrigger value="draft">Solution Canvas</TabsTrigger>
           <TabsTrigger value="stakeholders">Stakeholders</TabsTrigger>
           <TabsTrigger value="share">Share</TabsTrigger>
         </TabsList>
