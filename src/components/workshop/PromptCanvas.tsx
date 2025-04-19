@@ -2,6 +2,16 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ChevronDown, ChevronUp, Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type PromptCanvasProps = {
   problem: string;
@@ -32,60 +42,125 @@ export function PromptCanvas({
   onGenerate,
   loading,
 }: PromptCanvasProps) {
+  const [isExpanded, setIsExpanded] = React.useState(true);
+
   return (
-    <section className="border rounded p-4">
-      <h2 className="font-semibold mb-2">Prompt Canvas</h2>
-      <Textarea
-        placeholder="Problem statement..."
-        className="border w-full p-2 mb-2"
-        value={problem}
-        onChange={(e) => setProblem(e.target.value)}
-      />
-      <div className="flex gap-2 mb-2">
-        <input
-          placeholder="Add metric"
-          className="border flex-1 p-2"
-          value={metricInput}
-          onChange={(e) => setMetricInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && addMetric()}
-        />
-        <Button onClick={addMetric} variant="outline">
-          Add
-        </Button>
+    <Collapsible
+      open={isExpanded}
+      onOpenChange={setIsExpanded}
+      className="border rounded-lg bg-card shadow-sm transition-all duration-200"
+    >
+      <div className="p-4 flex items-center justify-between border-b">
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold">Prompt Canvas</h2>
+          <Tooltip>
+            <TooltipTrigger>
+              <Info className="h-4 w-4 text-muted-foreground" />
+            </TooltipTrigger>
+            <TooltipContent>
+              Define your problem, success metrics, and constraints to generate solutions
+            </TooltipContent>
+          </Tooltip>
+        </div>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" size="sm">
+            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+        </CollapsibleTrigger>
       </div>
-      <div className="flex gap-2 flex-wrap mb-2">
-        {metrics.map((m) => (
-          <span key={m} className="bg-gray-200 px-2 rounded">
-            {m}
-          </span>
-        ))}
-      </div>
-      <div className="flex gap-2 mb-2">
-        <input
-          placeholder="Add constraint"
-          className="border flex-1 p-2"
-          value={constraintInput}
-          onChange={(e) => setConstraintInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && addConstraint()}
-        />
-        <Button onClick={addConstraint} variant="outline">
-          Add
-        </Button>
-      </div>
-      <div className="flex gap-2 flex-wrap">
-        {constraints.map((c) => (
-          <span key={c} className="bg-gray-200 px-2 rounded">
-            {c}
-          </span>
-        ))}
-      </div>
-      <Button
-        onClick={onGenerate}
-        disabled={loading}
-        className="mt-4 bg-primary text-white"
-      >
-        {loading ? "Generating…" : "Run"}
-      </Button>
-    </section>
+
+      <CollapsibleContent>
+        <div className="p-4 space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="problem">Problem Statement</Label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Label className="text-sm text-muted-foreground block">
+                  Clearly describe the challenge or issue that needs to be addressed
+                </Label>
+              </TooltipTrigger>
+              <TooltipContent>
+                Be specific and concise in describing your problem
+              </TooltipContent>
+            </Tooltip>
+            <Textarea
+              id="problem"
+              placeholder="Describe the problem you want to solve..."
+              className="min-h-[100px]"
+              value={problem}
+              onChange={(e) => setProblem(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Success Metrics</Label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Label className="text-sm text-muted-foreground block">
+                  Define how success will be measured
+                </Label>
+              </TooltipTrigger>
+              <TooltipContent>
+                Add quantifiable metrics to measure success
+              </TooltipContent>
+            </Tooltip>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add success metric..."
+                value={metricInput}
+                onChange={(e) => setMetricInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addMetric()}
+              />
+              <Button onClick={addMetric} variant="outline">Add</Button>
+            </div>
+            <div className="flex gap-2 flex-wrap mt-2">
+              {metrics.map((m) => (
+                <Badge key={m} variant="secondary" className="text-sm">
+                  {m}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Constraints</Label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Label className="text-sm text-muted-foreground block">
+                  List any limitations or requirements
+                </Label>
+              </TooltipTrigger>
+              <TooltipContent>
+                Add any technical, business, or resource constraints
+              </TooltipContent>
+            </Tooltip>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add constraint..."
+                value={constraintInput}
+                onChange={(e) => setConstraintInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addConstraint()}
+              />
+              <Button onClick={addConstraint} variant="outline">Add</Button>
+            </div>
+            <div className="flex gap-2 flex-wrap mt-2">
+              {constraints.map((c) => (
+                <Badge key={c} variant="secondary" className="text-sm">
+                  {c}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          <Button
+            onClick={onGenerate}
+            disabled={loading}
+            className="w-full"
+          >
+            {loading ? "Generating..." : "Generate Solution"}
+          </Button>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
