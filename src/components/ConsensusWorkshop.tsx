@@ -7,11 +7,52 @@ import { PromptCanvas } from "@/components/workshop/PromptCanvas";
 import { StakeholderSupport } from "@/components/workshop/StakeholderSupport";
 import { TeamManagement } from "@/components/workshop/TeamManagement";
 import { WorkshopSharing } from "@/components/workshop/WorkshopSharing";
+import { usePromptCanvas, AiModel } from "@/hooks/usePromptCanvas";
+import { useDraftWorkspace } from "@/hooks/useDraftWorkspace";
+import { useStakeholders } from "@/hooks/useStakeholders";
 
 export default function ConsensusWorkshop() {
   const [searchParams] = useSearchParams();
   const workshopId = searchParams.get('id');
   const [activeTab, setActiveTab] = useState("draft");
+  const [loading, setLoading] = useState(false);
+  
+  // Initialize hooks for workshop data
+  const {
+    problem,
+    setProblem,
+    metrics,
+    setMetrics,
+    metricInput,
+    setMetricInput,
+    constraints,
+    setConstraints,
+    constraintInput,
+    setConstraintInput,
+    selectedModel,
+    setSelectedModel,
+    addMetric,
+    addConstraint,
+  } = usePromptCanvas();
+  
+  const {
+    currentDraft,
+    versions,
+    currentIdx,
+    setCurrentIdx,
+    activeThread,
+    setActiveThread,
+    addFeedback,
+    generateDraft
+  } = useDraftWorkspace();
+  
+  const {
+    stakeholders,
+    newRole,
+    setNewRole,
+    addStakeholder,
+    updateStakeholder
+  } = useStakeholders();
 
   useEffect(() => {
     // Set initial tab based on URL hash
@@ -26,6 +67,17 @@ export default function ConsensusWorkshop() {
     window.location.hash = value;
   };
 
+  const handleGenerateSolution = async () => {
+    setLoading(true);
+    try {
+      await generateDraft(problem, metrics, constraints, selectedModel);
+    } catch (error) {
+      console.error("Error generating solution:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="w-full space-y-4">
       <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full">
@@ -37,19 +89,57 @@ export default function ConsensusWorkshop() {
           <TabsTrigger value="share">Share</TabsTrigger>
         </TabsList>
         <TabsContent value="draft">
-          <DraftWorkspace workshopId={workshopId} />
+          <DraftWorkspace 
+            currentDraft={currentDraft}
+            versions={versions}
+            currentIdx={currentIdx}
+            setCurrentIdx={setCurrentIdx}
+            activeThread={activeThread}
+            setActiveThread={setActiveThread}
+            addFeedback={addFeedback}
+            onRePrompt={handleGenerateSolution}
+            loading={loading}
+          />
         </TabsContent>
         <TabsContent value="prompt">
-          <PromptCanvas workshopId={workshopId} />
+          <PromptCanvas 
+            problem={problem}
+            setProblem={setProblem}
+            metrics={metrics}
+            metricInput={metricInput}
+            setMetricInput={setMetricInput}
+            addMetric={addMetric}
+            constraints={constraints}
+            constraintInput={constraintInput}
+            setConstraintInput={setConstraintInput}
+            addConstraint={addConstraint}
+            selectedModel={selectedModel}
+            setSelectedModel={setSelectedModel}
+            onGenerate={handleGenerateSolution}
+            loading={loading}
+          />
         </TabsContent>
         <TabsContent value="stakeholders">
-          <StakeholderSupport workshopId={workshopId} />
+          <StakeholderSupport 
+            stakeholders={stakeholders}
+            newRole={newRole}
+            setNewRole={setNewRole}
+            addStakeholder={addStakeholder}
+            updateStakeholder={updateStakeholder}
+          />
         </TabsContent>
         <TabsContent value="team">
-          <TeamManagement workshopId={workshopId} />
+          <TeamManagement />
         </TabsContent>
         <TabsContent value="share">
-          <WorkshopSharing workshopId={workshopId} />
+          <WorkshopSharing 
+            workshopData={{
+              problem,
+              metrics,
+              constraints,
+              selectedModel
+            }}
+          />
         </TabsContent>
       </Tabs>
     </div>
