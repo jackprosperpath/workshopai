@@ -37,6 +37,8 @@ export default function ConsensusWorkshop() {
     updateFormat,
     customFormat,
     setCustomFormat,
+    selectedModel,
+    setSelectedModel,
     addMetric,
     addConstraint,
   } = usePromptCanvas();

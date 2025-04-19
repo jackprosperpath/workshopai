@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useSharedWorkshop } from "./useSharedWorkshop";
 import { supabase } from "@/integrations/supabase/client";
-import { AiModel } from "./usePromptCanvas";
+import type { AiModel } from "./usePromptCanvas";
 import { toast } from "@/components/ui/sonner";
 
 type PromptCanvasData = {

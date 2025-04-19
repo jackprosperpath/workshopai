@@ -1,5 +1,9 @@
+
 import { useState } from "react";
 import type { OutputFormat, PredefinedFormat } from "@/types/OutputFormat";
+import { OUTPUT_FORMATS } from "@/types/OutputFormat";
+
+export type AiModel = "gpt-4o-mini" | "gpt-4o";
 
 export function usePromptCanvas() {
   const [problem, setProblem] = useState("");
@@ -9,6 +13,7 @@ export function usePromptCanvas() {
   const [constraintInput, setConstraintInput] = useState("");
   const [selectedFormat, setSelectedFormat] = useState<OutputFormat>(OUTPUT_FORMATS.report);
   const [customFormat, setCustomFormat] = useState("");
+  const [selectedModel, setSelectedModel] = useState<AiModel>("gpt-4o-mini");
 
   const addMetric = () => {
     if (metricInput.trim()) {
@@ -52,6 +57,8 @@ export function usePromptCanvas() {
     updateFormat,
     customFormat,
     setCustomFormat,
+    selectedModel,
+    setSelectedModel,
     addMetric,
     addConstraint,
   };
