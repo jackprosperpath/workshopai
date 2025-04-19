@@ -33,8 +33,10 @@ export default function ConsensusWorkshop() {
     setConstraints,
     constraintInput,
     setConstraintInput,
-    selectedModel,
-    setSelectedModel,
+    selectedFormat,
+    updateFormat,
+    customFormat,
+    setCustomFormat,
     addMetric,
     addConstraint,
   } = usePromptCanvas();
@@ -73,7 +75,12 @@ export default function ConsensusWorkshop() {
   const handleGenerateSolution = async () => {
     setLoading(true);
     try {
-      await generateDraft(problem, metrics, constraints, selectedModel);
+      await generateDraft(
+        problem, 
+        metrics, 
+        constraints, 
+        selectedFormat
+      );
     } catch (error) {
       console.error("Error generating solution:", error);
     } finally {
@@ -175,6 +182,10 @@ export default function ConsensusWorkshop() {
             constraintInput={constraintInput}
             setConstraintInput={setConstraintInput}
             addConstraint={addConstraint}
+            selectedFormat={selectedFormat}
+            updateFormat={updateFormat}
+            customFormat={customFormat}
+            setCustomFormat={setCustomFormat}
             onGenerate={handleGenerateSolution}
             loading={loading}
           />

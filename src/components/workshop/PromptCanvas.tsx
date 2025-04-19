@@ -1,17 +1,25 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, ChevronUp, Info } from "lucide-react";
+import { Info } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { AiModel } from "@/hooks/usePromptCanvas";
+import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { OUTPUT_FORMATS } from "@/types/OutputFormat";
+import type { PredefinedFormat } from "@/types/OutputFormat";
 
 type PromptCanvasProps = {
   problem: string;
@@ -24,8 +32,10 @@ type PromptCanvasProps = {
   constraintInput: string;
   setConstraintInput: (value: string) => void;
   addConstraint: () => void;
-  selectedModel: AiModel;
-  setSelectedModel: (value: AiModel) => void;
+  selectedFormat: { type: PredefinedFormat; customFormat?: string };
+  updateFormat: (format: PredefinedFormat) => void;
+  customFormat: string;
+  setCustomFormat: (value: string) => void;
   onGenerate: () => void;
   loading: boolean;
 };
@@ -41,9 +51,13 @@ export function PromptCanvas({
   constraintInput,
   setConstraintInput,
   addConstraint,
+  selectedFormat,
+  updateFormat,
+  customFormat,
+  setCustomFormat,
   onGenerate,
   loading,
-}: Omit<PromptCanvasProps, 'selectedModel' | 'setSelectedModel'>) {
+}: PromptCanvasProps) {
   const [isExpanded, setIsExpanded] = React.useState(true);
 
   return (
@@ -73,6 +87,49 @@ export function PromptCanvas({
 
       <CollapsibleContent>
         <div className="p-4 space-y-6">
+          <div className="space-y-2">
+            <Label>Output Format</Label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Label className="text-sm text-muted-foreground block">
+                  Select the desired format for the generated solution
+                </Label>
+              </TooltipTrigger>
+              <TooltipContent>
+                Choose a predefined format or create your own
+              </TooltipContent>
+            </Tooltip>
+            <div className="flex gap-4">
+              <Select 
+                value={selectedFormat.type}
+                onValueChange={(value: PredefinedFormat) => updateFormat(value)}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select format" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(OUTPUT_FORMATS).map(([key, format]) => (
+                    <SelectItem key={key} value={key}>
+                      {format.description}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="other">Custom Format</SelectItem>
+                </SelectContent>
+              </Select>
+              {selectedFormat.type === 'other' && (
+                <Input
+                  placeholder="Define your format..."
+                  value={customFormat}
+                  onChange={(e) => {
+                    setCustomFormat(e.target.value);
+                    updateFormat('other');
+                  }}
+                  className="flex-1"
+                />
+              )}
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="problem">Problem Statement</Label>
             <Tooltip>
