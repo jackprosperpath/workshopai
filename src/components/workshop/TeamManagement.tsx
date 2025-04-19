@@ -14,7 +14,7 @@ import { toast } from "@/components/ui/sonner";
 import {
   Select,
   SelectContent,
-  SelectItem,.
+  SelectItem, // Removed the extra `.`
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
