@@ -2,6 +2,11 @@
 import { Hero } from "@/components/Hero";
 import { Navbar } from "@/components/Navbar";
 import { LogoStrip } from "@/components/LogoStrip";
+import { Features } from "@/components/Features";
+import { HowItWorks } from "@/components/HowItWorks";
+import { Testimonials } from "@/components/Testimonials";
+import { Pricing } from "@/components/Pricing";
+import { CTA } from "@/components/CTA";
 
 const Index = () => {
   return (
@@ -9,6 +14,11 @@ const Index = () => {
       <Navbar />
       <Hero />
       <LogoStrip />
+      <Features />
+      <HowItWorks />
+      <Testimonials />
+      <Pricing />
+      <CTA />
     </div>
   );
 };

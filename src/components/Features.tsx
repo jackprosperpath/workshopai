@@ -1,5 +1,5 @@
 
-import { Check, Users, History, ThumbsUp, Zap } from "lucide-react";
+import { Users, History, ThumbsUp, Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const features = [
