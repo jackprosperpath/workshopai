@@ -1,4 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/sonner";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 type SectionFeedback = {
   text: string;
@@ -60,32 +64,44 @@ export default function ConsensusWorkshop() {
     }
   };
 
-  /* Stubbed draft generator */
   const generateDraft = async (feedback: string | null = null) => {
+    if (!problem.trim()) {
+      toast.error("Please provide a problem statement");
+      return;
+    }
+
     setLoading(true);
 
-    /* Simulate latency */
-    await new Promise((res) => setTimeout(res, 1500));
+    try {
+      const { data, error } = await supabase.functions.invoke('workshop-ai', {
+        body: {
+          problem,
+          metrics,
+          constraints,
+          feedback
+        }
+      });
 
-    const fakeParagraphs = [
-      "This is section 1 of the draft solution...",
-      "This is section 2 explaining the key approach...",
-      "This is section 3 covering next steps..."
-    ];
+      if (error) throw error;
 
-    const next: DraftVersion = {
-      id: versions.length + 1,
-      output: fakeParagraphs,
-      reasoning: feedback ?? "Initial generation",
-      sectionFeedback: {}
-    };
+      const next: DraftVersion = {
+        id: versions.length + 1,
+        output: data.output,
+        reasoning: data.reasoning || feedback || "Initial generation",
+        sectionFeedback: {}
+      };
 
-    setVersions((prev) => [...prev, next]);
-    setCurrentIdx(versions.length); // point to new version
-    setLoading(false);
+      setVersions((prev) => [...prev, next]);
+      setCurrentIdx(versions.length);
+      toast.success("New draft generated");
+    } catch (error) {
+      console.error('Error generating draft:', error);
+      toast.error("Failed to generate draft");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  /* Feedback handlers */
   const addFeedback = (sectionIdx: number, text: string) => {
     if (!currentDraft) return;
     const id = threadCounter.current++;
@@ -109,7 +125,6 @@ export default function ConsensusWorkshop() {
     );
   };
 
-  /* Stakeholder handlers */
   const addStakeholder = () => {
     if (newRole.trim()) {
       setStakeholders((s) => [
@@ -133,7 +148,6 @@ export default function ConsensusWorkshop() {
     );
   };
 
-  /* Diff helper */
   const highlightChanges = (text: string, idx: number) => {
     if (currentIdx === null || currentIdx === 0) return text;
     const prev = versions[currentIdx - 1];
@@ -149,7 +163,7 @@ export default function ConsensusWorkshop() {
       {/* Prompt Canvas */}
       <section className="border rounded p-4">
         <h2 className="font-semibold mb-2">Prompt Canvas</h2>
-        <textarea
+        <Textarea
           placeholder="Problem statement..."
           className="border w-full p-2 mb-2"
           value={problem}
@@ -161,10 +175,11 @@ export default function ConsensusWorkshop() {
             className="border flex-1 p-2"
             value={metricInput}
             onChange={(e) => setMetricInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && addMetric()}
           />
-          <button onClick={addMetric} className="border px-3">
-            +
-          </button>
+          <Button onClick={addMetric} variant="outline">
+            Add
+          </Button>
         </div>
         <div className="flex gap-2 flex-wrap mb-2">
           {metrics.map((m) => (
@@ -179,10 +194,11 @@ export default function ConsensusWorkshop() {
             className="border flex-1 p-2"
             value={constraintInput}
             onChange={(e) => setConstraintInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && addConstraint()}
           />
-          <button onClick={addConstraint} className="border px-3">
-            +
-          </button>
+          <Button onClick={addConstraint} variant="outline">
+            Add
+          </Button>
         </div>
         <div className="flex gap-2 flex-wrap">
           {constraints.map((c) => (
@@ -191,13 +207,13 @@ export default function ConsensusWorkshop() {
             </span>
           ))}
         </div>
-        <button
+        <Button
           onClick={() => generateDraft()}
           disabled={loading}
-          className="mt-4 bg-black text-white px-4 py-2 rounded"
+          className="mt-4 bg-primary text-white"
         >
           {loading ? "Generating…" : "Run"}
-        </button>
+        </Button>
       </section>
 
       {/* Draft Workspace */}
@@ -256,7 +272,6 @@ export default function ConsensusWorkshop() {
                 </div>
               )}
 
-              {/* Existing feedback */}
               {(currentDraft.sectionFeedback[idx] || []).map((fb) => (
                 <div
                   key={fb.threadId}
@@ -288,9 +303,9 @@ export default function ConsensusWorkshop() {
             value={newRole}
             onChange={(e) => setNewRole(e.target.value)}
           />
-          <button onClick={addStakeholder} className="border px-3">
-            +
-          </button>
+          <Button onClick={addStakeholder} variant="outline">
+            Add
+          </Button>
         </div>
 
         {stakeholders.map((st) => (
