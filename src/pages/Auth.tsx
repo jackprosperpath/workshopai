@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
-import { Mail, Google } from "lucide-react";
+import { Mail, Chrome } from "lucide-react";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -124,7 +124,7 @@ export default function Auth() {
               className="w-full"
               onClick={handleGoogleSignIn}
             >
-              <Google className="mr-2" />
+              <Chrome className="mr-2" />
               Sign up with Google
             </Button>
           </div>
