@@ -12,8 +12,11 @@ export function useWorkshop() {
   const createWorkshop = async () => {
     try {
       const { data: userData } = await supabase.auth.getUser();
+      console.log('Current User Data:', userData); // Diagnostic log
+
       if (!userData.user) {
         toast.error("Please sign in to create a workshop");
+        console.error('No user found when trying to create workshop'); // Diagnostic log
         return null;
       }
 
@@ -33,9 +36,11 @@ export function useWorkshop() {
       }
 
       if (!workshop) {
+        console.error('No workshop returned from database'); // Diagnostic log
         throw new Error("No workshop returned from database");
       }
 
+      console.log('Created Workshop:', workshop); // Diagnostic log
       toast.success("New workshop created");
       navigate(`/workshop?id=${workshop.id}`);
       return workshop;
