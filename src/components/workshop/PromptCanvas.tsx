@@ -123,21 +123,6 @@ export function PromptCanvas({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>Context Documents</Label>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Label className="text-sm text-muted-foreground block">
-                  Upload documents to provide additional context for the solution generation
-                </Label>
-              </TooltipTrigger>
-              <TooltipContent>
-                Supported formats: PDF, DOC, DOCX, TXT
-              </TooltipContent>
-            </Tooltip>
-            <DocumentUpload onDocumentsUpdate={setDocuments} />
-          </div>
-
           <ItemList
             label="Success Metrics"
             tooltipText="Define how success will be measured"
@@ -157,6 +142,21 @@ export function PromptCanvas({
             onAdd={addConstraint}
             placeholder="Add constraint..."
           />
+
+          <div className="space-y-2">
+            <Label>Context Documents</Label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Label className="text-sm text-muted-foreground block">
+                  Upload documents to provide additional context for the solution generation
+                </Label>
+              </TooltipTrigger>
+              <TooltipContent>
+                Supported formats: PDF, DOC, DOCX, TXT
+              </TooltipContent>
+            </Tooltip>
+            <DocumentUpload onDocumentsUpdate={setDocuments} />
+          </div>
 
           <Button
             onClick={() => onGenerate()}
