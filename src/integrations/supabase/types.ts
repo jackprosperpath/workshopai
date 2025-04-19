@@ -15,6 +15,7 @@ export type Database = {
           created_at: string | null
           id: string
           metrics: Json | null
+          name: string
           owner_id: string
           problem: string | null
           selected_model: string | null
@@ -26,6 +27,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           metrics?: Json | null
+          name?: string
           owner_id: string
           problem?: string | null
           selected_model?: string | null
@@ -37,6 +39,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           metrics?: Json | null
+          name?: string
           owner_id?: string
           problem?: string | null
           selected_model?: string | null
