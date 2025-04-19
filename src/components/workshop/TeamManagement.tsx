@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,19 +6,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Share, Copy, Check, X, Users, AlertCircle } from "lucide-react";
+import { Mail, Share, Copy, Check, X, Users, AlertCircle, Settings } from "lucide-react";
 import { TeamMember, useTeamCollaboration } from "@/hooks/useTeamCollaboration";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/toast";
+import { toast } from "@/components/ui/sonner";
 import {
   Select,
   SelectContent,
-  SelectItem,
+  SelectItem,.
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { usePromptCanvas } from "@/hooks/usePromptCanvas";
+import { usePromptCanvas, AiModel } from "@/hooks/usePromptCanvas";
 
 export function TeamManagement() {
   const location = useLocation();
@@ -180,7 +181,7 @@ export function TeamManagement() {
               <Label htmlFor="ai-model">AI Model</Label>
               <Select 
                 value={selectedModel} 
-                onValueChange={setSelectedModel}
+                onValueChange={(value: AiModel) => setSelectedModel(value)}
               >
                 <SelectTrigger id="ai-model">
                   <SelectValue placeholder="Select AI model" />
