@@ -92,10 +92,15 @@ export function useWorkshop() {
     }
   };
 
+  const updateWorkshopName = (newName: string) => {
+    setWorkshopName(newName);
+  };
+
   return {
     loading,
     workshopName,
     createWorkshop,
-    getWorkshop
+    getWorkshop,
+    updateWorkshopName
   };
 }

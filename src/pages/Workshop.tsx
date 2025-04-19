@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
@@ -13,7 +14,7 @@ const Workshop = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const workshopId = searchParams.get('id');
-  const { loading, workshopName, getWorkshop, createWorkshop } = useWorkshop();
+  const { loading, workshopName, getWorkshop, createWorkshop, updateWorkshopName } = useWorkshop();
   const [workshops, setWorkshops] = useState([]);
   const [isLoadingWorkshops, setIsLoadingWorkshops] = useState(true);
 
@@ -93,7 +94,11 @@ const Workshop = () => {
           </div>
         ) : (
           <>
-            <WorkshopHeader workshopId={workshopId} initialName={workshopName} />
+            <WorkshopHeader 
+              workshopId={workshopId} 
+              initialName={workshopName} 
+              onNameUpdate={updateWorkshopName}
+            />
             <ConsensusWorkshop />
           </>
         )}

@@ -7,9 +7,14 @@ import { toast } from "@/components/ui/sonner";
 type WorkshopHeaderProps = {
   workshopId: string | null;
   initialName?: string;
+  onNameUpdate?: (newName: string) => void;
 };
 
-export function WorkshopHeader({ workshopId, initialName = "Untitled Workshop" }: WorkshopHeaderProps) {
+export function WorkshopHeader({ 
+  workshopId, 
+  initialName = "Untitled Workshop",
+  onNameUpdate
+}: WorkshopHeaderProps) {
   const [name, setName] = useState(initialName);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -45,6 +50,9 @@ export function WorkshopHeader({ workshopId, initialName = "Untitled Workshop" }
       if (error) throw error;
       
       setIsEditing(false);
+      if (onNameUpdate) {
+        onNameUpdate(name);
+      }
       toast.success("Workshop name updated");
     } catch (error) {
       console.error("Error updating workshop name:", error);
@@ -69,6 +77,7 @@ export function WorkshopHeader({ workshopId, initialName = "Untitled Workshop" }
                 if (e.key === 'Enter') handleSave();
                 if (e.key === 'Escape') setIsEditing(false);
               }}
+              autoFocus
             />
           </div>
         ) : (
@@ -83,4 +92,3 @@ export function WorkshopHeader({ workshopId, initialName = "Untitled Workshop" }
     </div>
   );
 }
-
