@@ -73,12 +73,25 @@ export default function ConsensusWorkshop() {
     setLoading(true);
 
     try {
+      // Collect all feedback if this is a re-prompt
+      let consolidatedFeedback = '';
+      if (feedback && currentDraft) {
+        // Gather all section feedback
+        Object.entries(currentDraft.sectionFeedback).forEach(([sectionIdx, comments]) => {
+          const sectionContent = currentDraft.output[Number(sectionIdx)];
+          consolidatedFeedback += `\nFeedback for section "${sectionContent.slice(0, 50)}...":\n`;
+          comments.forEach(fb => {
+            consolidatedFeedback += `- ${fb.text}\n`;
+          });
+        });
+      }
+
       const { data, error } = await supabase.functions.invoke('workshop-ai', {
         body: {
           problem,
           metrics,
           constraints,
-          feedback
+          feedback: consolidatedFeedback || null
         }
       });
 

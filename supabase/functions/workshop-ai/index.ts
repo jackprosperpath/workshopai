@@ -14,23 +14,29 @@ serve(async (req) => {
   }
 
   try {
-    const { problem, metrics, constraints } = await req.json();
+    const { problem, metrics, constraints, feedback } = await req.json();
 
-    // Construct a well-formatted prompt
-    const prompt = `
+    // Base prompt construction
+    let prompt = `
 Given this problem statement: "${problem}"
 
 Key metrics to optimize for:
 ${metrics.map(m => `- ${m}`).join('\n')}
 
 Constraints to consider:
-${constraints.map(c => `- ${c}`).join('\n')}
+${constraints.map(c => `- ${c}`).join('\n')}`;
 
-Please provide a detailed solution that:
+    // Add feedback context if provided
+    if (feedback) {
+      prompt += `\n\nPrevious feedback to address:\n${feedback}`;
+    }
+
+    prompt += `\n\nPlease provide a detailed solution that:
 1. Addresses the core problem
 2. Optimizes for the given metrics
 3. Respects all constraints
 4. Is divided into clear, implementable sections
+${feedback ? '5. Incorporates the provided feedback' : ''}
 
 Respond with 3 sections maximum.`;
 
@@ -65,7 +71,7 @@ Respond with 3 sections maximum.`;
     return new Response(
       JSON.stringify({ 
         output: sections,
-        reasoning: "Generated using GPT-4o model with strategic consulting context"
+        reasoning: feedback ? "Generated with feedback incorporated" : "Initial generation using GPT-4o"
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
