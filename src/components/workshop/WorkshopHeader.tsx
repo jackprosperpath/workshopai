@@ -17,7 +17,6 @@ export function WorkshopHeader({ workshopId, initialName = "Untitled Workshop" }
   const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
 
-  // Update local state when prop changes
   useEffect(() => {
     if (initialName) {
       setName(initialName);
@@ -29,19 +28,16 @@ export function WorkshopHeader({ workshopId, initialName = "Untitled Workshop" }
     
     setIsSaving(true);
     try {
-      // Check if workshopId is a valid UUID
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const isValidUuid = uuidRegex.test(workshopId);
 
       let result;
       if (isValidUuid) {
-        // If it's a valid UUID, use it directly
         result = await supabase
           .from('workshops')
           .update({ name })
           .eq('id', workshopId);
       } else {
-        // If not a valid UUID, it might be a share_id
         result = await supabase
           .from('workshops')
           .update({ name })
