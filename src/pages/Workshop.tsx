@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
@@ -74,10 +73,6 @@ const Workshop = () => {
           <div className="space-y-8">
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-bold">Your Workshops</h1>
-              <Button onClick={createWorkshop} size="lg">
-                <Plus className="mr-2 h-4 w-4" />
-                Create New Workshop
-              </Button>
             </div>
             <WorkshopHistory 
               workshops={workshops} 
