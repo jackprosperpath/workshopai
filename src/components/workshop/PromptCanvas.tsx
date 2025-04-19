@@ -1,16 +1,8 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Info, ChevronUp, ChevronDown } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Info } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -101,7 +93,7 @@ export function PromptCanvas({
               </TooltipContent>
             </Tooltip>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               {Object.entries(OUTPUT_FORMATS).map(([key, format]) => (
                 <button
                   key={key}
@@ -109,7 +101,7 @@ export function PromptCanvas({
                     updateFormat(key as PredefinedFormat);
                     setShowCustomFormat(false);
                   }}
-                  className={`p-4 rounded-lg border text-left transition-all hover:border-primary/50 ${
+                  className={`p-4 rounded-lg border text-left transition-all hover:border-primary/50 h-full ${
                     selectedFormat.type === key
                       ? "border-primary bg-primary/5"
                       : "border-border hover:bg-accent/5"
@@ -127,7 +119,7 @@ export function PromptCanvas({
                   updateFormat('other');
                   setShowCustomFormat(true);
                 }}
-                className={`p-4 rounded-lg border text-left transition-all hover:border-primary/50 ${
+                className={`p-4 rounded-lg border text-left transition-all hover:border-primary/50 h-full ${
                   selectedFormat.type === 'other'
                     ? "border-primary bg-primary/5"
                     : "border-border hover:bg-accent/5"
