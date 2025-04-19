@@ -1,5 +1,6 @@
 
 import { Button } from "./ui/button";
+import { Link } from "react-router-dom";
 
 export const Navbar = () => {
   return (
@@ -11,6 +12,7 @@ export const Navbar = () => {
           <li><a href="#integrations" className="hover:text-primary transition-colors">Integrations</a></li>
           <li><a href="#pricing" className="hover:text-primary transition-colors">Pricing</a></li>
           <li><a href="#community" className="hover:text-primary transition-colors">Community</a></li>
+          <li><Link to="/workshop" className="hover:text-primary transition-colors">Workshop</Link></li>
           <li><Button variant="outline" className="font-medium">Sign Up</Button></li>
         </ul>
       </nav>
