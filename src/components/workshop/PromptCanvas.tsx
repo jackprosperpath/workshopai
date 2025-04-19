@@ -249,16 +249,16 @@ export function PromptCanvas({
 
 function getFormatDescription(format: PredefinedFormat): string {
   switch (format) {
-    case 'report':
+    case 'detailed-report':
       return 'Comprehensive document with findings and recommendations';
     case 'prd':
       return 'Technical specifications and requirements';
-    case 'proposal':
+    case 'project-proposal':
       return 'Structured project plan and implementation details';
-    case 'analysis':
-      return 'Data-driven insights and conclusions';
-    case 'strategy':
+    case 'strategic-plan':
       return 'Strategic roadmap and execution plan';
+    case 'business-case':
+      return 'Comprehensive analysis of business opportunity';
     default:
       return '';
   }
