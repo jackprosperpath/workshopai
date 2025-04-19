@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -60,6 +59,7 @@ export function PromptCanvas({
   loading,
 }: PromptCanvasProps) {
   const [isExpanded, setIsExpanded] = React.useState(true);
+  const [showCustomFormat, setShowCustomFormat] = React.useState(false);
 
   return (
     <Collapsible
@@ -100,35 +100,57 @@ export function PromptCanvas({
                 Choose a predefined format or create your own
               </TooltipContent>
             </Tooltip>
-            <div className="flex gap-4">
-              <Select 
-                value={selectedFormat.type}
-                onValueChange={(value: PredefinedFormat) => updateFormat(value)}
-              >
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Select format" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(OUTPUT_FORMATS).map(([key, format]) => (
-                    <SelectItem key={key} value={key}>
-                      {format.description}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="other">Custom Format</SelectItem>
-                </SelectContent>
-              </Select>
-              {selectedFormat.type === 'other' && (
-                <Input
-                  placeholder="Define your format..."
-                  value={customFormat}
-                  onChange={(e) => {
-                    setCustomFormat(e.target.value);
-                    updateFormat('other');
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Object.entries(OUTPUT_FORMATS).map(([key, format]) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    updateFormat(key as PredefinedFormat);
+                    setShowCustomFormat(false);
                   }}
-                  className="flex-1"
-                />
-              )}
+                  className={`p-4 rounded-lg border text-left transition-all hover:border-primary/50 ${
+                    selectedFormat.type === key
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:bg-accent/5"
+                  }`}
+                >
+                  <h3 className="font-medium mb-1">{format.description}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {getFormatDescription(key as PredefinedFormat)}
+                  </p>
+                </button>
+              ))}
+              
+              <button
+                onClick={() => {
+                  updateFormat('other');
+                  setShowCustomFormat(true);
+                }}
+                className={`p-4 rounded-lg border text-left transition-all hover:border-primary/50 ${
+                  selectedFormat.type === 'other'
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:bg-accent/5"
+                }`}
+              >
+                <h3 className="font-medium mb-1">Custom Format</h3>
+                <p className="text-sm text-muted-foreground">
+                  Define your own custom output format
+                </p>
+              </button>
             </div>
+
+            {showCustomFormat && (
+              <Input
+                placeholder="Define your format..."
+                value={customFormat}
+                onChange={(e) => {
+                  setCustomFormat(e.target.value);
+                  updateFormat('other');
+                }}
+                className="mt-4"
+              />
+            )}
           </div>
 
           <div className="space-y-2">
@@ -223,4 +245,21 @@ export function PromptCanvas({
       </CollapsibleContent>
     </Collapsible>
   );
+}
+
+function getFormatDescription(format: PredefinedFormat): string {
+  switch (format) {
+    case 'report':
+      return 'Comprehensive document with findings and recommendations';
+    case 'prd':
+      return 'Technical specifications and requirements';
+    case 'proposal':
+      return 'Structured project plan and implementation details';
+    case 'analysis':
+      return 'Data-driven insights and conclusions';
+    case 'strategy':
+      return 'Strategic roadmap and execution plan';
+    default:
+      return '';
+  }
 }
