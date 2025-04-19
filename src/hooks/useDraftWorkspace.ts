@@ -2,6 +2,7 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
+import type { AiModel } from "./usePromptCanvas";
 
 export type SectionFeedback = {
   text: string;
@@ -28,7 +29,8 @@ export function useDraftWorkspace() {
     problem: string,
     metrics: string[],
     constraints: string[],
-    feedback: string | null = null
+    feedback: string | null = null,
+    model: AiModel = "gpt-4o-mini"
   ) => {
     if (!problem.trim()) {
       toast.error("Please provide a problem statement");
@@ -54,7 +56,8 @@ export function useDraftWorkspace() {
           problem,
           metrics,
           constraints,
-          feedback: consolidatedFeedback || null
+          feedback: consolidatedFeedback || null,
+          model
         }
       });
 
