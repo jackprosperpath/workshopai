@@ -8,6 +8,7 @@ import { PromptCanvas } from "@/components/workshop/PromptCanvas";
 import { DraftWorkspace } from "@/components/workshop/DraftWorkspace";
 import { StakeholderSupport } from "@/components/workshop/StakeholderSupport";
 import { WorkshopSharing } from "@/components/workshop/WorkshopSharing";
+import { TeamManagement } from "@/components/workshop/TeamManagement";
 
 export default function ConsensusWorkshop() {
   const promptCanvas = usePromptCanvas();
@@ -82,6 +83,9 @@ export default function ConsensusWorkshop() {
           }}
         />
       </div>
+      
+      {/* New Team Management section */}
+      <TeamManagement />
       
       <PromptCanvas
         {...promptCanvas}
