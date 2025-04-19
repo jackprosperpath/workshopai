@@ -40,13 +40,34 @@ export function useWorkshop() {
 
   const getWorkshop = async (id: string) => {
     try {
-      const { data: workshop, error } = await supabase
-        .from('workshops')
-        .select('*')
-        .eq('id', id)
-        .single();
+      // First try to find by UUID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const isValidUuid = uuidRegex.test(id);
+      
+      let query;
+      if (isValidUuid) {
+        // If it's a valid UUID, query by id
+        query = supabase
+          .from('workshops')
+          .select('*')
+          .eq('id', id)
+          .single();
+      } else {
+        // If not a valid UUID, try by share_id
+        query = supabase
+          .from('workshops')
+          .select('*')
+          .eq('share_id', id)
+          .single();
+      }
 
-      if (error) throw error;
+      const { data: workshop, error } = await query;
+
+      if (error) {
+        console.error("Error fetching workshop:", error);
+        throw error;
+      }
+      
       setWorkshopName(workshop.name);
       return workshop;
     } catch (error) {

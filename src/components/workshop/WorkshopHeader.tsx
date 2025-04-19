@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,16 +15,40 @@ export function WorkshopHeader({ workshopId, initialName = "Untitled Workshop" }
   const [name, setName] = useState(initialName);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Update local state when prop changes
+  useEffect(() => {
+    if (initialName) {
+      setName(initialName);
+    }
+  }, [initialName]);
+
   const handleSave = async () => {
     if (!workshopId) return;
     
     setIsSaving(true);
     try {
-      const { error } = await supabase
-        .from('workshops')
-        .update({ name })
-        .eq('id', workshopId);
+      console.log("Updating workshop name for ID:", workshopId);
+      
+      // Check if workshopId is a valid UUID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const isValidUuid = uuidRegex.test(workshopId);
 
+      let result;
+      if (isValidUuid) {
+        // If it's a valid UUID, use it directly
+        result = await supabase
+          .from('workshops')
+          .update({ name })
+          .eq('id', workshopId);
+      } else {
+        // If not a valid UUID, it might be a share_id
+        result = await supabase
+          .from('workshops')
+          .update({ name })
+          .eq('share_id', workshopId);
+      }
+
+      const { error } = result;
       if (error) throw error;
       
       setIsEditing(false);

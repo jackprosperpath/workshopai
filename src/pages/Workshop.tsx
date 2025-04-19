@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
@@ -39,7 +40,7 @@ const Workshop = () => {
     return () => subscription.unsubscribe();
   }, [navigate, workshopId]);
 
-  if (loading) {
+  if (loading && workshopId) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
