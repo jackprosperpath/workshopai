@@ -1,8 +1,9 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Info } from "lucide-react";
+import { Info, ChevronUp, ChevronDown } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -12,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { OUTPUT_FORMATS } from "@/types/OutputFormat";
 import type { PredefinedFormat } from "@/types/OutputFormat";
+import { Textarea } from "@/components/ui/textarea";
 
 type PromptCanvasProps = {
   problem: string;

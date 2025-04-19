@@ -11,7 +11,7 @@ export function usePromptCanvas() {
   const [metricInput, setMetricInput] = useState("");
   const [constraints, setConstraints] = useState<string[]>([]);
   const [constraintInput, setConstraintInput] = useState("");
-  const [selectedFormat, setSelectedFormat] = useState<OutputFormat>(OUTPUT_FORMATS.report);
+  const [selectedFormat, setSelectedFormat] = useState<OutputFormat>(OUTPUT_FORMATS['detailed-report']);
   const [customFormat, setCustomFormat] = useState("");
   const [selectedModel, setSelectedModel] = useState<AiModel>("gpt-4o-mini");
 
