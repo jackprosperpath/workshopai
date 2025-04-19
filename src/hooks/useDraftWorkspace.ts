@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import type { AiModel } from "./usePromptCanvas";
+import type { OutputFormat } from "@/types/OutputFormat";
 
 export type SectionFeedback = {
   text: string;
@@ -62,6 +63,7 @@ export function useDraftWorkspace() {
     problem: string,
     metrics: string[],
     constraints: string[],
+    format: OutputFormat,
     model: AiModel = "gpt-4o-mini"
   ) => {
     if (!problem.trim()) {
@@ -90,6 +92,7 @@ export function useDraftWorkspace() {
           metrics,
           constraints,
           feedback: consolidatedFeedback || null,
+          format,
           model
         }
       });
