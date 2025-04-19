@@ -1,105 +1,57 @@
 
-import React, { useEffect } from "react";
-import { usePromptCanvas } from "@/hooks/usePromptCanvas";
-import { useDraftWorkspace } from "@/hooks/useDraftWorkspace";
-import { useStakeholders } from "@/hooks/useStakeholders";
-import { usePromptCanvasSync } from "@/hooks/usePromptCanvasSync";
-import { PromptCanvas } from "@/components/workshop/PromptCanvas";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DraftWorkspace } from "@/components/workshop/DraftWorkspace";
+import { PromptCanvas } from "@/components/workshop/PromptCanvas";
 import { StakeholderSupport } from "@/components/workshop/StakeholderSupport";
 import { TeamManagement } from "@/components/workshop/TeamManagement";
-import { useSearchParams } from "react-router-dom";
-import { WorkshopHeader } from "@/components/workshop/WorkshopHeader";
+import { WorkshopSharing } from "@/components/workshop/WorkshopSharing";
 
 export default function ConsensusWorkshop() {
   const [searchParams] = useSearchParams();
   const workshopId = searchParams.get('id');
-  const promptCanvas = usePromptCanvas();
-  const draftWorkspace = useDraftWorkspace();
-  const stakeholderSupport = useStakeholders();
-  
-  // Setup synchronization of prompt canvas data
-  const promptCanvasSync = usePromptCanvasSync(
-    {
-      problem: promptCanvas.problem,
-      metrics: promptCanvas.metrics,
-      constraints: promptCanvas.constraints,
-      selectedModel: promptCanvas.selectedModel
-    },
-    (data) => {
-      if (data.problem !== undefined) promptCanvas.setProblem(data.problem);
-      if (data.metrics !== undefined) promptCanvas.setMetrics(data.metrics);
-      if (data.constraints !== undefined) promptCanvas.setConstraints(data.constraints);
-      if (data.selectedModel !== undefined) promptCanvas.setSelectedModel(data.selectedModel);
-    }
-  );
+  const [activeTab, setActiveTab] = useState("draft");
 
-  // Sync data whenever it changes
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      promptCanvasSync.syncData({
-        problem: promptCanvas.problem,
-        metrics: promptCanvas.metrics,
-        constraints: promptCanvas.constraints,
-        selectedModel: promptCanvas.selectedModel
-      });
-    }, 1000); // Debounce updates to reduce traffic
-    
-    return () => clearTimeout(timeoutId);
-  }, [
-    promptCanvas.problem,
-    promptCanvas.metrics,
-    promptCanvas.constraints,
-    promptCanvas.selectedModel
-  ]);
+    // Set initial tab based on URL hash
+    const hash = window.location.hash.replace('#', '');
+    if (hash && ['draft', 'prompt', 'stakeholders', 'team', 'share'].includes(hash)) {
+      setActiveTab(hash);
+    }
+  }, []);
 
-  const handleGenerate = () => {
-    draftWorkspace.generateDraft(
-      promptCanvas.problem,
-      promptCanvas.metrics,
-      promptCanvas.constraints,
-      undefined,
-      promptCanvas.selectedModel
-    );
-  };
-
-  const handleRePrompt = () => {
-    draftWorkspace.generateDraft(
-      promptCanvas.problem,
-      promptCanvas.metrics,
-      promptCanvas.constraints,
-      "Re‑prompt with feedback",
-      promptCanvas.selectedModel
-    );
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    window.location.hash = value;
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-8">
-      <WorkshopHeader workshopId={workshopId} />
-      
-      {/* New Team Management section */}
-      <TeamManagement />
-      
-      <PromptCanvas
-        {...promptCanvas}
-        onGenerate={handleGenerate}
-        loading={draftWorkspace.loading}
-      />
-
-      <DraftWorkspace
-        currentDraft={draftWorkspace.currentDraft}
-        versions={draftWorkspace.versions}
-        currentIdx={draftWorkspace.currentIdx}
-        setCurrentIdx={draftWorkspace.setCurrentIdx}
-        activeThread={draftWorkspace.activeThread}
-        setActiveThread={draftWorkspace.setActiveThread}
-        addFeedback={draftWorkspace.addFeedback}
-        onRePrompt={handleRePrompt}
-        loading={draftWorkspace.loading}
-      />
-
-      <StakeholderSupport {...stakeholderSupport} />
+    <div className="w-full space-y-4">
+      <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="draft">Draft</TabsTrigger>
+          <TabsTrigger value="prompt">Prompt Canvas</TabsTrigger>
+          <TabsTrigger value="stakeholders">Stakeholders</TabsTrigger>
+          <TabsTrigger value="team">Team</TabsTrigger>
+          <TabsTrigger value="share">Share</TabsTrigger>
+        </TabsList>
+        <TabsContent value="draft">
+          <DraftWorkspace workshopId={workshopId} />
+        </TabsContent>
+        <TabsContent value="prompt">
+          <PromptCanvas workshopId={workshopId} />
+        </TabsContent>
+        <TabsContent value="stakeholders">
+          <StakeholderSupport workshopId={workshopId} />
+        </TabsContent>
+        <TabsContent value="team">
+          <TeamManagement workshopId={workshopId} />
+        </TabsContent>
+        <TabsContent value="share">
+          <WorkshopSharing workshopId={workshopId} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
-
