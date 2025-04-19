@@ -100,8 +100,6 @@ export default function ConsensusWorkshop() {
             constraintInput={constraintInput}
             setConstraintInput={setConstraintInput}
             addConstraint={addConstraint}
-            selectedModel={selectedModel}
-            setSelectedModel={setSelectedModel}
             onGenerate={handleGenerateSolution}
             loading={loading}
           />

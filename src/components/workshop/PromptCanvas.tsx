@@ -7,13 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ChevronDown, ChevronUp, Info } from "lucide-react";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -48,11 +41,9 @@ export function PromptCanvas({
   constraintInput,
   setConstraintInput,
   addConstraint,
-  selectedModel,
-  setSelectedModel,
   onGenerate,
   loading,
-}: PromptCanvasProps) {
+}: Omit<PromptCanvasProps, 'selectedModel' | 'setSelectedModel'>) {
   const [isExpanded, setIsExpanded] = React.useState(true);
 
   return (
@@ -82,30 +73,6 @@ export function PromptCanvas({
 
       <CollapsibleContent>
         <div className="p-4 space-y-6">
-          <div className="space-y-2">
-            <Label>AI Model</Label>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Label className="text-sm text-muted-foreground block">
-                  Select which AI model to use for generation
-                </Label>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>GPT-4o-mini is faster but less powerful</p>
-                <p>GPT-4o is more powerful but slower</p>
-              </TooltipContent>
-            </Tooltip>
-            <Select value={selectedModel} onValueChange={setSelectedModel}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select model" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="gpt-4o-mini">GPT-4o-mini (Fast)</SelectItem>
-                <SelectItem value="gpt-4o">GPT-4o (Powerful)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="problem">Problem Statement</Label>
             <Tooltip>
