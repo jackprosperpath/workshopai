@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import type { AiModel } from "./usePromptCanvas";
@@ -25,11 +25,43 @@ export function useDraftWorkspace() {
 
   const currentDraft = currentIdx !== null ? versions[currentIdx] : null;
 
+  // Set up real-time updates for draft editing
+  useEffect(() => {
+    if (!currentDraft) return;
+
+    const workshopId = new URLSearchParams(window.location.search).get('id');
+    if (!workshopId) return;
+
+    const channel = supabase.channel(`draft-edits-${workshopId}`);
+    
+    channel
+      .on('broadcast', { event: 'draft_edit' }, (payload) => {
+        const { draftId, sectionIdx, content, userId } = payload.payload as any;
+        
+        if (draftId === currentDraft.id) {
+          setVersions(prev => 
+            prev.map(v => {
+              if (v.id === draftId) {
+                const newOutput = [...v.output];
+                newOutput[sectionIdx] = content;
+                return { ...v, output: newOutput };
+              }
+              return v;
+            })
+          );
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentDraft]);
+
   const generateDraft = async (
     problem: string,
     metrics: string[],
     constraints: string[],
-    feedback: string | null = null,
     model: AiModel = "gpt-4o-mini"
   ) => {
     if (!problem.trim()) {
@@ -40,8 +72,9 @@ export function useDraftWorkspace() {
     setLoading(true);
 
     try {
+      // Get feedback from current draft if it exists
       let consolidatedFeedback = '';
-      if (feedback && currentDraft) {
+      if (currentDraft) {
         Object.entries(currentDraft.sectionFeedback).forEach(([sectionIdx, comments]) => {
           const sectionContent = currentDraft.output[Number(sectionIdx)];
           consolidatedFeedback += `\nFeedback for section "${sectionContent.slice(0, 50)}...":\n`;
@@ -66,7 +99,7 @@ export function useDraftWorkspace() {
       const next: DraftVersion = {
         id: versions.length + 1,
         output: data.output,
-        reasoning: data.reasoning || feedback || "Initial generation",
+        reasoning: data.reasoning || (consolidatedFeedback ? "Generated with feedback incorporated" : "Initial generation"),
         sectionFeedback: {}
       };
 
@@ -102,6 +135,56 @@ export function useDraftWorkspace() {
           : v
       )
     );
+    
+    // Broadcast feedback to other users
+    const workshopId = new URLSearchParams(window.location.search).get('id');
+    if (workshopId) {
+      supabase.channel(`workshop:${workshopId}`)
+        .send({
+          type: 'broadcast',
+          event: 'feedback_added',
+          payload: {
+            draftId: currentDraft.id,
+            sectionIdx,
+            feedback
+          }
+        });
+    }
+  };
+
+  const updateDraftSection = async (draftId: number, sectionIdx: number, content: string) => {
+    if (currentIdx === null) return;
+    
+    // Apply optimistic update locally
+    setVersions(prev => 
+      prev.map(v => {
+        if (v.id === draftId) {
+          const newOutput = [...v.output];
+          newOutput[sectionIdx] = content;
+          return { ...v, output: newOutput };
+        }
+        return v;
+      })
+    );
+    
+    // Broadcast changes to other users
+    const workshopId = new URLSearchParams(window.location.search).get('id');
+    if (workshopId) {
+      const { data } = await supabase.auth.getUser();
+      await supabase.channel(`workshop:${workshopId}`)
+        .send({
+          type: 'broadcast',
+          event: 'draft_edit',
+          payload: {
+            draftId,
+            sectionIdx,
+            content,
+            userId: data.user?.id
+          }
+        });
+    }
+    
+    return true;
   };
 
   return {
@@ -114,5 +197,6 @@ export function useDraftWorkspace() {
     currentDraft,
     generateDraft,
     addFeedback,
+    updateDraftSection,
   };
 }
