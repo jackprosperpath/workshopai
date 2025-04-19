@@ -14,7 +14,7 @@ export const Hero = () => {
         <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
           Converge.ai transforms any meeting into an interactive AI co‑creation workshop that drives instant team buy‑in.
         </p>
-        <Button size="lg" className="bg-primary hover:bg-secondary">
+        <Button size="lg" className="bg-primary hover:bg-secondary text-white">
           Request Early Access
         </Button>
       </div>
