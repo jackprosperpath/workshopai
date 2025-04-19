@@ -1,11 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
-import { useNavigate } from "react-router-dom";
 
 type WorkshopHeaderProps = {
   workshopId: string | null;
@@ -16,7 +13,6 @@ export function WorkshopHeader({ workshopId, initialName = "Untitled Workshop" }
   const [name, setName] = useState(initialName);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (initialName) {
@@ -58,41 +54,6 @@ export function WorkshopHeader({ workshopId, initialName = "Untitled Workshop" }
     }
   };
 
-  const createNewWorkshop = async () => {
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        toast.error("Please sign in to create a workshop");
-        return;
-      }
-
-      const { data: workshop, error } = await supabase
-        .from('workshops')
-        .insert([{
-          owner_id: userData.user.id,
-          share_id: crypto.randomUUID().substring(0, 8),
-          name: "Untitled Workshop"
-        }])
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error creating workshop:", error);
-        throw error;
-      }
-
-      if (!workshop) {
-        throw new Error("No workshop returned from database");
-      }
-
-      toast.success("New workshop created");
-      navigate(`/workshop?id=${workshop.id}`);
-    } catch (error) {
-      console.error("Error creating workshop:", error);
-      toast.error("Failed to create workshop");
-    }
-  };
-
   return (
     <div className="flex items-center justify-between mb-6">
       <div className="flex items-center gap-4">
@@ -119,10 +80,7 @@ export function WorkshopHeader({ workshopId, initialName = "Untitled Workshop" }
           </h1>
         )}
       </div>
-      <Button onClick={createNewWorkshop} variant="outline" size="sm">
-        <Plus className="mr-2 h-4 w-4" />
-        New Workshop
-      </Button>
     </div>
   );
 }
+
