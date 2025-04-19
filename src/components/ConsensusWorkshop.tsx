@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -65,7 +64,6 @@ export default function ConsensusWorkshop() {
   } = useStakeholders();
 
   useEffect(() => {
-    // Load and persist drafts when the component mounts or workshopId changes
     if (workshopId) {
       loadDrafts(workshopId);
     }

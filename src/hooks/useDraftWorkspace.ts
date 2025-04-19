@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
@@ -31,7 +32,7 @@ export function useDraftWorkspace() {
     : null;
 
   // Load drafts from Supabase
-  const loadDrafts = async () => {
+  const loadDrafts = async (workshopId?: string) => {
     if (!workshopId) return;
 
     try {
@@ -52,9 +53,9 @@ export function useDraftWorkspace() {
       }
 
       if (data) {
-        const parsedVersions = JSON.parse(data.versions);
+        const parsedVersions = JSON.parse(data.versions.toString());
         setVersions(parsedVersions);
-        setCurrentIdx(data.current_idx);
+        setCurrentIdx(data.current_idx !== null ? data.current_idx : null);
       }
     } catch (error) {
       console.error('Error loading drafts from Supabase:', error);
@@ -96,7 +97,9 @@ export function useDraftWorkspace() {
 
   // Load drafts when component mounts or workshopId changes
   useEffect(() => {
-    loadDrafts();
+    if (workshopId) {
+      loadDrafts(workshopId);
+    }
   }, [workshopId]);
 
   const generateDraft = async (
