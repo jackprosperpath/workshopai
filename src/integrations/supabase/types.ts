@@ -9,7 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      workshops: {
+        Row: {
+          constraints: Json | null
+          created_at: string | null
+          id: string
+          metrics: Json | null
+          owner_id: string
+          problem: string | null
+          selected_model: string | null
+          share_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          constraints?: Json | null
+          created_at?: string | null
+          id?: string
+          metrics?: Json | null
+          owner_id: string
+          problem?: string | null
+          selected_model?: string | null
+          share_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          constraints?: Json | null
+          created_at?: string | null
+          id?: string
+          metrics?: Json | null
+          owner_id?: string
+          problem?: string | null
+          selected_model?: string | null
+          share_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
