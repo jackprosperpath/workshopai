@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -51,7 +52,8 @@ export default function ConsensusWorkshop() {
     activeThread,
     setActiveThread,
     addFeedback,
-    generateDraft
+    generateDraft,
+    loadDrafts,
   } = useDraftWorkspace();
   
   const {
@@ -61,6 +63,13 @@ export default function ConsensusWorkshop() {
     addStakeholder,
     updateStakeholder
   } = useStakeholders();
+
+  useEffect(() => {
+    // Load and persist drafts when the component mounts or workshopId changes
+    if (workshopId) {
+      loadDrafts(workshopId);
+    }
+  }, [workshopId]);
 
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
@@ -204,6 +213,7 @@ export default function ConsensusWorkshop() {
             addFeedback={addFeedback}
             onRePrompt={handleGenerateSolution}
             loading={loading}
+            workshopId={workshopId}
           />
         </TabsContent>
         <TabsContent value="stakeholders">

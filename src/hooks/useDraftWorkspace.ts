@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
@@ -23,8 +22,40 @@ export function useDraftWorkspace() {
   const [loading, setLoading] = useState(false);
   const [activeThread, setActiveThread] = useState<number | null>(null);
   const threadCounter = useRef(1);
+  
+  const currentDraft = currentIdx !== null && versions.length > 0 
+    ? versions[currentIdx] 
+    : null;
 
-  const currentDraft = currentIdx !== null ? versions[currentIdx] : null;
+  // Load drafts from localStorage
+  const loadDrafts = (workshopId: string) => {
+    try {
+      const savedDrafts = localStorage.getItem(`workshop-drafts-${workshopId}`);
+      if (savedDrafts) {
+        const parsedDrafts = JSON.parse(savedDrafts) as {
+          versions: DraftVersion[];
+          currentIdx: number | null;
+        };
+        setVersions(parsedDrafts.versions);
+        setCurrentIdx(parsedDrafts.currentIdx);
+      }
+    } catch (error) {
+      console.error('Error loading drafts from localStorage:', error);
+    }
+  };
+
+  // Save drafts to localStorage whenever versions or currentIdx changes
+  useEffect(() => {
+    if (versions.length > 0) {
+      const workshopId = new URLSearchParams(window.location.search).get('id');
+      if (workshopId) {
+        localStorage.setItem(`workshop-drafts-${workshopId}`, JSON.stringify({
+          versions,
+          currentIdx
+        }));
+      }
+    }
+  }, [versions, currentIdx]);
 
   // Set up real-time updates for draft editing
   useEffect(() => {
@@ -106,8 +137,19 @@ export function useDraftWorkspace() {
         sectionFeedback: {}
       };
 
-      setVersions((prev) => [...prev, next]);
-      setCurrentIdx(versions.length);
+      const newVersions = [...versions, next];
+      setVersions(newVersions);
+      setCurrentIdx(newVersions.length - 1);
+      
+      // Save to localStorage
+      const workshopId = new URLSearchParams(window.location.search).get('id');
+      if (workshopId) {
+        localStorage.setItem(`workshop-drafts-${workshopId}`, JSON.stringify({
+          versions: newVersions,
+          currentIdx: newVersions.length - 1
+        }));
+      }
+      
       toast.success("New draft generated");
     } catch (error) {
       console.error('Error generating draft:', error);
@@ -201,5 +243,6 @@ export function useDraftWorkspace() {
     generateDraft,
     addFeedback,
     updateDraftSection,
+    loadDrafts,
   };
 }
