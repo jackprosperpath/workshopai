@@ -12,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import type { PredefinedFormat } from "@/types/OutputFormat";
 import { FormatSelector } from "./FormatSelector";
 import { ItemList } from "./ItemList";
+import { DocumentUpload } from "./DocumentUpload";
 
 type PromptCanvasProps = {
   problem: string;
@@ -51,6 +52,7 @@ export function PromptCanvas({
   loading,
 }: PromptCanvasProps) {
   const [isExpanded, setIsExpanded] = React.useState(true);
+  const [documents, setDocuments] = React.useState<{ name: string; path: string; size: number; }[]>([]);
 
   return (
     <Collapsible
@@ -121,6 +123,21 @@ export function PromptCanvas({
             />
           </div>
 
+          <div className="space-y-2">
+            <Label>Context Documents</Label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Label className="text-sm text-muted-foreground block">
+                  Upload documents to provide additional context for the solution generation
+                </Label>
+              </TooltipTrigger>
+              <TooltipContent>
+                Supported formats: PDF, DOC, DOCX, TXT
+              </TooltipContent>
+            </Tooltip>
+            <DocumentUpload onDocumentsUpdate={setDocuments} />
+          </div>
+
           <ItemList
             label="Success Metrics"
             tooltipText="Define how success will be measured"
@@ -142,7 +159,7 @@ export function PromptCanvas({
           />
 
           <Button
-            onClick={onGenerate}
+            onClick={() => onGenerate()}
             disabled={loading}
             className="w-full"
           >
