@@ -1,11 +1,10 @@
-
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
 
 export const Navbar = () => {
   return (
     <header className="flex justify-between items-center py-6 px-8 max-w-7xl mx-auto">
-      <div className="text-2xl font-bold tracking-tight">Converge.ai</div>
+      <div className="text-2xl font-bold tracking-tight">WorkshopAI</div>
       <nav className="hidden md:block">
         <ul className="flex gap-8 font-medium">
           <li><a href="#features" className="hover:text-primary transition-colors">Features</a></li>
