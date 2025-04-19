@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -23,12 +22,11 @@ export default {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: "#2D3142",
-        secondary: "#7209B7",
-        accent: "#4CC9F0",
-        turquoise: "#23C4E7", // New turquoise color added
+        background: "#fafafa",
+        foreground: "#111827",
+        primary: "#2563eb",
+        secondary: "#1e4ed8",
+        accent: "#2563eb",
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
@@ -36,7 +34,6 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
-        display: ['"Plus Jakarta Sans"', 'sans-serif'],
       },
       keyframes: {
         "fade-up": {
@@ -57,4 +54,3 @@ export default {
   },
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;
-
