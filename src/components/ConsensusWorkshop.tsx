@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -83,7 +82,7 @@ export default function ConsensusWorkshop() {
         metrics, 
         constraints, 
         selectedFormat,
-        selectedModel  // Pass the selectedModel as the last parameter
+        selectedModel
       );
     } catch (error) {
       console.error("Error generating solution:", error);

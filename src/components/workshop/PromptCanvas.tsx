@@ -26,7 +26,7 @@ type PromptCanvasProps = {
   constraintInput: string;
   setConstraintInput: (value: string) => void;
   addConstraint: () => void;
-  selectedFormat: { type: PredefinedFormat; customFormat?: string };
+  selectedFormat: { type: PredefinedFormat; customFormat?: string; description: string };
   updateFormat: (format: PredefinedFormat) => void;
   customFormat: string;
   setCustomFormat: (value: string) => void;
@@ -53,7 +53,7 @@ export function PromptCanvas({
   loading,
 }: PromptCanvasProps) {
   const [isExpanded, setIsExpanded] = React.useState(true);
-  const [showCustomFormat, setShowCustomFormat] = React.useState(false);
+  const [showCustomFormat, setShowCustomFormat] = React.useState(selectedFormat.type === 'other');
 
   return (
     <Collapsible
@@ -104,7 +104,7 @@ export function PromptCanvas({
                     setShowCustomFormat(false);
                   }}
                   className={`p-4 rounded-lg border text-left transition-all hover:border-primary/50 h-full ${
-                    selectedFormat.type === key
+                    selectedFormat && selectedFormat.type === key
                       ? "border-primary bg-primary/5"
                       : "border-border hover:bg-accent/5"
                   }`}
@@ -122,7 +122,7 @@ export function PromptCanvas({
                   setShowCustomFormat(true);
                 }}
                 className={`p-4 rounded-lg border text-left transition-all hover:border-primary/50 h-full ${
-                  selectedFormat.type === 'other'
+                  selectedFormat && selectedFormat.type === 'other'
                     ? "border-primary bg-primary/5"
                     : "border-border hover:bg-accent/5"
                 }`}
