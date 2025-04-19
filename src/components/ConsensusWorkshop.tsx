@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { usePromptCanvas } from "@/hooks/usePromptCanvas";
 import { useDraftWorkspace } from "@/hooks/useDraftWorkspace";
@@ -7,6 +6,7 @@ import { usePromptCanvasSync } from "@/hooks/usePromptCanvasSync";
 import { PromptCanvas } from "@/components/workshop/PromptCanvas";
 import { DraftWorkspace } from "@/components/workshop/DraftWorkspace";
 import { StakeholderSupport } from "@/components/workshop/StakeholderSupport";
+import { WorkshopSharing } from "@/components/workshop/WorkshopSharing";
 import { TeamManagement } from "@/components/workshop/TeamManagement";
 import { useSearchParams } from "react-router-dom";
 import { WorkshopHeader } from "@/components/workshop/WorkshopHeader";
@@ -102,4 +102,3 @@ export default function ConsensusWorkshop() {
     </div>
   );
 }
-
