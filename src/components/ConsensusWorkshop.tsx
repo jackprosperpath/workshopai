@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { usePromptCanvas } from "@/hooks/usePromptCanvas";
 import { useDraftWorkspace } from "@/hooks/useDraftWorkspace";
@@ -9,8 +8,12 @@ import { DraftWorkspace } from "@/components/workshop/DraftWorkspace";
 import { StakeholderSupport } from "@/components/workshop/StakeholderSupport";
 import { WorkshopSharing } from "@/components/workshop/WorkshopSharing";
 import { TeamManagement } from "@/components/workshop/TeamManagement";
+import { useSearchParams } from "react-router-dom";
+import { WorkshopHeader } from "@/components/workshop/WorkshopHeader";
 
 export default function ConsensusWorkshop() {
+  const [searchParams] = useSearchParams();
+  const workshopId = searchParams.get('id');
   const promptCanvas = usePromptCanvas();
   const draftWorkspace = useDraftWorkspace();
   const stakeholderSupport = useStakeholders();
@@ -72,17 +75,7 @@ export default function ConsensusWorkshop() {
 
   return (
     <div className="container mx-auto p-6 space-y-8">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Consensus Workshop</h1>
-        <WorkshopSharing 
-          workshopData={{
-            problem: promptCanvas.problem,
-            metrics: promptCanvas.metrics,
-            constraints: promptCanvas.constraints,
-            selectedModel: promptCanvas.selectedModel
-          }}
-        />
-      </div>
+      <WorkshopHeader workshopId={workshopId} />
       
       {/* New Team Management section */}
       <TeamManagement />
