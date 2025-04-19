@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
@@ -7,24 +6,24 @@ import { WorkshopHeader } from "@/components/workshop/WorkshopHeader";
 import { WorkshopHistory } from "@/components/workshop/WorkshopHistory";
 import { useWorkshop } from "@/hooks/useWorkshop";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 const Workshop = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const workshopId = searchParams.get('id');
-  const { loading, workshopName, getWorkshop } = useWorkshop();
+  const { loading, workshopName, getWorkshop, createWorkshop } = useWorkshop();
   const [workshops, setWorkshops] = useState([]);
   const [isLoadingWorkshops, setIsLoadingWorkshops] = useState(true);
 
   useEffect(() => {
-    // Check if user is authenticated
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         navigate("/auth");
       }
     });
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!session) {
@@ -33,11 +32,9 @@ const Workshop = () => {
       }
     );
 
-    // Load workshop data if ID is provided
     if (workshopId) {
       getWorkshop(workshopId);
     } else {
-      // If no workshop ID, fetch workshop history
       fetchWorkshops();
     }
 
@@ -46,14 +43,12 @@ const Workshop = () => {
 
   const fetchWorkshops = async () => {
     try {
-      // Get the current user
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {
         console.log("No authenticated user found");
         return;
       }
 
-      // Fetch workshops belonging to the current user
       const { data, error } = await supabase
         .from('workshops')
         .select('*')
@@ -86,6 +81,10 @@ const Workshop = () => {
           <div className="space-y-8">
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-bold">Your Workshops</h1>
+              <Button onClick={createWorkshop} className="gap-2">
+                <Plus className="h-4 w-4" />
+                New Workshop
+              </Button>
             </div>
             <WorkshopHistory 
               workshops={workshops} 
