@@ -1,11 +1,12 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import ConsensusWorkshop from "@/components/ConsensusWorkshop";
 import { WorkshopHeader } from "@/components/workshop/WorkshopHeader";
+import { WorkshopHistory } from "@/components/workshop/WorkshopHistory";
 import { useWorkshop } from "@/hooks/useWorkshop";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,6 +15,8 @@ const Workshop = () => {
   const [searchParams] = useSearchParams();
   const workshopId = searchParams.get('id');
   const { loading, workshopName, createWorkshop, getWorkshop } = useWorkshop();
+  const [workshops, setWorkshops] = useState([]);
+  const [isLoadingWorkshops, setIsLoadingWorkshops] = useState(true);
 
   useEffect(() => {
     // Check if user is authenticated
@@ -35,10 +38,29 @@ const Workshop = () => {
     // Load workshop data if ID is provided
     if (workshopId) {
       getWorkshop(workshopId);
+    } else {
+      // If no workshop ID, fetch workshop history
+      fetchWorkshops();
     }
 
     return () => subscription.unsubscribe();
   }, [navigate, workshopId]);
+
+  const fetchWorkshops = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('workshops')
+        .select('*')
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+      setWorkshops(data || []);
+    } catch (error) {
+      console.error('Error fetching workshops:', error);
+    } finally {
+      setIsLoadingWorkshops(false);
+    }
+  };
 
   if (loading && workshopId) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
@@ -49,13 +71,18 @@ const Workshop = () => {
       <Navbar />
       <div className="container mx-auto p-6">
         {!workshopId ? (
-          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-            <h1 className="text-3xl font-bold mb-4">Welcome to WorkshopAI</h1>
-            <p className="text-muted-foreground mb-8">Create a new workshop to get started</p>
-            <Button onClick={createWorkshop} size="lg">
-              <Plus className="mr-2 h-4 w-4" />
-              Create New Workshop
-            </Button>
+          <div className="space-y-8">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold">Your Workshops</h1>
+              <Button onClick={createWorkshop} size="lg">
+                <Plus className="mr-2 h-4 w-4" />
+                Create New Workshop
+              </Button>
+            </div>
+            <WorkshopHistory 
+              workshops={workshops} 
+              isLoading={isLoadingWorkshops} 
+            />
           </div>
         ) : (
           <>
