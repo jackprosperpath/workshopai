@@ -1,20 +1,26 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DraftWorkspace } from "@/components/workshop/DraftWorkspace";
 import { PromptCanvas } from "@/components/workshop/PromptCanvas";
 import { StakeholderSupport } from "@/components/workshop/StakeholderSupport";
 import { TeamManagement } from "@/components/workshop/TeamManagement";
 import { WorkshopSharing } from "@/components/workshop/WorkshopSharing";
-import { usePromptCanvas, AiModel } from "@/hooks/usePromptCanvas";
+import { usePromptCanvas } from "@/hooks/usePromptCanvas";
 import { useDraftWorkspace } from "@/hooks/useDraftWorkspace";
 import { useStakeholders } from "@/hooks/useStakeholders";
+import { Button } from "@/components/ui/button";
+import { Plus, Save } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/sonner";
 
 export default function ConsensusWorkshop() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const workshopId = searchParams.get('id');
   const [activeTab, setActiveTab] = useState("draft");
   const [loading, setLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const {
     problem,
@@ -75,8 +81,77 @@ export default function ConsensusWorkshop() {
     }
   };
 
+  const handleSaveWorkshop = async () => {
+    if (!workshopId) return;
+    
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('workshops')
+        .update({
+          problem,
+          metrics,
+          constraints,
+          selected_model: selectedModel,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', workshopId);
+
+      if (error) throw error;
+      toast.success("Workshop saved successfully");
+    } catch (error) {
+      console.error("Error saving workshop:", error);
+      toast.error("Failed to save workshop");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCreateNewWorkshop = async () => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      
+      if (!userData.user) {
+        toast.error("Please sign in to create a workshop");
+        return;
+      }
+
+      const { data: workshop, error } = await supabase
+        .from('workshops')
+        .insert([{
+          owner_id: userData.user.id,
+          share_id: crypto.randomUUID().substring(0, 8),
+          name: "Untitled Workshop"
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      toast.success("New workshop created");
+      navigate(`/workshop?id=${workshop.id}`);
+    } catch (error) {
+      console.error("Error creating workshop:", error);
+      toast.error("Failed to create workshop");
+    }
+  };
+
   return (
     <div className="w-full space-y-4">
+      <div className="flex justify-end gap-2 mb-4">
+        <Button onClick={handleCreateNewWorkshop} variant="outline">
+          <Plus className="h-4 w-4 mr-2" />
+          New Workshop
+        </Button>
+        <Button 
+          onClick={handleSaveWorkshop} 
+          disabled={!workshopId || isSaving}
+        >
+          <Save className="h-4 w-4 mr-2" />
+          {isSaving ? "Saving..." : "Save Workshop"}
+        </Button>
+      </div>
+      
       <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="team">Team</TabsTrigger>
