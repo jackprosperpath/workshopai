@@ -3,12 +3,13 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import ConsensusWorkshop from "@/components/ConsensusWorkshop";
-import { WorkshopHeader } from "@/components/workshop/WorkshopHeader";
 import { WorkshopHistory } from "@/components/workshop/WorkshopHistory";
 import { useWorkshop } from "@/hooks/useWorkshop";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 const Workshop = () => {
   const navigate = useNavigate();
@@ -17,6 +18,13 @@ const Workshop = () => {
   const { loading, workshopName, getWorkshop, createWorkshop, updateWorkshopName } = useWorkshop();
   const [workshops, setWorkshops] = useState([]);
   const [isLoadingWorkshops, setIsLoadingWorkshops] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [name, setName] = useState(workshopName);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setName(workshopName);
+  }, [workshopName]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -70,6 +78,41 @@ const Workshop = () => {
     }
   };
 
+  const handleSave = async () => {
+    if (!workshopId) return;
+    
+    setIsSaving(true);
+    try {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const isValidUuid = uuidRegex.test(workshopId);
+
+      let result;
+      if (isValidUuid) {
+        result = await supabase
+          .from('workshops')
+          .update({ name })
+          .eq('id', workshopId);
+      } else {
+        result = await supabase
+          .from('workshops')
+          .update({ name })
+          .eq('share_id', workshopId);
+      }
+
+      const { error } = result;
+      if (error) throw error;
+      
+      setIsEditing(false);
+      updateWorkshopName(name);
+      toast.success("Workshop name updated");
+    } catch (error) {
+      console.error("Error updating workshop name:", error);
+      toast.error("Failed to update workshop name");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (loading && workshopId) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
@@ -94,11 +137,33 @@ const Workshop = () => {
           </div>
         ) : (
           <>
-            <WorkshopHeader 
-              workshopId={workshopId} 
-              initialName={workshopName} 
-              onNameUpdate={updateWorkshopName}
-            />
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-4">
+                {isEditing ? (
+                  <div className="flex gap-2 items-center">
+                    <Input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="max-w-[300px]"
+                      placeholder="Enter workshop name..."
+                      onBlur={handleSave}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSave();
+                        if (e.key === 'Escape') setIsEditing(false);
+                      }}
+                      autoFocus
+                    />
+                  </div>
+                ) : (
+                  <h1 
+                    className="text-2xl font-semibold cursor-pointer hover:bg-accent hover:text-accent-foreground rounded px-2 py-1 transition-colors"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    {name}
+                  </h1>
+                )}
+              </div>
+            </div>
             <ConsensusWorkshop />
           </>
         )}
