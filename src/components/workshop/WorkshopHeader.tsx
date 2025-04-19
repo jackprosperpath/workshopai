@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
@@ -11,8 +10,8 @@ type WorkshopHeaderProps = {
 };
 
 export function WorkshopHeader({ workshopId, initialName = "Untitled Workshop" }: WorkshopHeaderProps) {
-  const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(initialName);
+  const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // Update local state when prop changes
@@ -27,8 +26,6 @@ export function WorkshopHeader({ workshopId, initialName = "Untitled Workshop" }
     
     setIsSaving(true);
     try {
-      console.log("Updating workshop name for ID:", workshopId);
-      
       // Check if workshopId is a valid UUID
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const isValidUuid = uuidRegex.test(workshopId);
@@ -70,32 +67,20 @@ export function WorkshopHeader({ workshopId, initialName = "Untitled Workshop" }
             onChange={(e) => setName(e.target.value)}
             className="max-w-[300px]"
             placeholder="Enter workshop name..."
+            onBlur={handleSave}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSave();
+              if (e.key === 'Escape') setIsEditing(false);
+            }}
           />
-          <Button 
-            onClick={handleSave} 
-            disabled={isSaving}
-          >
-            Save
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => setIsEditing(false)}
-            disabled={isSaving}
-          >
-            Cancel
-          </Button>
         </div>
       ) : (
-        <div className="flex gap-2 items-center">
-          <h1 className="text-2xl font-semibold">{name}</h1>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsEditing(true)}
-          >
-            Edit
-          </Button>
-        </div>
+        <h1 
+          className="text-2xl font-semibold cursor-pointer hover:bg-accent hover:text-accent-foreground rounded px-2 py-1 transition-colors"
+          onClick={() => setIsEditing(true)}
+        >
+          {name}
+        </h1>
       )}
     </div>
   );
