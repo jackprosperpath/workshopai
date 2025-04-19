@@ -91,6 +91,7 @@ export default function ConsensusWorkshop() {
         selectedFormat,
         selectedModel
       );
+      handleTabChange("draft");
     } catch (error) {
       console.error("Error generating solution:", error);
     } finally {
