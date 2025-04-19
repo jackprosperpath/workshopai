@@ -82,24 +82,14 @@ export default function ConsensusWorkshop() {
     <div className="w-full space-y-4">
       <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="draft">Draft</TabsTrigger>
-          <TabsTrigger value="prompt">Prompt Canvas</TabsTrigger>
-          <TabsTrigger value="stakeholders">Stakeholders</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
+          <TabsTrigger value="prompt">Prompt Canvas</TabsTrigger>
+          <TabsTrigger value="draft">Draft</TabsTrigger>
+          <TabsTrigger value="stakeholders">Stakeholders</TabsTrigger>
           <TabsTrigger value="share">Share</TabsTrigger>
         </TabsList>
-        <TabsContent value="draft">
-          <DraftWorkspace 
-            currentDraft={currentDraft}
-            versions={versions}
-            currentIdx={currentIdx}
-            setCurrentIdx={setCurrentIdx}
-            activeThread={activeThread}
-            setActiveThread={setActiveThread}
-            addFeedback={addFeedback}
-            onRePrompt={handleGenerateSolution}
-            loading={loading}
-          />
+        <TabsContent value="team">
+          <TeamManagement />
         </TabsContent>
         <TabsContent value="prompt">
           <PromptCanvas 
@@ -119,6 +109,19 @@ export default function ConsensusWorkshop() {
             loading={loading}
           />
         </TabsContent>
+        <TabsContent value="draft">
+          <DraftWorkspace 
+            currentDraft={currentDraft}
+            versions={versions}
+            currentIdx={currentIdx}
+            setCurrentIdx={setCurrentIdx}
+            activeThread={activeThread}
+            setActiveThread={setActiveThread}
+            addFeedback={addFeedback}
+            onRePrompt={handleGenerateSolution}
+            loading={loading}
+          />
+        </TabsContent>
         <TabsContent value="stakeholders">
           <StakeholderSupport 
             stakeholders={stakeholders}
@@ -127,9 +130,6 @@ export default function ConsensusWorkshop() {
             addStakeholder={addStakeholder}
             updateStakeholder={updateStakeholder}
           />
-        </TabsContent>
-        <TabsContent value="team">
-          <TeamManagement />
         </TabsContent>
         <TabsContent value="share">
           <WorkshopSharing 
