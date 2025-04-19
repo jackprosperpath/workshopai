@@ -12,6 +12,7 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isSignIn, setIsSignIn] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,6 +52,21 @@ export default function Auth() {
     setLoading(false);
   };
 
+  const handleEmailSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      toast.error(error.message);
+    }
+    setLoading(false);
+  };
+
   const handleGoogleSignIn = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -65,13 +81,18 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold">Create your account</h2>
+          <h2 className="text-3xl font-bold">
+            {isSignIn ? "Welcome back" : "Create your account"}
+          </h2>
           <p className="mt-2 text-muted-foreground">
-            Get started with WorkshopAI today
+            {isSignIn 
+              ? "Sign in to your WorkshopAI account" 
+              : "Get started with WorkshopAI today"
+            }
           </p>
         </div>
 
-        <form onSubmit={handleEmailSignUp} className="mt-8 space-y-6">
+        <form onSubmit={isSignIn ? handleEmailSignIn : handleEmailSignUp} className="mt-8 space-y-6">
           <div className="space-y-4">
             <div>
               <Label htmlFor="email">Email</Label>
@@ -91,7 +112,7 @@ export default function Auth() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Create a password"
+                placeholder={isSignIn ? "Enter your password" : "Create a password"}
                 required
               />
             </div>
@@ -104,7 +125,7 @@ export default function Auth() {
               disabled={loading}
             >
               <Mail className="mr-2" />
-              Sign up with Email
+              {isSignIn ? "Sign in with Email" : "Sign up with Email"}
             </Button>
 
             <div className="relative">
@@ -125,8 +146,21 @@ export default function Auth() {
               onClick={handleGoogleSignIn}
             >
               <Chrome className="mr-2" />
-              Sign up with Google
+              Continue with Google
             </Button>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setIsSignIn(!isSignIn)}
+                className="text-sm text-primary hover:underline"
+              >
+                {isSignIn 
+                  ? "Don't have an account? Sign up" 
+                  : "Already have an account? Sign in"
+                }
+              </button>
+            </div>
           </div>
         </form>
       </div>
