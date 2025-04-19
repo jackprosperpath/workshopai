@@ -1,8 +1,7 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import ConsensusWorkshop from "@/components/ConsensusWorkshop";
 import { WorkshopHeader } from "@/components/workshop/WorkshopHeader";
 import { WorkshopHistory } from "@/components/workshop/WorkshopHistory";
@@ -13,7 +12,7 @@ const Workshop = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const workshopId = searchParams.get('id');
-  const { loading, workshopName, createWorkshop, getWorkshop } = useWorkshop();
+  const { loading, workshopName, getWorkshop } = useWorkshop();
   const [workshops, setWorkshops] = useState([]);
   const [isLoadingWorkshops, setIsLoadingWorkshops] = useState(true);
 
@@ -47,12 +46,26 @@ const Workshop = () => {
 
   const fetchWorkshops = async () => {
     try {
+      // Get the current user
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        console.log("No authenticated user found");
+        return;
+      }
+
+      // Fetch workshops belonging to the current user
       const { data, error } = await supabase
         .from('workshops')
         .select('*')
+        .eq('owner_id', userData.user.id)
         .order('updated_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching workshops:', error);
+        throw error;
+      }
+      
+      console.log('Fetched workshops:', data);
       setWorkshops(data || []);
     } catch (error) {
       console.error('Error fetching workshops:', error);

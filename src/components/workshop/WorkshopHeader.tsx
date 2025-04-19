@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -70,11 +71,19 @@ export function WorkshopHeader({ workshopId, initialName = "Untitled Workshop" }
         .insert([{
           owner_id: userData.user.id,
           share_id: crypto.randomUUID().substring(0, 8),
+          name: "Untitled Workshop"
         }])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating workshop:", error);
+        throw error;
+      }
+
+      if (!workshop) {
+        throw new Error("No workshop returned from database");
+      }
 
       toast.success("New workshop created");
       navigate(`/workshop?id=${workshop.id}`);

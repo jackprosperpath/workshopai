@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,11 +22,19 @@ export function useWorkshop() {
         .insert([{
           owner_id: userData.user.id,
           share_id: crypto.randomUUID().substring(0, 8),
+          name: "Untitled Workshop"
         }])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Insert error:", error);
+        throw error;
+      }
+
+      if (!workshop) {
+        throw new Error("No workshop returned from database");
+      }
 
       toast.success("New workshop created");
       navigate(`/workshop?id=${workshop.id}`);
