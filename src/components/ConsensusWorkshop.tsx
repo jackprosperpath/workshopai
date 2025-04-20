@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,7 +5,6 @@ import { DraftWorkspace } from "@/components/workshop/DraftWorkspace";
 import { PromptCanvas } from "@/components/workshop/PromptCanvas";
 import { StakeholderSupport } from "@/components/workshop/StakeholderSupport";
 import { TeamManagement } from "@/components/workshop/TeamManagement";
-import { WorkshopSharing } from "@/components/workshop/WorkshopSharing";
 import { WorkshopActions } from "@/components/workshop/WorkshopActions";
 import { usePromptCanvas } from "@/hooks/usePromptCanvas";
 import { useDraftWorkspace } from "@/hooks/useDraftWorkspace";
@@ -69,7 +67,7 @@ export default function ConsensusWorkshop() {
 
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
-    if (hash && ['draft', 'prompt', 'stakeholders', 'team', 'share'].includes(hash)) {
+    if (hash && ['draft', 'prompt', 'stakeholders', 'team'].includes(hash)) {
       setActiveTab(hash === 'stakeholders' ? 'endorsement' : hash);
     }
   }, []);
@@ -102,12 +100,11 @@ export default function ConsensusWorkshop() {
       <WorkshopActions />
       
       <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="prompt">Context</TabsTrigger>
           <TabsTrigger value="draft">Solution Canvas</TabsTrigger>
           <TabsTrigger value="endorsement">Endorsement</TabsTrigger>
-          <TabsTrigger value="share">Share</TabsTrigger>
         </TabsList>
         <TabsContent value="team">
           <TeamManagement />
@@ -157,16 +154,6 @@ export default function ConsensusWorkshop() {
             addStakeholder={addStakeholder}
             updateStakeholder={updateStakeholder}
             removeStakeholder={removeStakeholder}
-          />
-        </TabsContent>
-        <TabsContent value="share">
-          <WorkshopSharing 
-            workshopData={{
-              problem,
-              metrics,
-              constraints,
-              selectedModel
-            }}
           />
         </TabsContent>
       </Tabs>
