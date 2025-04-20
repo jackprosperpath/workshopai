@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -65,7 +64,7 @@ export default function ConsensusWorkshop() {
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
     if (hash && ['draft', 'prompt', 'stakeholders', 'team', 'share'].includes(hash)) {
-      setActiveTab(hash);
+      setActiveTab(hash === 'stakeholders' ? 'endorsement' : hash);
     }
   }, []);
 
@@ -101,7 +100,7 @@ export default function ConsensusWorkshop() {
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="prompt">Context</TabsTrigger>
           <TabsTrigger value="draft">Solution Canvas</TabsTrigger>
-          <TabsTrigger value="stakeholders">Stakeholders</TabsTrigger>
+          <TabsTrigger value="endorsement">Endorsement</TabsTrigger>
           <TabsTrigger value="share">Share</TabsTrigger>
         </TabsList>
         <TabsContent value="team">
@@ -141,7 +140,7 @@ export default function ConsensusWorkshop() {
             workshopId={workshopId}
           />
         </TabsContent>
-        <TabsContent value="stakeholders">
+        <TabsContent value="endorsement">
           <StakeholderSupport 
             stakeholders={stakeholders}
             newRole={newRole}
