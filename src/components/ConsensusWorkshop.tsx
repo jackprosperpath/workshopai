@@ -16,6 +16,8 @@ import { useWorkshopActions } from "@/hooks/useWorkshopActions";
 export default function ConsensusWorkshop() {
   const [activeTab, setActiveTab] = useState("draft");
   const [loading, setLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+  const workshopId = searchParams.get('id');
   
   const {
     problem,
