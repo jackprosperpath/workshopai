@@ -74,7 +74,7 @@ export default function ConsensusWorkshop() {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    window.location.hash = value;
+    window.location.hash = value === 'endorsement' ? 'stakeholders' : value;
   };
 
   const handleGenerateSolution = async () => {

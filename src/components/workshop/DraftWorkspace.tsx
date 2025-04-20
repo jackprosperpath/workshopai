@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -354,14 +353,37 @@ export function DraftWorkspace({
         </div>
       ))}
 
-      <Button
-        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-        onClick={onRePrompt}
-        disabled={loading}
-      >
-        <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-        {loading ? "Generating…" : "Re‑prompt"}
-      </Button>
+      <div className="flex gap-2 mt-4">
+        <Button
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          onClick={onRePrompt}
+          disabled={loading}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+          {loading ? "Generating…" : "Re‑prompt"}
+        </Button>
+
+        <Button
+          variant="outline"
+          onClick={() => {
+            if (currentDraft) {
+              const finalVersion = {
+                ...currentDraft,
+                isFinal: true
+              };
+              
+              const updatedVersions = versions.map((v, i) => 
+                i === currentIdx ? finalVersion : v
+              );
+              setCurrentIdx(currentIdx || 0);
+              
+              window.location.hash = 'endorsement';
+            }
+          }}
+        >
+          Finalise
+        </Button>
+      </div>
     </section>
   );
 }

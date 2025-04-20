@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
@@ -16,6 +15,7 @@ export type DraftVersion = {
   output: string[];
   reasoning: string;
   sectionFeedback: Record<number, SectionFeedback[]>;
+  isFinal?: boolean;
 };
 
 export function useDraftWorkspace() {
@@ -32,14 +32,11 @@ export function useDraftWorkspace() {
     ? versions[currentIdx] 
     : null;
 
-  // Reset state when workshopId changes
   useEffect(() => {
     if (workshopId !== previousWorkshopId.current) {
-      // Clear state when switching workshops
       setVersions([]);
       setCurrentIdx(null);
       
-      // If we have a new workshop ID, load its drafts
       if (workshopId) {
         loadDrafts(workshopId);
         previousWorkshopId.current = workshopId;
@@ -47,7 +44,6 @@ export function useDraftWorkspace() {
     }
   }, [workshopId]);
 
-  // Load drafts from Supabase
   const loadDrafts = async (workshopId?: string) => {
     if (!workshopId) return;
 
@@ -63,7 +59,6 @@ export function useDraftWorkspace() {
         .single();
 
       if (error) {
-        // No existing drafts, which is fine
         console.log('No existing drafts found for workshop:', workshopId);
         return;
       }
@@ -78,7 +73,6 @@ export function useDraftWorkspace() {
     }
   };
 
-  // Save drafts to Supabase whenever versions or currentIdx changes
   useEffect(() => {
     const saveDraftsToSupabase = async () => {
       if (!workshopId || versions.length === 0) return;
@@ -106,7 +100,6 @@ export function useDraftWorkspace() {
       }
     };
 
-    // Debounce to prevent too many writes
     const timeoutId = setTimeout(saveDraftsToSupabase, 500);
     return () => clearTimeout(timeoutId);
   }, [versions, currentIdx, workshopId]);
@@ -126,7 +119,6 @@ export function useDraftWorkspace() {
     setLoading(true);
 
     try {
-      // Get feedback from current draft if it exists
       let consolidatedFeedback = '';
       if (currentDraft) {
         Object.entries(currentDraft.sectionFeedback).forEach(([sectionIdx, comments]) => {
@@ -155,7 +147,8 @@ export function useDraftWorkspace() {
         id: versions.length + 1,
         output: data.output,
         reasoning: data.reasoning || (consolidatedFeedback ? "Generated with feedback incorporated" : "Initial generation"),
-        sectionFeedback: {}
+        sectionFeedback: {},
+        isFinal: false
       };
 
       const newVersions = [...versions, next];
@@ -193,7 +186,6 @@ export function useDraftWorkspace() {
       )
     );
     
-    // Broadcast feedback to other users
     if (workshopId) {
       supabase.channel(`workshop:${workshopId}`)
         .send({
@@ -211,7 +203,6 @@ export function useDraftWorkspace() {
   const updateDraftSection = async (draftId: number, sectionIdx: number, content: string) => {
     if (currentIdx === null) return;
     
-    // Apply optimistic update locally
     setVersions(prev => 
       prev.map(v => {
         if (v.id === draftId) {
@@ -223,7 +214,6 @@ export function useDraftWorkspace() {
       })
     );
     
-    // Broadcast changes to other users
     if (workshopId) {
       const { data } = await supabase.auth.getUser();
       await supabase.channel(`workshop:${workshopId}`)
