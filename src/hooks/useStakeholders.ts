@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/sonner";
-import { TeamMember, useTeamCollaboration } from "@/hooks/useTeamCollaboration";
+import { TeamMember, useTeamMembers } from "@/hooks/team/useTeamMembers";
 import { supabase } from "@/integrations/supabase/client";
 
 export type Stakeholder = {
@@ -17,7 +18,7 @@ export function useStakeholders() {
   const [newRole, setNewRole] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [isInviting, setIsInviting] = useState(false);
-  const { teamMembers } = useTeamCollaboration();
+  const { teamMembers } = useTeamMembers();
 
   useEffect(() => {
     const initializeStakeholders = async () => {
