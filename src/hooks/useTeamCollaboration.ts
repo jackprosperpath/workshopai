@@ -41,7 +41,7 @@ export function useTeamCollaboration() {
           data.map(collab => ({
             id: collab.id,
             email: collab.email,
-            status: collab.status as "pending" | "accepted" | "declined", // Type cast here
+            status: collab.status as "pending" | "accepted" | "declined", 
             invitedAt: new Date(collab.invited_at)
           }))
         );
@@ -95,6 +95,12 @@ export function useTeamCollaboration() {
     setIsInviting(true);
     
     try {
+      console.log("Calling invite-team-member function with:", {
+        workshopId,
+        email: inviteEmail,
+        inviterId: (await supabase.auth.getUser()).data.user?.id || 'anonymous'
+      });
+      
       // Call the Supabase Edge function to send the invitation
       const { data, error } = await supabase.functions.invoke('invite-team-member', {
         body: {
@@ -104,22 +110,37 @@ export function useTeamCollaboration() {
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Edge function error:", error);
+        throw error;
+      }
       
-      // Add the new team member to the state
-      const newMember: TeamMember = {
-        id: Date.now().toString(),
-        email: inviteEmail,
-        status: "pending",
-        invitedAt: new Date()
-      };
+      console.log("Edge function response:", data);
       
-      setTeamMembers(prev => [...prev, newMember]);
-      toast.success(`Invitation sent to ${inviteEmail}`);
-      setInviteEmail("");
+      if (data.success) {
+        // Add the new team member to the state
+        const newMember: TeamMember = {
+          id: data.invitation.id,
+          email: inviteEmail,
+          status: "pending",
+          invitedAt: new Date()
+        };
+        
+        setTeamMembers(prev => [...prev, newMember]);
+        
+        if (data.emailSent === false) {
+          toast.warning(`Invitation created but email could not be sent. ${data.emailError || ''}`);
+        } else {
+          toast.success(`Invitation sent to ${inviteEmail}`);
+        }
+        
+        setInviteEmail("");
+      } else {
+        throw new Error(data.error || "Unknown error");
+      }
     } catch (error) {
       console.error("Error inviting team member:", error);
-      toast.error("Failed to send invitation");
+      toast.error("Failed to send invitation: " + (error.message || "Unknown error"));
     } finally {
       setIsInviting(false);
     }
