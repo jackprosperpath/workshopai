@@ -50,7 +50,7 @@ export function useTeamInvites() {
         inviterId
       });
       
-      const { data, error: inviteError, status } = await supabase.functions.invoke('invite-team-member', {
+      const { data, error: inviteError } = await supabase.functions.invoke('invite-team-member', {
         body: {
           workshopId,
           email: inviteEmail,
@@ -58,8 +58,8 @@ export function useTeamInvites() {
         }
       });
       
-      // Handle the special case of 400 status which might be for duplicate invites
-      if (status === 400 && data?.error) {
+      // Check if data contains an error response (which could be from a 400 status)
+      if (data && data.error) {
         // For duplicate invites, show a warning instead of an error
         if (data.error.includes("already been invited")) {
           toast.warning(data.error);
