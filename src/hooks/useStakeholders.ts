@@ -18,7 +18,15 @@ export function useStakeholders() {
   const [newRole, setNewRole] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [isInviting, setIsInviting] = useState(false);
-  const { teamMembers } = useTeamMembers();
+  const [workshopId, setWorkshopId] = useState<string | null>(null);
+  const { teamMembers } = useTeamMembers(workshopId);
+
+  // Get current workshop ID from URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    if (id) setWorkshopId(id);
+  }, []);
 
   useEffect(() => {
     const initializeStakeholders = async () => {
