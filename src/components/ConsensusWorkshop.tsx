@@ -57,8 +57,14 @@ export default function ConsensusWorkshop() {
     stakeholders,
     newRole,
     setNewRole,
+    newEmail,
+    setNewEmail,
+    isInviting,
+    workshopId: stakeholderWorkshopId,
     addStakeholder,
-    updateStakeholder
+    updateStakeholder,
+    removeStakeholder,
+    inviteStakeholder
   } = useStakeholders();
 
   const { handleSaveWorkshop } = useWorkshopActions();
@@ -147,8 +153,14 @@ export default function ConsensusWorkshop() {
             stakeholders={stakeholders}
             newRole={newRole}
             setNewRole={setNewRole}
+            newEmail={newEmail}
+            setNewEmail={setNewEmail}
+            isInviting={isInviting}
+            workshopId={stakeholderWorkshopId}
             addStakeholder={addStakeholder}
             updateStakeholder={updateStakeholder}
+            removeStakeholder={removeStakeholder}
+            inviteStakeholder={inviteStakeholder}
           />
         </TabsContent>
         <TabsContent value="share">

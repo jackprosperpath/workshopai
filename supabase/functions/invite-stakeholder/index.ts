@@ -55,14 +55,44 @@ serve(async (req) => {
       .from('workshops')
       .select('name')
       .eq('id', workshopId)
-      .single();
+      .maybeSingle();
 
     if (workshopError) {
       console.error("Error fetching workshop:", workshopError);
       throw workshopError;
     }
 
-    console.log("Workshop data:", workshopData);
+    if (!workshopData) {
+      console.log("No workshop found with ID:", workshopId);
+      console.log("Trying to fetch using share_id instead");
+      
+      // Try to fetch by share_id
+      const { data: sharedWorkshopData, error: sharedWorkshopError } = await supabaseClient
+        .from('workshops')
+        .select('name, id')
+        .eq('share_id', workshopId)
+        .maybeSingle();
+        
+      if (sharedWorkshopError) {
+        console.error("Error fetching workshop by share_id:", sharedWorkshopError);
+        throw sharedWorkshopError;
+      }
+      
+      if (!sharedWorkshopData) {
+        return new Response(
+          JSON.stringify({
+            error: `Workshop not found with ID or share_id: ${workshopId}`,
+          }),
+          {
+            status: 404,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+      
+      console.log("Workshop found by share_id:", sharedWorkshopData);
+      workshopData = sharedWorkshopData;
+    }
 
     // Using the Resend API to send the email invite
     const { data, error } = await resend.emails.send({
@@ -72,7 +102,7 @@ serve(async (req) => {
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #3b82f6;">Workshop Stakeholder Invite</h2>
-          <p>You've been invited as a <strong>${role || 'Stakeholder'}</strong> for the workshop "${workshopData.name}".</p>
+          <p>You've been invited as a <strong>${role || 'Stakeholder'}</strong> for the workshop "${workshopData.name || 'Untitled Workshop'}".</p>
           <p>Click the button below to review and endorse this workshop:</p>
           <a href="${siteUrl}/workshop?id=${workshopId}" 
              style="display: inline-block; background-color: #3b82f6; color: white; 

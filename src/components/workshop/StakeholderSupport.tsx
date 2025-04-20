@@ -55,9 +55,13 @@ export function StakeholderSupport({
   };
 
   const handleInviteStakeholder = async (id: number) => {
-    const link = await getShareLink();
-    if (link) {
-      await inviteStakeholder(id, link);
+    try {
+      const link = await getShareLink();
+      if (link) {
+        await inviteStakeholder(id, link);
+      }
+    } catch (error) {
+      console.error("Error inviting stakeholder:", error);
     }
   };
 
