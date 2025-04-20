@@ -38,16 +38,8 @@ serve(async (req) => {
       );
     }
 
-    // Fetch inviter's details
-    const { data: inviterData, error: inviterError } = await supabaseClient
-      .from('users')
-      .select('email')
-      .eq('id', inviterId)
-      .single();
-
-    if (inviterError) {
-      throw inviterError;
-    }
+    // Instead of querying the users table, we'll use the inviterId directly
+    // We don't need to fetch the inviter's details, as we already have their ID
 
     // Fetch workshop details
     const { data: workshopData, error: workshopError } = await supabaseClient
@@ -83,7 +75,7 @@ serve(async (req) => {
       subject: `You've been invited to collaborate on a Consensus Workshop`,
       html: `
         <h1>Workshop Collaboration Invite</h1>
-        <p>You've been invited to collaborate on the workshop "${workshopData.name}" by ${inviterData.email}.</p>
+        <p>You've been invited to collaborate on the workshop "${workshopData.name}".</p>
         <p>Click the link below to join:</p>
         <a href="${Deno.env.get('SITE_URL')}/workshop?id=${workshopId}&invite=${invitation.id}">Join Workshop</a>
         <p>If you didn't expect this invite, you can safely ignore this email.</p>
