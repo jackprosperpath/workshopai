@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Share, Copy, Check, X, Users, AlertCircle, Settings } from "lucide-react";
+import { Mail, Share, Check, X, Users, AlertCircle, Settings } from "lucide-react";
 import { TeamMember, useTeamCollaboration } from "@/hooks/useTeamCollaboration";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,7 +31,8 @@ export function TeamManagement() {
     removeTeamMember,
     generateShareableLink,
     copyLinkSuccess,
-    workshopId
+    workshopId,
+    setTeamMembers
   } = useTeamCollaboration();
 
   const { selectedModel, setSelectedModel } = usePromptCanvas();
@@ -84,6 +86,8 @@ export function TeamManagement() {
         status: "pending",
         invitedAt: new Date()
       };
+      
+      // Use the setTeamMembers function correctly with previous state
       setTeamMembers(prev => [...prev, newMember]);
     } catch (error) {
       console.error("Error inviting team member:", error);

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,7 +41,7 @@ export function useTeamCollaboration() {
           data.map(collab => ({
             id: collab.id,
             email: collab.email,
-            status: collab.status,
+            status: collab.status as "pending" | "accepted" | "declined", // Type cast here
             invitedAt: new Date(collab.invited_at)
           }))
         );
@@ -207,6 +208,7 @@ export function useTeamCollaboration() {
     removeTeamMember,
     generateShareableLink,
     copyLinkSuccess,
-    workshopId
+    workshopId,
+    setTeamMembers // Export this function to make it available
   };
 }
