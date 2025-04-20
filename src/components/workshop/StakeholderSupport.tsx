@@ -14,12 +14,10 @@ type StakeholderSupportProps = {
   setNewRole: (role: string) => void;
   newEmail?: string;
   setNewEmail?: (email: string) => void;
-  isInviting?: boolean;
   workshopId?: string | null;
   addStakeholder: () => void;
   updateStakeholder: (id: number, updates: Partial<Omit<Stakeholder, "id">>) => void;
   removeStakeholder?: (id: number) => void;
-  inviteStakeholder?: (id: number, workshopShareLink: string) => Promise<void>;
 };
 
 export function StakeholderSupport({
@@ -28,12 +26,10 @@ export function StakeholderSupport({
   setNewRole,
   newEmail = "",
   setNewEmail = () => {},
-  isInviting = false,
   workshopId = null,
   addStakeholder,
   updateStakeholder,
   removeStakeholder = () => {},
-  inviteStakeholder = async () => {},
 }: StakeholderSupportProps) {
   const { shareId, createShareableWorkshop } = useSharedWorkshop();
   const [shareUrl, setShareUrl] = React.useState<string | null>(null);
@@ -64,23 +60,6 @@ export function StakeholderSupport({
       throw error;
     } finally {
       setIsGettingShareLink(false);
-    }
-  };
-
-  const handleInviteStakeholder = async (id: number) => {
-    if (isInviting) {
-      toast.info("Another invitation is already in progress");
-      return;
-    }
-    
-    try {
-      const link = await getShareLink();
-      if (link) {
-        await inviteStakeholder(id, link);
-      }
-    } catch (error) {
-      console.error("Error inviting stakeholder:", error);
-      toast.error("Failed to invite stakeholder: " + (error.message || "Unknown error"));
     }
   };
 
@@ -132,10 +111,8 @@ export function StakeholderSupport({
                   <StakeholderCard
                     key={stakeholder.id}
                     stakeholder={stakeholder}
-                    isInviting={isInviting || isGettingShareLink}
                     onUpdate={(updates) => updateStakeholder(stakeholder.id, updates)}
                     onRemove={() => removeStakeholder(stakeholder.id)}
-                    onInvite={() => handleInviteStakeholder(stakeholder.id)}
                   />
                 ))}
               </div>

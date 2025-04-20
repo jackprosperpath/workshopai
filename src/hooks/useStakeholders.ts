@@ -1,8 +1,7 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { toast } from "@/components/ui/sonner";
 import { TeamMember, useTeamMembers } from "@/hooks/team/useTeamMembers";
-import { supabase } from "@/integrations/supabase/client";
 
 export type Stakeholder = {
   id: number;
@@ -10,14 +9,12 @@ export type Stakeholder = {
   status: "pending" | "yes" | "no";
   comment?: string;
   email?: string;
-  inviteSent?: boolean;
 };
 
 export function useStakeholders() {
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
   const [newRole, setNewRole] = useState("");
   const [newEmail, setNewEmail] = useState("");
-  const [isInviting, setIsInviting] = useState(false);
   const [workshopId, setWorkshopId] = useState<string | null>(null);
   
   // Get current workshop ID from URL
@@ -45,11 +42,9 @@ export function useStakeholders() {
             id: Date.now(),
             role: "Workshop Owner",
             status: "pending",
-            email: user.email,
-            inviteSent: true
+            email: user.email
           });
           
-          // Add to tracking set
           setInitializedStakeholderEmails(prev => new Set([...prev, user.email]));
         }
         
@@ -60,11 +55,9 @@ export function useStakeholders() {
               id: Date.now() + Math.random(),
               role: "Team Member",
               status: member.status === "accepted" ? "pending" : "pending",
-              email: member.email,
-              inviteSent: true
+              email: member.email
             });
             
-            // Add to tracking set
             setInitializedStakeholderEmails(prev => new Set([...prev, member.email]));
           }
         });
@@ -96,8 +89,7 @@ export function useStakeholders() {
           id: Date.now(),
           role: newRole.trim(),
           status: "pending",
-          email,
-          inviteSent: false
+          email
         }
       ]);
       
@@ -139,74 +131,15 @@ export function useStakeholders() {
     });
   }, []);
 
-  const inviteStakeholder = useCallback(async (id: number, workshopShareLink: string) => {
-    setIsInviting(true);
-    try {
-      const stakeholder = stakeholders.find(s => s.id === id);
-      if (!stakeholder || !stakeholder.email) {
-        throw new Error("No email address found for this stakeholder");
-      }
-
-      if (!workshopId) {
-        throw new Error("Workshop ID not available");
-      }
-
-      const { data: userData } = await supabase.auth.getUser();
-      const inviterId = userData.user?.id;
-      
-      if (!inviterId) {
-        throw new Error("You must be logged in to invite stakeholders");
-      }
-      
-      // Call the edge function to send the invitation
-      console.log("Sending invitation with:", {
-        workshopId,
-        email: stakeholder.email,
-        inviterId,
-        role: stakeholder.role
-      });
-      
-      const { data, error } = await supabase.functions.invoke('invite-stakeholder', {
-        body: {
-          workshopId,
-          email: stakeholder.email,
-          inviterId,
-          role: stakeholder.role
-        }
-      });
-      
-      if (error) {
-        console.error("Error from edge function:", error);
-        throw new Error(`Failed to send invitation: ${error.message || "Unknown error"}`);
-      }
-      
-      console.log("Invitation response:", data);
-      
-      if (data && data.success) {
-        updateStakeholder(id, { inviteSent: true });
-        toast.success(`Invite sent to ${stakeholder.email}`);
-      } else {
-        throw new Error(data?.error || "Unknown error occurred");
-      }
-    } catch (error) {
-      console.error("Error inviting stakeholder:", error);
-      toast.error(error.message || "Failed to send invitation");
-    } finally {
-      setIsInviting(false);
-    }
-  }, [stakeholders, workshopId, updateStakeholder]);
-
   return {
     stakeholders,
     newRole,
     setNewRole,
     newEmail,
     setNewEmail,
-    isInviting,
     workshopId,
     addStakeholder,
     updateStakeholder,
-    removeStakeholder,
-    inviteStakeholder
+    removeStakeholder
   };
 }
