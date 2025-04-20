@@ -40,6 +40,7 @@ export function useTeamMembers(workshopId: string | null) {
 
     loadCollaborators();
 
+    // Set up real-time subscription for collaborator updates
     const channel = supabase
       .channel('workshop-collaborators')
       .on(

@@ -15,7 +15,7 @@ export function TeamMemberList({ members, onRemove }: TeamMemberListProps) {
 
   return (
     <div className="mt-6">
-      <h3 className="text-sm font-medium mb-2">Invited Team Members</h3>
+      <h3 className="text-sm font-medium mb-2">Team Members</h3>
       <ul className="space-y-2">
         {members.map((member) => (
           <TeamMemberItem key={member.id} member={member} onRemove={onRemove} />
@@ -26,6 +26,18 @@ export function TeamMemberList({ members, onRemove }: TeamMemberListProps) {
 }
 
 function TeamMemberItem({ member, onRemove }: { member: TeamMember; onRemove: (id: string) => void }) {
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case "accepted":
+        return "default";
+      case "declined":
+        return "destructive";
+      case "pending":
+      default:
+        return "secondary";
+    }
+  };
+
   return (
     <li className="flex items-center justify-between p-2 rounded-md bg-muted/50">
       <div className="flex items-center gap-2">
@@ -35,19 +47,16 @@ function TeamMemberItem({ member, onRemove }: { member: TeamMember; onRemove: (i
         <div>
           <p className="text-sm font-medium">{member.email}</p>
           <p className="text-xs text-muted-foreground">
-            Invited {member.invitedAt.toLocaleDateString()}
+            Invited {new Date(member.invitedAt).toLocaleDateString()}
           </p>
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Badge variant={
-          member.status === "accepted" ? "default" :
-          member.status === "declined" ? "destructive" :
-          "outline"
-        }>
-          {member.status === "accepted" ? "Accepted" :
-           member.status === "declined" ? "Declined" :
-           "Pending"}
+        <Badge 
+          variant={getStatusBadgeVariant(member.status)}
+          className="capitalize"
+        >
+          {member.status}
         </Badge>
         <Button
           variant="ghost"
