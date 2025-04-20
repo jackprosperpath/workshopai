@@ -99,7 +99,7 @@ export default function ConsensusWorkshop() {
       <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="team">Team</TabsTrigger>
-          <TabsTrigger value="prompt">Topic</TabsTrigger>
+          <TabsTrigger value="prompt">Context</TabsTrigger>
           <TabsTrigger value="draft">Solution Canvas</TabsTrigger>
           <TabsTrigger value="stakeholders">Stakeholders</TabsTrigger>
           <TabsTrigger value="share">Share</TabsTrigger>
