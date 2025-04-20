@@ -19,12 +19,14 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     const siteUrl = Deno.env.get("SITE_URL") ?? "https://workshopai.lovable.app";
+    const isDevelopment = siteUrl.includes("localhost") || siteUrl.includes("127.0.0.1");
     
     console.log("Environment variables check:");
     console.log("- SUPABASE_URL exists:", !!supabaseUrl);
     console.log("- SUPABASE_SERVICE_ROLE_KEY exists:", !!supabaseKey);
     console.log("- RESEND_API_KEY exists:", !!resendApiKey);
     console.log("- SITE_URL:", siteUrl);
+    console.log("- Is Development:", isDevelopment);
     
     if (!supabaseUrl || !supabaseKey) {
       throw new Error("Missing required environment variables: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY");
@@ -159,16 +161,35 @@ serve(async (req) => {
     console.log("Invitation created:", invitation);
     console.log("About to send email with Resend");
     
+    // Get inviter email for development notification
+    let inviterEmail = null;
+    if (isDevelopment) {
+      const { data: inviterData } = await supabaseClient
+        .from('profiles')
+        .select('email')
+        .eq('id', inviterId)
+        .single();
+      
+      if (inviterData?.email) {
+        inviterEmail = inviterData.email;
+      } else {
+        const { data: authUser } = await supabaseClient.auth.admin.getUserById(inviterId);
+        inviterEmail = authUser?.user?.email;
+      }
+    }
+
     try {
       // Using the Resend API to send the email invite
-      const { data, error } = await resend.emails.send({
+      const emailParams = {
         from: "Workshop AI <onboarding@resend.dev>", 
-        to: [normalizedEmail],
+        to: [isDevelopment && inviterEmail ? inviterEmail : normalizedEmail],
         subject: `You've been invited to collaborate on a Workshop AI project`,
         html: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #3b82f6;">Workshop Collaboration Invite</h2>
             <p>You've been invited to collaborate on the workshop "${workshopData.name}".</p>
+            ${isDevelopment && inviterEmail !== normalizedEmail ? 
+              `<p><strong>Note:</strong> This is a development environment email. In production, this would be sent to: ${normalizedEmail}</p>` : ''}
             <p>Click the button below to join:</p>
             <a href="${siteUrl}/workshop?id=${workshopData.share_id || workshopData.id}&invite=${invitation.id}" 
                style="display: inline-block; background-color: #3b82f6; color: white; 
@@ -181,7 +202,9 @@ serve(async (req) => {
             </p>
           </div>
         `
-      });
+      };
+
+      const { data, error } = await resend.emails.send(emailParams);
 
       if (error) {
         console.error("Resend error details:", JSON.stringify(error, null, 2));
@@ -190,11 +213,13 @@ serve(async (req) => {
 
       console.log("Email sent successfully:", data);
 
-      // Return success response
+      // Return success response with info about who the email was actually sent to
       return new Response(
         JSON.stringify({
           success: true,
           message: `Invitation sent to ${normalizedEmail}`,
+          emailSentTo: isDevelopment && inviterEmail ? inviterEmail : normalizedEmail,
+          isDevelopment,
           invitation
         }),
         {
@@ -213,7 +238,8 @@ serve(async (req) => {
           emailSent: false,
           emailError: emailError.message,
           message: `Invitation created for ${normalizedEmail} but email could not be sent`,
-          invitation
+          invitation,
+          devNote: "To send emails to other recipients in development, please verify a domain at resend.com/domains, and change the `from` address to an email using this domain."
         }),
         {
           status: 200,

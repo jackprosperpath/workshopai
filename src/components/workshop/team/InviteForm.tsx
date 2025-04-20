@@ -2,12 +2,21 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail, Loader2 } from "lucide-react";
+import { Mail, Loader2, AlertTriangle } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTeamInvites } from "@/hooks/team/useTeamInvites";
 
 export function InviteForm() {
-  const { inviteEmail, setInviteEmail, isInviting, inviteTeamMember, error } = useTeamInvites();
+  const { 
+    inviteEmail, 
+    setInviteEmail, 
+    isInviting, 
+    inviteTeamMember, 
+    error, 
+    devMode,
+    lastInviteResult 
+  } = useTeamInvites();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,8 +52,35 @@ export function InviteForm() {
           </Button>
         </div>
       </div>
+      
       {error && (
         <p className="text-sm text-destructive mt-2">{error}</p>
+      )}
+      
+      {devMode && lastInviteResult && (
+        <Alert variant="warning" className="mt-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="text-xs">
+            <p className="font-medium">Development Mode:</p> 
+            <p>
+              {lastInviteResult.emailSent === false ? 
+                "Email couldn't be sent due to Resend development restrictions." : 
+                `Email was sent to ${lastInviteResult.emailSentTo} instead of ${lastInviteResult.invitation.email}.`}
+            </p>
+            <p className="mt-1">
+              To send emails to other addresses, verify a domain at{" "}
+              <a 
+                href="https://resend.com/domains" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                resend.com/domains
+              </a>
+              , and update the "from" address.
+            </p>
+          </AlertDescription>
+        </Alert>
       )}
     </form>
   );

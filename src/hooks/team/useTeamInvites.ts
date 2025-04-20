@@ -3,21 +3,41 @@ import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 
+interface InviteResult {
+  success: boolean;
+  emailSent: boolean;
+  emailError?: string;
+  emailSentTo?: string;
+  isDevelopment?: boolean;
+  invitation: {
+    id: string;
+    email: string;
+    status: string;
+  };
+}
+
 export function useTeamInvites() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [isInviting, setIsInviting] = useState(false);
   const [workshopId, setWorkshopId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [devMode, setDevMode] = useState(false);
+  const [lastInviteResult, setLastInviteResult] = useState<InviteResult | null>(null);
 
   // Get current workshop ID from URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
     if (id) setWorkshopId(id);
+    
+    // Check if we're in development mode
+    const hostname = window.location.hostname;
+    setDevMode(hostname === 'localhost' || hostname === '127.0.0.1');
   }, []);
 
   const inviteTeamMember = async () => {
     setError(null);
+    setLastInviteResult(null);
     
     if (!inviteEmail.trim() || !inviteEmail.includes("@")) {
       setError("Please enter a valid email address");
@@ -78,8 +98,19 @@ export function useTeamInvites() {
       console.log("Invitation response:", data);
       
       if (data && data.success) {
+        // Store the invitation result for dev mode display
+        if (data.isDevelopment || data.emailSent === false) {
+          setLastInviteResult(data);
+        }
+        
         if (data.emailSent === false) {
-          toast.warning(`Invitation created but email could not be sent. ${data.emailError || ''}`);
+          if (devMode) {
+            toast.warning("Invitation created but email could not be sent due to development restrictions.");
+          } else {
+            toast.warning(`Invitation created but email could not be sent. ${data.emailError || ''}`);
+          }
+        } else if (data.isDevelopment && data.emailSentTo !== data.invitation.email) {
+          toast.success(`Invitation created and development email sent to ${data.emailSentTo}`);
         } else {
           toast.success(`Invitation sent to ${inviteEmail}`);
         }
@@ -103,6 +134,8 @@ export function useTeamInvites() {
     isInviting,
     inviteTeamMember,
     workshopId,
-    error
+    error,
+    devMode,
+    lastInviteResult
   };
 }
