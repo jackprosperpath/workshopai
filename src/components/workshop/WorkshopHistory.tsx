@@ -24,7 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type Workshop = {
   id: string;
@@ -44,7 +44,7 @@ export function WorkshopHistory({ workshops, isLoading, onWorkshopDeleted }: Wor
   const [localWorkshops, setLocalWorkshops] = useState<Workshop[]>(workshops);
 
   // Update local workshops when prop changes
-  useState(() => {
+  useEffect(() => {
     setLocalWorkshops(workshops);
   }, [workshops]);
 
