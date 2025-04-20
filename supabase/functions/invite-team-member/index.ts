@@ -26,6 +26,10 @@ serve(async (req) => {
     console.log("- RESEND_API_KEY exists:", !!resendApiKey);
     console.log("- SITE_URL:", siteUrl);
     
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Missing required environment variables: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY");
+    }
+    
     if (!resendApiKey) {
       throw new Error("RESEND_API_KEY is not set");
     }
@@ -34,7 +38,9 @@ serve(async (req) => {
     const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
     // Get request body
-    const { workshopId, email, inviterId } = await req.json();
+    const requestData = await req.json();
+    const { workshopId, email, inviterId } = requestData;
+    
     console.log("Request body:", { workshopId, email, inviterId });
 
     // Validate request
@@ -68,7 +74,15 @@ serve(async (req) => {
 
     if (workshopError) {
       console.error("Error fetching workshop:", workshopError);
-      throw workshopError;
+      return new Response(
+        JSON.stringify({
+          error: `Error fetching workshop: ${workshopError.message}`,
+        }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     console.log("Workshop data:", workshopData);
@@ -80,11 +94,19 @@ serve(async (req) => {
       .from("workshop_collaborators")
       .select("id")
       .eq("workshop_id", actualWorkshopId)
-      .eq("email", email);
+      .eq("email", email.toLowerCase().trim());
 
     if (checkError) {
       console.error("Error checking existing invites:", checkError);
-      throw checkError;
+      return new Response(
+        JSON.stringify({
+          error: `Error checking existing invites: ${checkError.message}`,
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     // If the email has already been invited, return an error
@@ -100,12 +122,15 @@ serve(async (req) => {
       );
     }
 
+    // Normalize email
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Insert the collaboration invitation
     const { data: invitation, error: invitationError } = await supabaseClient
       .from("workshop_collaborators")
       .insert({
         workshop_id: actualWorkshopId,
-        email: email,
+        email: normalizedEmail,
         invited_by: inviterId,
         status: "pending"
       })
@@ -114,7 +139,15 @@ serve(async (req) => {
 
     if (invitationError) {
       console.error("Error creating invitation:", invitationError);
-      throw invitationError;
+      return new Response(
+        JSON.stringify({
+          error: `Error creating invitation: ${invitationError.message}`,
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     console.log("Invitation created:", invitation);
@@ -124,14 +157,14 @@ serve(async (req) => {
       // Using the Resend API to send the email invite
       const { data, error } = await resend.emails.send({
         from: "Workshop AI <onboarding@resend.dev>", 
-        to: [email],
+        to: [normalizedEmail],
         subject: `You've been invited to collaborate on a Workshop AI project`,
         html: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #3b82f6;">Workshop Collaboration Invite</h2>
             <p>You've been invited to collaborate on the workshop "${workshopData.name}".</p>
             <p>Click the button below to join:</p>
-            <a href="${siteUrl}/workshop?id=${workshopData.id}&invite=${invitation.id}" 
+            <a href="${siteUrl}/workshop?id=${workshopData.share_id || workshopData.id}&invite=${invitation.id}" 
                style="display: inline-block; background-color: #3b82f6; color: white; 
                       padding: 10px 20px; text-decoration: none; border-radius: 5px; 
                       margin: 15px 0;">
@@ -155,7 +188,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: true,
-          message: `Invitation sent to ${email}`,
+          message: `Invitation sent to ${normalizedEmail}`,
           invitation
         }),
         {
@@ -173,7 +206,7 @@ serve(async (req) => {
           success: true,
           emailSent: false,
           emailError: emailError.message,
-          message: `Invitation created for ${email} but email could not be sent`,
+          message: `Invitation created for ${normalizedEmail} but email could not be sent`,
           invitation
         }),
         {

@@ -7,6 +7,7 @@ export function useTeamInvites() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [isInviting, setIsInviting] = useState(false);
   const [workshopId, setWorkshopId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Get current workshop ID from URL
   useEffect(() => {
@@ -16,26 +17,31 @@ export function useTeamInvites() {
   }, []);
 
   const inviteTeamMember = async () => {
+    setError(null);
+    
     if (!inviteEmail.trim() || !inviteEmail.includes("@")) {
-      toast.error("Please enter a valid email address");
+      setError("Please enter a valid email address");
       return;
     }
 
     if (!workshopId) {
-      toast.error("Workshop ID not available");
+      setError("Workshop ID not available");
       return;
     }
 
     setIsInviting(true);
     
     try {
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        throw new Error("Authentication error: " + userError.message);
+      }
+      
       const inviterId = userData.user?.id;
       
       if (!inviterId) {
-        toast.error("You must be logged in to invite team members");
-        setIsInviting(false);
-        return;
+        throw new Error("You must be logged in to invite team members");
       }
       
       console.log("Sending team invitation with:", {
@@ -44,7 +50,7 @@ export function useTeamInvites() {
         inviterId
       });
       
-      const { data, error } = await supabase.functions.invoke('invite-team-member', {
+      const { data, error: inviteError } = await supabase.functions.invoke('invite-team-member', {
         body: {
           workshopId,
           email: inviteEmail,
@@ -52,9 +58,9 @@ export function useTeamInvites() {
         }
       });
       
-      if (error) {
-        console.error("Error from edge function:", error);
-        throw new Error(`Failed to send invitation: ${error.message || "Unknown error"}`);
+      if (inviteError) {
+        console.error("Error from edge function:", inviteError);
+        throw new Error(`Failed to send invitation: ${inviteError.message || "Unknown error"}`);
       }
       
       console.log("Invitation response:", data);
@@ -72,6 +78,7 @@ export function useTeamInvites() {
       }
     } catch (error) {
       console.error("Error inviting team member:", error);
+      setError("Failed to send invitation: " + (error.message || "Unknown error"));
       toast.error("Failed to send invitation: " + (error.message || "Unknown error"));
     } finally {
       setIsInviting(false);
@@ -83,6 +90,7 @@ export function useTeamInvites() {
     setInviteEmail,
     isInviting,
     inviteTeamMember,
-    workshopId
+    workshopId,
+    error
   };
 }

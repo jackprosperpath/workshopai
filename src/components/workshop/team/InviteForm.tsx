@@ -2,12 +2,12 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail } from "lucide-react";
+import { Mail, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useTeamInvites } from "@/hooks/team/useTeamInvites";
 
 export function InviteForm() {
-  const { inviteEmail, setInviteEmail, isInviting, inviteTeamMember } = useTeamInvites();
+  const { inviteEmail, setInviteEmail, isInviting, inviteTeamMember, error } = useTeamInvites();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,11 +29,23 @@ export function InviteForm() {
             required
           />
           <Button type="submit" disabled={isInviting || !inviteEmail.trim()}>
-            <Mail className="mr-2 h-4 w-4" />
-            {isInviting ? "Sending..." : "Invite"}
+            {isInviting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              <>
+                <Mail className="mr-2 h-4 w-4" />
+                Invite
+              </>
+            )}
           </Button>
         </div>
       </div>
+      {error && (
+        <p className="text-sm text-destructive mt-2">{error}</p>
+      )}
     </form>
   );
 }
