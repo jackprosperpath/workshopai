@@ -152,30 +152,36 @@ export const Navbar = () => {
                   </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuContent 
+                className="w-56 bg-[#1A1F2C] border border-gray-700 text-white" 
+                align="end" 
+                forceMount
+              >
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">Account</p>
-                    <p className="text-xs leading-none text-muted-foreground">
+                    <p className="text-xs leading-none text-gray-400">
                       {user.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-gray-700" />
                 <DropdownMenuItem 
-                  className="cursor-pointer"
+                  className="cursor-pointer hover:bg-gray-800"
                   onClick={() => navigate("/workshop")}
                 >
                   <BookOpen className="mr-2 h-4 w-4" />
                   <span>My Workshops</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem 
+                  className="cursor-pointer hover:bg-gray-800"
+                >
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-gray-700" />
                 <DropdownMenuItem 
-                  className="cursor-pointer"
+                  className="cursor-pointer hover:bg-gray-800"
                   onClick={handleSignOut}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
