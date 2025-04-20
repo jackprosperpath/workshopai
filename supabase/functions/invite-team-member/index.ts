@@ -89,10 +89,13 @@ serve(async (req) => {
       throw invitationError;
     }
 
-    // Send invitation email using a verified Resend domain
+    console.log("About to send email with Resend");
+    console.log("RESEND_API_KEY exists:", !!Deno.env.get("RESEND_API_KEY"));
+    
+    // Send invitation email using Resend's test email
     const { data, error } = await resend.emails.send({
-      from: "Consensus <onboarding@resend.dev>", // Use Resend's default verified domain
-      to: email,
+      from: "onboarding@resend.dev", // This is Resend's verified test sender
+      to: [email],
       subject: `You've been invited to collaborate on a Consensus Workshop`,
       html: `
         <h1>Workshop Collaboration Invite</h1>
@@ -104,8 +107,11 @@ serve(async (req) => {
     });
 
     if (error) {
+      console.error("Resend error:", error);
       throw error;
     }
+
+    console.log("Email sent successfully:", data);
 
     // Return success response
     return new Response(
