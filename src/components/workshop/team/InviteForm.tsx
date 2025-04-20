@@ -1,0 +1,38 @@
+
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Mail } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { useTeamInvites } from "@/hooks/team/useTeamInvites";
+
+export function InviteForm() {
+  const { inviteEmail, setInviteEmail, isInviting, inviteTeamMember } = useTeamInvites();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    inviteTeamMember();
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="flex flex-col space-y-1.5">
+        <Label htmlFor="email-invite">Email address</Label>
+        <div className="flex gap-2">
+          <Input
+            id="email-invite"
+            placeholder="colleague@example.com"
+            type="email"
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+            disabled={isInviting}
+          />
+          <Button type="submit" disabled={isInviting}>
+            <Mail className="mr-2 h-4 w-4" />
+            {isInviting ? "Sending..." : "Invite"}
+          </Button>
+        </div>
+      </div>
+    </form>
+  );
+}
