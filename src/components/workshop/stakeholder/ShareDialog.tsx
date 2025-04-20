@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Share } from "lucide-react";
+import { Share2, Copy, Check, Link } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 interface ShareDialogProps {
   getShareLink: () => Promise<string | null>;
@@ -18,10 +19,16 @@ export function ShareDialog({ getShareLink }: ShareDialogProps) {
   const handleGetShareLink = async () => {
     setIsLoading(true);
     try {
+      console.log("Requesting share link");
       const url = await getShareLink();
+      console.log("Received share link:", url);
       setShareUrl(url);
+      if (!url) {
+        toast.error("Failed to generate share link");
+      }
     } catch (error) {
       console.error("Error getting share link:", error);
+      toast.error("Error generating share link");
     } finally {
       setIsLoading(false);
     }
@@ -29,9 +36,15 @@ export function ShareDialog({ getShareLink }: ShareDialogProps) {
   
   const handleCopyLink = () => {
     if (shareUrl) {
-      navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      try {
+        navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        toast.success("Link copied to clipboard!");
+        setTimeout(() => setCopied(false), 2000);
+      } catch (error) {
+        console.error("Error copying to clipboard:", error);
+        toast.error("Failed to copy link");
+      }
     }
   };
   
@@ -42,7 +55,7 @@ export function ShareDialog({ getShareLink }: ShareDialogProps) {
           setIsOpen(true);
           handleGetShareLink();
         }} className="w-full sm:w-auto">
-          <Share className="h-4 w-4 mr-2" />
+          <Share2 className="h-4 w-4 mr-2" />
           Share with Executives
         </Button>
       </DialogTrigger>
@@ -55,7 +68,10 @@ export function ShareDialog({ getShareLink }: ShareDialogProps) {
         </DialogHeader>
         
         {isLoading ? (
-          <div className="flex justify-center py-4">Loading share link...</div>
+          <div className="flex justify-center py-4">
+            <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mr-2"></div>
+            Loading share link...
+          </div>
         ) : shareUrl ? (
           <div className="space-y-4 py-4">
             <div className="flex items-center space-x-2">
@@ -69,12 +85,14 @@ export function ShareDialog({ getShareLink }: ShareDialogProps) {
                 size="sm" 
                 onClick={handleCopyLink}
               >
-                {copied ? "Copied!" : "Copy"}
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                <span className="ml-2">{copied ? "Copied!" : "Copy"}</span>
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <div className="flex items-center text-sm text-muted-foreground">
+              <Link className="h-4 w-4 mr-2" />
               Anyone with this link can view the workshop content and provide feedback.
-            </p>
+            </div>
           </div>
         ) : (
           <div className="py-4">
