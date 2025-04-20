@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,9 +50,45 @@ export function TeamManagement() {
     checkInvitation();
   }, [location]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    inviteTeamMember();
+    if (!inviteEmail.trim() || !workshopId) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("You must be logged in to invite team members");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('invite-team-member', {
+        body: {
+          workshopId,
+          email: inviteEmail,
+          inviterId: user.id
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success(`Invitation sent to ${inviteEmail}`);
+      setInviteEmail("");
+
+      // Add the new team member to local state
+      const newMember: TeamMember = {
+        id: data.invitation.id,
+        email: inviteEmail,
+        status: "pending",
+        invitedAt: new Date()
+      };
+      setTeamMembers(prev => [...prev, newMember]);
+    } catch (error) {
+      console.error("Error inviting team member:", error);
+      toast.error("Failed to send invitation");
+    }
   };
 
   const getCurrentUserCount = () => {

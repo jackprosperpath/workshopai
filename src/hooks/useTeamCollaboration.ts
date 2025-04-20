@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,49 +16,63 @@ export function useTeamCollaboration() {
   const [copyLinkSuccess, setCopyLinkSuccess] = useState(false);
   const [workshopId, setWorkshopId] = useState<string | null>(null);
 
-  // Get current workshop ID from URL or create one if needed
+  // Get current workshop ID from URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const workshopIdFromUrl = params.get('id');
-    
-    if (workshopIdFromUrl) {
-      setWorkshopId(workshopIdFromUrl);
-      fetchTeamMembers(workshopIdFromUrl);
-    } else {
-      // In a real app, you would create a new workshop in the database
-      // and then set the workshop ID
-      const dummyWorkshopId = `workshop-${Date.now()}`;
-      setWorkshopId(dummyWorkshopId);
-      
-      // Update URL with workshop ID without reloading
-      const newUrl = `${window.location.pathname}?id=${dummyWorkshopId}`;
-      window.history.pushState({ path: newUrl }, '', newUrl);
-    }
+    const id = params.get('id');
+    if (id) setWorkshopId(id);
   }, []);
 
-  // Fetch team members for this workshop
-  const fetchTeamMembers = async (workshopId: string) => {
-    try {
-      // In a real implementation, you would fetch team members from your database
-      // For now, we'll just use the local state
-      console.log(`Fetching team members for workshop ${workshopId}`);
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // In a real app, we would fetch from Supabase
-      // const { data, error } = await supabase
-      //   .from('workshop_invitations')
-      //   .select('*')
-      //   .eq('workshop_id', workshopId);
-      
-      // if (error) throw error;
-      // setTeamMembers(data);
-    } catch (error) {
-      console.error("Error fetching team members:", error);
-      toast.error("Failed to load team members");
-    }
-  };
+  // Load existing collaborators
+  useEffect(() => {
+    if (!workshopId) return;
+
+    const loadCollaborators = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('workshop_collaborators')
+          .select('*')
+          .eq('workshop_id', workshopId);
+
+        if (error) throw error;
+
+        setTeamMembers(
+          data.map(collab => ({
+            id: collab.id,
+            email: collab.email,
+            status: collab.status,
+            invitedAt: new Date(collab.invited_at)
+          }))
+        );
+      } catch (error) {
+        console.error("Error loading collaborators:", error);
+      }
+    };
+
+    loadCollaborators();
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('workshop-collaborators')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'workshop_collaborators',
+          filter: `workshop_id=eq.${workshopId}`
+        },
+        (payload) => {
+          console.log('Collaboration change received:', payload);
+          loadCollaborators(); // Reload collaborators when changes occur
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [workshopId]);
 
   const inviteTeamMember = async () => {
     if (!inviteEmail.trim() || !inviteEmail.includes("@")) {

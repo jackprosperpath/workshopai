@@ -9,6 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      workshop_collaborators: {
+        Row: {
+          accepted_at: string | null
+          email: string
+          id: string
+          invited_at: string | null
+          invited_by: string
+          role: string | null
+          status: string | null
+          user_id: string | null
+          workshop_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          email: string
+          id?: string
+          invited_at?: string | null
+          invited_by: string
+          role?: string | null
+          status?: string | null
+          user_id?: string | null
+          workshop_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          email?: string
+          id?: string
+          invited_at?: string | null
+          invited_by?: string
+          role?: string | null
+          status?: string | null
+          user_id?: string | null
+          workshop_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workshop_collaborators_workshop_id_fkey"
+            columns: ["workshop_id"]
+            isOneToOne: false
+            referencedRelation: "workshops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workshop_drafts: {
         Row: {
           created_at: string

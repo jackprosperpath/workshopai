@@ -10,12 +10,12 @@ const corsHeaders = {
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     
     const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
@@ -35,65 +35,31 @@ serve(async (req) => {
       );
     }
 
-    // Check if user exists in auth.users
-    const { data: existingUsers, error: userLookupError } = await supabaseClient.auth
-      .admin.listUsers({
-        search: email,
-      });
+    // Insert the collaboration invitation
+    const { data: invitation, error: invitationError } = await supabaseClient
+      .from("workshop_collaborators")
+      .insert({
+        workshop_id: workshopId,
+        email: email,
+        invited_by: inviterId,
+        status: "pending"
+      })
+      .select()
+      .single();
 
-    if (userLookupError) {
-      console.error("Error looking up user:", userLookupError);
+    if (invitationError) {
+      throw invitationError;
     }
 
-    let userId = null;
-    if (existingUsers && existingUsers?.users.length > 0) {
-      // Find the exact match
-      const exactMatch = existingUsers.users.find(user => user.email === email);
-      if (exactMatch) {
-        userId = exactMatch.id;
-      }
-    }
-
-    // Generate a unique invitation token
-    const invitationToken = crypto.randomUUID();
-
-    // Store the invitation in the database (would implement in a real system)
-    // const { data: invitation, error: invitationError } = await supabaseClient
-    //   .from("workshop_invitations")
-    //   .insert({
-    //     workshop_id: workshopId,
-    //     email: email,
-    //     inviter_id: inviterId,
-    //     status: "pending",
-    //     invitation_token: invitationToken,
-    //     user_id: userId,
-    //   })
-    //   .select()
-    //   .single();
-    
-    // if (invitationError) {
-    //   throw invitationError;
-    // }
-
-    // Generate login link
-    let loginLink = `${supabaseUrl.replace('.supabase.co', '.supabase.in')}/auth/v1/invite/invite_via_email`;
-    loginLink += `?redirect_to=${encodeURIComponent(`${Deno.env.get("SITE_URL") || ""}/workshop?id=${workshopId}`)}`;
-
-    // Compose email content
-    const invitationLink = `${Deno.env.get("SITE_URL") || ""}/workshop?id=${workshopId}&invite=${invitationToken}`;
-    
-    console.log(`Sending invitation email to ${email} for workshop ${workshopId}`);
-    console.log(`Invitation link: ${invitationLink}`);
-    
-    // Send email (would implement in a real system)
-    // In a real implementation, we would use a service like Resend, SendGrid, etc.
-    // to send the actual email with the invitation link
+    // In a real system, we would send an email here
+    console.log(`Invitation sent to ${email} for workshop ${workshopId}`);
 
     // Return success response
     return new Response(
       JSON.stringify({
         success: true,
         message: `Invitation sent to ${email}`,
+        invitation
       }),
       {
         status: 200,
