@@ -36,11 +36,17 @@ type Workshop = {
 interface WorkshopHistoryProps {
   workshops: Workshop[];
   isLoading: boolean;
+  onWorkshopDeleted?: (workshopId: string) => void;
 }
 
-export function WorkshopHistory({ workshops, isLoading }: WorkshopHistoryProps) {
+export function WorkshopHistory({ workshops, isLoading, onWorkshopDeleted }: WorkshopHistoryProps) {
   const navigate = useNavigate();
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [localWorkshops, setLocalWorkshops] = useState<Workshop[]>(workshops);
+
+  // Update local workshops when prop changes
+  useState(() => {
+    setLocalWorkshops(workshops);
+  }, [workshops]);
 
   const handleDelete = async (workshopId: string) => {
     try {
@@ -50,8 +56,18 @@ export function WorkshopHistory({ workshops, isLoading }: WorkshopHistoryProps) 
         .eq('id', workshopId);
 
       if (error) throw error;
+      
+      // Remove the workshop from local state
+      setLocalWorkshops(prevWorkshops => 
+        prevWorkshops.filter(workshop => workshop.id !== workshopId)
+      );
+      
+      // Notify parent component if callback provided
+      if (onWorkshopDeleted) {
+        onWorkshopDeleted(workshopId);
+      }
+      
       toast.success("Workshop deleted successfully");
-      // The parent component should handle refreshing the list
     } catch (error) {
       console.error("Error deleting workshop:", error);
       toast.error("Failed to delete workshop");
@@ -73,7 +89,7 @@ export function WorkshopHistory({ workshops, isLoading }: WorkshopHistoryProps) 
     return <div className="text-center py-4">Loading workshops...</div>;
   }
 
-  if (workshops.length === 0) {
+  if (localWorkshops.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-4">
         No workshops found. Create your first one!
@@ -93,7 +109,7 @@ export function WorkshopHistory({ workshops, isLoading }: WorkshopHistoryProps) 
           </TableRow>
         </TableHeader>
         <TableBody>
-          {workshops.map((workshop) => (
+          {localWorkshops.map((workshop) => (
             <TableRow key={workshop.id}>
               <TableCell className="font-medium">{workshop.name}</TableCell>
               <TableCell>
