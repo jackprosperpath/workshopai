@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -253,7 +254,7 @@ export function DraftWorkspace({
       </div>
 
       {currentDraft.output.map((para, idx) => (
-        <div key={idx} className="mb-6 relative">
+        <div key={`section-${idx}`} className="mb-6 relative">
           {editingSection === idx ? (
             <div className="space-y-2">
               <Textarea
@@ -342,7 +343,7 @@ export function DraftWorkspace({
 
               {(currentDraft.sectionFeedback[idx] || []).map((fb) => (
                 <div
-                  key={fb.threadId}
+                  key={`feedback-${idx}-${fb.threadId}`}
                   className="text-xs bg-gray-100 p-2 rounded mb-1 mt-1"
                 >
                   {fb.text}

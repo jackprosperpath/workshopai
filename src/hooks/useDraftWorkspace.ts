@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
@@ -161,15 +162,6 @@ export function useDraftWorkspace() {
       setVersions(newVersions);
       setCurrentIdx(newVersions.length - 1);
       
-      // Save to localStorage
-      const workshopId = new URLSearchParams(window.location.search).get('id');
-      if (workshopId) {
-        localStorage.setItem(`workshop-drafts-${workshopId}`, JSON.stringify({
-          versions: newVersions,
-          currentIdx: newVersions.length - 1
-        }));
-      }
-      
       toast.success("New draft generated");
     } catch (error) {
       console.error('Error generating draft:', error);
@@ -202,7 +194,6 @@ export function useDraftWorkspace() {
     );
     
     // Broadcast feedback to other users
-    const workshopId = new URLSearchParams(window.location.search).get('id');
     if (workshopId) {
       supabase.channel(`workshop:${workshopId}`)
         .send({
@@ -233,7 +224,6 @@ export function useDraftWorkspace() {
     );
     
     // Broadcast changes to other users
-    const workshopId = new URLSearchParams(window.location.search).get('id');
     if (workshopId) {
       const { data } = await supabase.auth.getUser();
       await supabase.channel(`workshop:${workshopId}`)

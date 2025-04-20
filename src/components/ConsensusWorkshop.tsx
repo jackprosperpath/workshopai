@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -48,6 +49,7 @@ export default function ConsensusWorkshop() {
     setActiveThread,
     addFeedback,
     generateDraft,
+    updateDraftSection,
     loadDrafts,
   } = useDraftWorkspace();
   
