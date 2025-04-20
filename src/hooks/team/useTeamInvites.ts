@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -9,11 +9,11 @@ export function useTeamInvites() {
   const [workshopId, setWorkshopId] = useState<string | null>(null);
 
   // Get current workshop ID from URL
-  useState(() => {
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
     if (id) setWorkshopId(id);
-  });
+  }, []);
 
   const inviteTeamMember = async () => {
     if (!inviteEmail.trim() || !inviteEmail.includes("@")) {
@@ -38,6 +38,12 @@ export function useTeamInvites() {
         return;
       }
       
+      console.log("Sending team invitation with:", {
+        workshopId,
+        email: inviteEmail,
+        inviterId
+      });
+      
       const { data, error } = await supabase.functions.invoke('invite-team-member', {
         body: {
           workshopId,
@@ -46,9 +52,14 @@ export function useTeamInvites() {
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error from edge function:", error);
+        throw new Error(`Failed to send invitation: ${error.message || "Unknown error"}`);
+      }
       
-      if (data.success) {
+      console.log("Invitation response:", data);
+      
+      if (data && data.success) {
         if (data.emailSent === false) {
           toast.warning(`Invitation created but email could not be sent. ${data.emailError || ''}`);
         } else {
@@ -57,7 +68,7 @@ export function useTeamInvites() {
         
         setInviteEmail("");
       } else {
-        throw new Error(data.error || "Unknown error");
+        throw new Error(data?.error || "Unknown error occurred");
       }
     } catch (error) {
       console.error("Error inviting team member:", error);

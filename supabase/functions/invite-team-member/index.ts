@@ -50,12 +50,21 @@ serve(async (req) => {
       );
     }
 
+    // First determine if workshopId is a UUID or a share_id
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(workshopId);
+    
     // Fetch workshop details
-    const { data: workshopData, error: workshopError } = await supabaseClient
+    const workshopQuery = supabaseClient
       .from('workshops')
-      .select('name')
-      .eq('id', workshopId)
-      .single();
+      .select('id, name, share_id');
+    
+    if (isUuid) {
+      workshopQuery.eq('id', workshopId);
+    } else {
+      workshopQuery.eq('share_id', workshopId);
+    }
+      
+    const { data: workshopData, error: workshopError } = await workshopQuery.single();
 
     if (workshopError) {
       console.error("Error fetching workshop:", workshopError);
@@ -63,12 +72,14 @@ serve(async (req) => {
     }
 
     console.log("Workshop data:", workshopData);
+    
+    const actualWorkshopId = workshopData.id;
 
     // Check if the email has already been invited to this workshop
     const { data: existingInvites, error: checkError } = await supabaseClient
       .from("workshop_collaborators")
       .select("id")
-      .eq("workshop_id", workshopId)
+      .eq("workshop_id", actualWorkshopId)
       .eq("email", email);
 
     if (checkError) {
@@ -93,7 +104,7 @@ serve(async (req) => {
     const { data: invitation, error: invitationError } = await supabaseClient
       .from("workshop_collaborators")
       .insert({
-        workshop_id: workshopId,
+        workshop_id: actualWorkshopId,
         email: email,
         invited_by: inviterId,
         status: "pending"
@@ -120,7 +131,7 @@ serve(async (req) => {
             <h2 style="color: #3b82f6;">Workshop Collaboration Invite</h2>
             <p>You've been invited to collaborate on the workshop "${workshopData.name}".</p>
             <p>Click the button below to join:</p>
-            <a href="${siteUrl}/workshop?id=${workshopId}&invite=${invitation.id}" 
+            <a href="${siteUrl}/workshop?id=${workshopData.id}&invite=${invitation.id}" 
                style="display: inline-block; background-color: #3b82f6; color: white; 
                       padding: 10px 20px; text-decoration: none; border-radius: 5px; 
                       margin: 15px 0;">

@@ -9,9 +9,9 @@ import { useTeamInvites } from "@/hooks/team/useTeamInvites";
 export function InviteForm() {
   const { inviteEmail, setInviteEmail, isInviting, inviteTeamMember } = useTeamInvites();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    inviteTeamMember();
+    await inviteTeamMember();
   };
 
   return (
@@ -26,8 +26,9 @@ export function InviteForm() {
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
             disabled={isInviting}
+            required
           />
-          <Button type="submit" disabled={isInviting}>
+          <Button type="submit" disabled={isInviting || !inviteEmail.trim()}>
             <Mail className="mr-2 h-4 w-4" />
             {isInviting ? "Sending..." : "Invite"}
           </Button>
