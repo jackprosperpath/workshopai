@@ -1,11 +1,14 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { Resend } from "https://esm.sh/resend@3.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY") ?? "");
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -35,6 +38,28 @@ serve(async (req) => {
       );
     }
 
+    // Fetch inviter's details
+    const { data: inviterData, error: inviterError } = await supabaseClient
+      .from('users')
+      .select('email')
+      .eq('id', inviterId)
+      .single();
+
+    if (inviterError) {
+      throw inviterError;
+    }
+
+    // Fetch workshop details
+    const { data: workshopData, error: workshopError } = await supabaseClient
+      .from('workshops')
+      .select('name')
+      .eq('id', workshopId)
+      .single();
+
+    if (workshopError) {
+      throw workshopError;
+    }
+
     // Insert the collaboration invitation
     const { data: invitation, error: invitationError } = await supabaseClient
       .from("workshop_collaborators")
@@ -51,8 +76,23 @@ serve(async (req) => {
       throw invitationError;
     }
 
-    // In a real system, we would send an email here
-    console.log(`Invitation sent to ${email} for workshop ${workshopId}`);
+    // Send invitation email
+    const { data, error } = await resend.emails.send({
+      from: "Consensus <onboarding@lovable.dev>",
+      to: email,
+      subject: `You've been invited to collaborate on a Consensus Workshop`,
+      html: `
+        <h1>Workshop Collaboration Invite</h1>
+        <p>You've been invited to collaborate on the workshop "${workshopData.name}" by ${inviterData.email}.</p>
+        <p>Click the link below to join:</p>
+        <a href="${Deno.env.get('SITE_URL')}/workshop?id=${workshopId}&invite=${invitation.id}">Join Workshop</a>
+        <p>If you didn't expect this invite, you can safely ignore this email.</p>
+      `
+    });
+
+    if (error) {
+      throw error;
+    }
 
     // Return success response
     return new Response(
