@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
@@ -26,10 +25,26 @@ export function useDraftWorkspace() {
   const [loading, setLoading] = useState(false);
   const [activeThread, setActiveThread] = useState<number | null>(null);
   const threadCounter = useRef(1);
+  const previousWorkshopId = useRef<string | null>(null);
   
   const currentDraft = currentIdx !== null && versions.length > 0 
     ? versions[currentIdx] 
     : null;
+
+  // Reset state when workshopId changes
+  useEffect(() => {
+    if (workshopId !== previousWorkshopId.current) {
+      // Clear state when switching workshops
+      setVersions([]);
+      setCurrentIdx(null);
+      
+      // If we have a new workshop ID, load its drafts
+      if (workshopId) {
+        loadDrafts(workshopId);
+        previousWorkshopId.current = workshopId;
+      }
+    }
+  }, [workshopId]);
 
   // Load drafts from Supabase
   const loadDrafts = async (workshopId?: string) => {
@@ -48,7 +63,7 @@ export function useDraftWorkspace() {
 
       if (error) {
         // No existing drafts, which is fine
-        console.log('No existing drafts found:', error);
+        console.log('No existing drafts found for workshop:', workshopId);
         return;
       }
 
@@ -94,13 +109,6 @@ export function useDraftWorkspace() {
     const timeoutId = setTimeout(saveDraftsToSupabase, 500);
     return () => clearTimeout(timeoutId);
   }, [versions, currentIdx, workshopId]);
-
-  // Load drafts when component mounts or workshopId changes
-  useEffect(() => {
-    if (workshopId) {
-      loadDrafts(workshopId);
-    }
-  }, [workshopId]);
 
   const generateDraft = async (
     problem: string,
