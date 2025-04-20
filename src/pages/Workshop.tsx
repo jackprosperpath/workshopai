@@ -8,7 +8,7 @@ import { useWorkshop } from "@/hooks/useWorkshop";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 
 const Workshop = () => {
@@ -18,31 +18,18 @@ const Workshop = () => {
   const { loading, workshopName, getWorkshop, createWorkshop, updateWorkshopName } = useWorkshop();
   const [workshops, setWorkshops] = useState([]);
   const [isLoadingWorkshops, setIsLoadingWorkshops] = useState(true);
-  const [isAuthenticating, setIsAuthenticating] = useState(true);
   
   // Name editing states
   const [name, setName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Check authentication first
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          navigate("/auth");
-        }
-      } catch (error) {
-        console.error("Error checking authentication:", error);
-        toast.error("Authentication error. Please sign in again.");
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
         navigate("/auth");
-      } finally {
-        setIsAuthenticating(false);
       }
-    };
-
-    checkAuth();
+    });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -52,19 +39,14 @@ const Workshop = () => {
       }
     );
 
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  // Load workshop or workshops list
-  useEffect(() => {
-    if (isAuthenticating) return;
-
     if (workshopId) {
       getWorkshop(workshopId);
     } else {
       fetchWorkshops();
     }
-  }, [workshopId, isAuthenticating]);
+
+    return () => subscription.unsubscribe();
+  }, [navigate, workshopId]);
 
   useEffect(() => {
     if (workshopName) {
@@ -87,6 +69,7 @@ const Workshop = () => {
         .order('updated_at', { ascending: false });
 
       if (error) {
+        console.error('Error fetching workshops:', error);
         throw error;
       }
       
@@ -94,14 +77,13 @@ const Workshop = () => {
       setWorkshops(data || []);
     } catch (error) {
       console.error('Error fetching workshops:', error);
-      toast.error("Failed to load workshops");
     } finally {
       setIsLoadingWorkshops(false);
     }
   };
 
   const handleSave = async () => {
-    if (!workshopId || !name.trim()) return;
+    if (!workshopId) return;
     
     setIsSaving(true);
     try {
@@ -135,25 +117,8 @@ const Workshop = () => {
     }
   };
 
-  if (isAuthenticating) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-lg">Authenticating...</span>
-      </div>
-    );
-  }
-
   if (loading && workshopId) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto p-6 flex items-center justify-center min-h-[calc(100vh-4rem)]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-2 text-lg">Loading workshop...</span>
-        </div>
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
   return (
@@ -192,7 +157,6 @@ const Workshop = () => {
                       }}
                       autoFocus
                     />
-                    {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
                   </div>
                 ) : (
                   <h1 

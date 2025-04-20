@@ -22,54 +22,31 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { BookOpen, LogOut, Plus, Settings, User as UserIcon, Loader2 } from "lucide-react";
+import { BookOpen, LogOut, Plus, Settings, User as UserIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const Navbar = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener FIRST (to catch all auth events)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    // Check current auth status
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      
-      if (event === 'SIGNED_OUT') {
-        // Clear any user-specific cached data
-        localStorage.removeItem('last-workshop-id');
-      }
     });
 
-    // THEN check current session
-    const checkSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user ?? null);
-      } catch (error) {
-        console.error("Error checking session:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    checkSession();
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null);
+    });
 
     return () => subscription.unsubscribe();
   }, []);
 
   const handleSignOut = async () => {
-    try {
-      setLoading(true);
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        throw error;
-      }
-      toast.success("Successfully signed out");
-      navigate("/");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to sign out");
-    } finally {
-      setLoading(false);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error(error.message);
     }
   };
 
@@ -85,7 +62,7 @@ export const Navbar = () => {
             <div className="text-2xl font-bold tracking-tight">WorkshopAI</div>
           </Link>
           
-          {user && !loading && (
+          {user && (
             <NavigationMenu>
               <NavigationMenuList>
                 <NavigationMenuItem>
@@ -141,9 +118,7 @@ export const Navbar = () => {
         </div>
 
         <nav className="flex items-center gap-2">
-          {loading ? (
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-          ) : user ? (
+          {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
@@ -193,7 +168,7 @@ export const Navbar = () => {
                 <li><a href="#community" className="hover:text-primary transition-colors">Community</a></li>
                 <li>
                   <Link to="/auth">
-                    <Button variant="outline" className="font-medium">Sign In</Button>
+                    <Button variant="outline" className="font-medium">Sign Up</Button>
                   </Link>
                 </li>
               </ul>

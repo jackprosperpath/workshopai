@@ -1,18 +1,25 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Info, ChevronUp, ChevronDown } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { OUTPUT_FORMATS } from "@/types/OutputFormat";
 import type { PredefinedFormat } from "@/types/OutputFormat";
-import { FormatSelector } from "./FormatSelector";
-import { ItemList } from "./ItemList";
-import { DocumentUpload } from "./DocumentUpload";
 
 type PromptCanvasProps = {
   problem: string;
@@ -25,7 +32,7 @@ type PromptCanvasProps = {
   constraintInput: string;
   setConstraintInput: (value: string) => void;
   addConstraint: () => void;
-  selectedFormat: { type: PredefinedFormat; customFormat?: string; description: string };
+  selectedFormat: { type: PredefinedFormat; customFormat?: string };
   updateFormat: (format: PredefinedFormat) => void;
   customFormat: string;
   setCustomFormat: (value: string) => void;
@@ -52,7 +59,7 @@ export function PromptCanvas({
   loading,
 }: PromptCanvasProps) {
   const [isExpanded, setIsExpanded] = React.useState(true);
-  const [documents, setDocuments] = React.useState<{ name: string; path: string; size: number; }[]>([]);
+  const [showCustomFormat, setShowCustomFormat] = React.useState(false);
 
   return (
     <Collapsible
@@ -94,12 +101,56 @@ export function PromptCanvas({
               </TooltipContent>
             </Tooltip>
             
-            <FormatSelector
-              selectedFormat={selectedFormat}
-              updateFormat={updateFormat}
-              customFormat={customFormat}
-              setCustomFormat={setCustomFormat}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Object.entries(OUTPUT_FORMATS).map(([key, format]) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    updateFormat(key as PredefinedFormat);
+                    setShowCustomFormat(false);
+                  }}
+                  className={`p-4 rounded-lg border text-left transition-all hover:border-primary/50 ${
+                    selectedFormat.type === key
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:bg-accent/5"
+                  }`}
+                >
+                  <h3 className="font-medium mb-1">{format.description}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {getFormatDescription(key as PredefinedFormat)}
+                  </p>
+                </button>
+              ))}
+              
+              <button
+                onClick={() => {
+                  updateFormat('other');
+                  setShowCustomFormat(true);
+                }}
+                className={`p-4 rounded-lg border text-left transition-all hover:border-primary/50 ${
+                  selectedFormat.type === 'other'
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:bg-accent/5"
+                }`}
+              >
+                <h3 className="font-medium mb-1">Custom Format</h3>
+                <p className="text-sm text-muted-foreground">
+                  Define your own custom output format
+                </p>
+              </button>
+            </div>
+
+            {showCustomFormat && (
+              <Input
+                placeholder="Define your format..."
+                value={customFormat}
+                onChange={(e) => {
+                  setCustomFormat(e.target.value);
+                  updateFormat('other');
+                }}
+                className="mt-4"
+              />
+            )}
           </div>
 
           <div className="space-y-2">
@@ -123,43 +174,68 @@ export function PromptCanvas({
             />
           </div>
 
-          <ItemList
-            label="Success Metrics"
-            tooltipText="Define how success will be measured"
-            items={metrics}
-            inputValue={metricInput}
-            setInputValue={setMetricInput}
-            onAdd={addMetric}
-            placeholder="Add success metric..."
-          />
-
-          <ItemList
-            label="Constraints"
-            tooltipText="List any limitations or requirements"
-            items={constraints}
-            inputValue={constraintInput}
-            setInputValue={setConstraintInput}
-            onAdd={addConstraint}
-            placeholder="Add constraint..."
-          />
-
           <div className="space-y-2">
-            <Label>Context Documents</Label>
+            <Label>Success Metrics</Label>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Label className="text-sm text-muted-foreground block">
-                  Upload documents to provide additional context for the solution generation
+                  Define how success will be measured
                 </Label>
               </TooltipTrigger>
               <TooltipContent>
-                Supported formats: PDF, DOC, DOCX, TXT
+                Add quantifiable metrics to measure success
               </TooltipContent>
             </Tooltip>
-            <DocumentUpload onDocumentsUpdate={setDocuments} />
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add success metric..."
+                value={metricInput}
+                onChange={(e) => setMetricInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addMetric()}
+              />
+              <Button onClick={addMetric} variant="outline">Add</Button>
+            </div>
+            <div className="flex gap-2 flex-wrap mt-2">
+              {metrics.map((m) => (
+                <Badge key={m} variant="secondary" className="text-sm">
+                  {m}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Constraints</Label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Label className="text-sm text-muted-foreground block">
+                  List any limitations or requirements
+                </Label>
+              </TooltipTrigger>
+              <TooltipContent>
+                Add any technical, business, or resource constraints
+              </TooltipContent>
+            </Tooltip>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add constraint..."
+                value={constraintInput}
+                onChange={(e) => setConstraintInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addConstraint()}
+              />
+              <Button onClick={addConstraint} variant="outline">Add</Button>
+            </div>
+            <div className="flex gap-2 flex-wrap mt-2">
+              {constraints.map((c) => (
+                <Badge key={c} variant="secondary" className="text-sm">
+                  {c}
+                </Badge>
+              ))}
+            </div>
           </div>
 
           <Button
-            onClick={() => onGenerate()}
+            onClick={onGenerate}
             disabled={loading}
             className="w-full"
           >
@@ -169,4 +245,21 @@ export function PromptCanvas({
       </CollapsibleContent>
     </Collapsible>
   );
+}
+
+function getFormatDescription(format: PredefinedFormat): string {
+  switch (format) {
+    case 'report':
+      return 'Comprehensive document with findings and recommendations';
+    case 'prd':
+      return 'Technical specifications and requirements';
+    case 'proposal':
+      return 'Structured project plan and implementation details';
+    case 'analysis':
+      return 'Data-driven insights and conclusions';
+    case 'strategy':
+      return 'Strategic roadmap and execution plan';
+    default:
+      return '';
+  }
 }

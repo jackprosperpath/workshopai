@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import type { AiModel } from "./usePromptCanvas";
 import type { OutputFormat } from "@/types/OutputFormat";
-import { useSearchParams } from "react-router-dom";
 
 export type SectionFeedback = {
   text: string;
@@ -19,97 +18,46 @@ export type DraftVersion = {
 };
 
 export function useDraftWorkspace() {
-  const [searchParams] = useSearchParams();
-  const workshopId = searchParams.get('id');
   const [versions, setVersions] = useState<DraftVersion[]>([]);
   const [currentIdx, setCurrentIdx] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeThread, setActiveThread] = useState<number | null>(null);
   const threadCounter = useRef(1);
-  const previousWorkshopId = useRef<string | null>(null);
-  
-  const currentDraft = currentIdx !== null && versions.length > 0 
-    ? versions[currentIdx] 
-    : null;
 
-  // Reset state when workshopId changes
+  const currentDraft = currentIdx !== null ? versions[currentIdx] : null;
+
+  // Set up real-time updates for draft editing
   useEffect(() => {
-    if (workshopId !== previousWorkshopId.current) {
-      // Clear state when switching workshops
-      setVersions([]);
-      setCurrentIdx(null);
-      
-      // If we have a new workshop ID, load its drafts
-      if (workshopId) {
-        loadDrafts(workshopId);
-        previousWorkshopId.current = workshopId;
-      }
-    }
-  }, [workshopId]);
+    if (!currentDraft) return;
 
-  // Load drafts from Supabase
-  const loadDrafts = async (workshopId?: string) => {
+    const workshopId = new URLSearchParams(window.location.search).get('id');
     if (!workshopId) return;
 
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('workshop_drafts')
-        .select('*')
-        .eq('workshop_id', workshopId)
-        .eq('user_id', user.id)
-        .single();
-
-      if (error) {
-        // No existing drafts, which is fine
-        console.log('No existing drafts found for workshop:', workshopId);
-        return;
-      }
-
-      if (data) {
-        const parsedVersions = JSON.parse(data.versions.toString());
-        setVersions(parsedVersions);
-        setCurrentIdx(data.current_idx !== null ? data.current_idx : null);
-      }
-    } catch (error) {
-      console.error('Error loading drafts from Supabase:', error);
-    }
-  };
-
-  // Save drafts to Supabase whenever versions or currentIdx changes
-  useEffect(() => {
-    const saveDraftsToSupabase = async () => {
-      if (!workshopId || versions.length === 0) return;
-
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { error } = await supabase
-          .from('workshop_drafts')
-          .upsert({
-            workshop_id: workshopId,
-            user_id: user.id,
-            versions: JSON.stringify(versions),
-            current_idx: currentIdx
-          }, {
-            onConflict: 'workshop_id, user_id'
-          });
-
-        if (error) {
-          console.error('Error saving drafts to Supabase:', error);
+    const channel = supabase.channel(`draft-edits-${workshopId}`);
+    
+    channel
+      .on('broadcast', { event: 'draft_edit' }, (payload) => {
+        const { draftId, sectionIdx, content, userId } = payload.payload as any;
+        
+        if (draftId === currentDraft.id) {
+          setVersions(prev => 
+            prev.map(v => {
+              if (v.id === draftId) {
+                const newOutput = [...v.output];
+                newOutput[sectionIdx] = content;
+                return { ...v, output: newOutput };
+              }
+              return v;
+            })
+          );
         }
-      } catch (error) {
-        console.error('Error saving drafts to Supabase:', error);
-      }
-    };
+      })
+      .subscribe();
 
-    // Debounce to prevent too many writes
-    const timeoutId = setTimeout(saveDraftsToSupabase, 500);
-    return () => clearTimeout(timeoutId);
-  }, [versions, currentIdx, workshopId]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentDraft]);
 
   const generateDraft = async (
     problem: string,
@@ -158,10 +106,8 @@ export function useDraftWorkspace() {
         sectionFeedback: {}
       };
 
-      const newVersions = [...versions, next];
-      setVersions(newVersions);
-      setCurrentIdx(newVersions.length - 1);
-      
+      setVersions((prev) => [...prev, next]);
+      setCurrentIdx(versions.length);
       toast.success("New draft generated");
     } catch (error) {
       console.error('Error generating draft:', error);
@@ -194,6 +140,7 @@ export function useDraftWorkspace() {
     );
     
     // Broadcast feedback to other users
+    const workshopId = new URLSearchParams(window.location.search).get('id');
     if (workshopId) {
       supabase.channel(`workshop:${workshopId}`)
         .send({
@@ -224,6 +171,7 @@ export function useDraftWorkspace() {
     );
     
     // Broadcast changes to other users
+    const workshopId = new URLSearchParams(window.location.search).get('id');
     if (workshopId) {
       const { data } = await supabase.auth.getUser();
       await supabase.channel(`workshop:${workshopId}`)
@@ -253,6 +201,5 @@ export function useDraftWorkspace() {
     generateDraft,
     addFeedback,
     updateDraftSection,
-    loadDrafts,
   };
 }

@@ -24,58 +24,44 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { action, workshopId, userId, data } = await req.json();
-    console.log(`Processing ${action} action for workshop ${workshopId}`);
 
     if (action === 'create') {
       // Create a new shareable workshop
-      const shareId = crypto.randomUUID().substring(0, 8);
-      console.log(`Creating new shareable workshop with ID: ${shareId}`);
-      
       const { data: workshop, error } = await supabase
         .from('workshops')
         .insert({
-          owner_id: userId || 'anonymous',
+          owner_id: userId,
           problem: data.problem || '',
           metrics: data.metrics || [],
           constraints: data.constraints || [],
           selected_model: data.selectedModel || 'gpt-4o-mini',
-          share_id: shareId
+          share_id: crypto.randomUUID().substring(0, 8)
         })
         .select()
         .single();
 
-      if (error) {
-        console.error('Error creating workshop:', error);
-        throw error;
-      }
+      if (error) throw error;
       
-      console.log('Workshop created successfully:', workshop.id);
       return new Response(JSON.stringify({ success: true, workshop }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } 
     else if (action === 'get') {
       // Get workshop by share ID
-      console.log(`Fetching workshop with share ID: ${workshopId}`);
       const { data: workshop, error } = await supabase
         .from('workshops')
         .select('*')
         .eq('share_id', workshopId)
         .single();
 
-      if (error) {
-        console.error('Error fetching workshop:', error);
-        throw error;
-      }
+      if (error) throw error;
       
-      console.log('Workshop retrieved successfully:', workshop.id);
       return new Response(JSON.stringify({ success: true, workshop }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
     else if (action === 'update') {
       // Update an existing workshop
-      console.log(`Updating workshop with share ID: ${workshopId}`);
       const { data: workshop, error } = await supabase
         .from('workshops')
         .update({
@@ -89,12 +75,8 @@ serve(async (req) => {
         .select()
         .single();
 
-      if (error) {
-        console.error('Error updating workshop:', error);
-        throw error;
-      }
+      if (error) throw error;
       
-      console.log('Workshop updated successfully:', workshop.id);
       return new Response(JSON.stringify({ success: true, workshop }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

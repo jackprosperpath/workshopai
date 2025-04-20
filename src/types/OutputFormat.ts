@@ -1,5 +1,5 @@
 
-export type PredefinedFormat = 'detailed-report' | 'prd' | 'project-proposal' | 'strategic-plan' | 'business-case' | 'other';
+export type PredefinedFormat = 'report' | 'prd' | 'proposal' | 'analysis' | 'strategy' | 'other';
 
 export interface OutputFormat {
   type: PredefinedFormat;
@@ -8,24 +8,24 @@ export interface OutputFormat {
 }
 
 export const OUTPUT_FORMATS: Record<Exclude<PredefinedFormat, 'other'>, OutputFormat> = {
-  'detailed-report': {
-    type: 'detailed-report',
-    description: 'Detailed Report'
+  report: {
+    type: 'report',
+    description: 'A detailed document with executive summary, findings, and recommendations'
   },
-  'prd': {
+  prd: {
     type: 'prd',
-    description: 'Product Requirements Document'
+    description: 'Product Requirements Document with features, specifications, and success criteria'
   },
-  'project-proposal': {
-    type: 'project-proposal',
-    description: 'Project Proposal'
+  proposal: {
+    type: 'proposal',
+    description: 'A formal project proposal with objectives, scope, and implementation plan'
   },
-  'strategic-plan': {
-    type: 'strategic-plan',
-    description: 'Strategic Plan'
+  analysis: {
+    type: 'analysis',
+    description: 'In-depth analysis with data insights, trends, and actionable conclusions'
   },
-  'business-case': {
-    type: 'business-case',
-    description: 'Business Case'
+  strategy: {
+    type: 'strategy',
+    description: 'Strategic plan with goals, tactics, and implementation roadmap'
   }
 };
