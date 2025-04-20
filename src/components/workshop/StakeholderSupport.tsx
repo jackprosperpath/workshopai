@@ -14,6 +14,7 @@ type StakeholderSupportProps = {
   newEmail?: string;
   setNewEmail?: (email: string) => void;
   isInviting?: boolean;
+  workshopId?: string | null;
   addStakeholder: () => void;
   updateStakeholder: (id: number, updates: Partial<Omit<Stakeholder, "id">>) => void;
   removeStakeholder?: (id: number) => void;
@@ -27,6 +28,7 @@ export function StakeholderSupport({
   newEmail = "",
   setNewEmail = () => {},
   isInviting = false,
+  workshopId = null,
   addStakeholder,
   updateStakeholder,
   removeStakeholder = () => {},

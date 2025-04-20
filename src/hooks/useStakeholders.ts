@@ -108,13 +108,50 @@ export function useStakeholders() {
         throw new Error("No email address found for this stakeholder");
       }
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!workshopId) {
+        throw new Error("Workshop ID not available");
+      }
+
+      const { data: userData } = await supabase.auth.getUser();
+      const inviterId = userData.user?.id;
       
-      updateStakeholder(id, { inviteSent: true });
-      toast.success(`Invite sent to ${stakeholder.email}`);
+      if (!inviterId) {
+        throw new Error("You must be logged in to invite stakeholders");
+      }
+      
+      // Call the edge function to send the invitation
+      console.log("Sending invitation with:", {
+        workshopId,
+        email: stakeholder.email,
+        inviterId,
+        role: stakeholder.role
+      });
+      
+      const { data, error } = await supabase.functions.invoke('invite-stakeholder', {
+        body: {
+          workshopId,
+          email: stakeholder.email,
+          inviterId,
+          role: stakeholder.role
+        }
+      });
+      
+      if (error) {
+        console.error("Error from edge function:", error);
+        throw new Error(`Failed to invite stakeholder: ${error.message}`);
+      }
+      
+      console.log("Invitation response:", data);
+      
+      if (data && data.success) {
+        updateStakeholder(id, { inviteSent: true });
+        toast.success(`Invite sent to ${stakeholder.email}`);
+      } else {
+        throw new Error(data?.error || "Unknown error occurred");
+      }
     } catch (error) {
       console.error("Error inviting stakeholder:", error);
-      toast.error("Failed to send invitation");
+      toast.error(error.message || "Failed to send invitation");
     } finally {
       setIsInviting(false);
     }
@@ -127,6 +164,7 @@ export function useStakeholders() {
     newEmail,
     setNewEmail,
     isInviting,
+    workshopId,
     addStakeholder,
     updateStakeholder,
     removeStakeholder,
