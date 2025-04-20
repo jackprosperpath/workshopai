@@ -88,13 +88,14 @@ serve(async (req) => {
     console.log("Workshop data:", workshopData);
     
     const actualWorkshopId = workshopData.id;
+    const normalizedEmail = email.toLowerCase().trim();
 
     // Check if the email has already been invited to this workshop
     const { data: existingInvites, error: checkError } = await supabaseClient
       .from("workshop_collaborators")
-      .select("id")
+      .select("id, email, status")
       .eq("workshop_id", actualWorkshopId)
-      .eq("email", email.toLowerCase().trim());
+      .eq("email", normalizedEmail);
 
     if (checkError) {
       console.error("Error checking existing invites:", checkError);
@@ -109,11 +110,19 @@ serve(async (req) => {
       );
     }
 
-    // If the email has already been invited, return an error
+    // If the email has already been invited, return an error with clear message
     if (existingInvites && existingInvites.length > 0) {
+      const existingInvite = existingInvites[0];
+      console.log("Existing invite found:", existingInvite);
+      
       return new Response(
         JSON.stringify({
-          error: "This email has already been invited to this workshop",
+          error: `This email has already been invited to this workshop`,
+          existingInvite: {
+            id: existingInvite.id,
+            email: existingInvite.email,
+            status: existingInvite.status
+          }
         }),
         {
           status: 400,
@@ -121,9 +130,6 @@ serve(async (req) => {
         }
       );
     }
-
-    // Normalize email
-    const normalizedEmail = email.toLowerCase().trim();
 
     // Insert the collaboration invitation
     const { data: invitation, error: invitationError } = await supabaseClient

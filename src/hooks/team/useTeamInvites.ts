@@ -50,13 +50,25 @@ export function useTeamInvites() {
         inviterId
       });
       
-      const { data, error: inviteError } = await supabase.functions.invoke('invite-team-member', {
+      const { data, error: inviteError, status } = await supabase.functions.invoke('invite-team-member', {
         body: {
           workshopId,
           email: inviteEmail,
           inviterId
         }
       });
+      
+      // Handle the special case of 400 status which might be for duplicate invites
+      if (status === 400 && data?.error) {
+        // For duplicate invites, show a warning instead of an error
+        if (data.error.includes("already been invited")) {
+          toast.warning(data.error);
+          setInviteEmail("");
+          return;
+        } else {
+          throw new Error(data.error);
+        }
+      }
       
       if (inviteError) {
         console.error("Error from edge function:", inviteError);
