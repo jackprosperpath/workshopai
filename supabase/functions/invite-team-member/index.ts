@@ -18,7 +18,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    const siteUrl = Deno.env.get("SITE_URL") ?? "http://localhost:5173";
+    const siteUrl = Deno.env.get("SITE_URL") ?? "https://workshopai.lovable.app";
     
     console.log("Environment variables check:");
     console.log("- SUPABASE_URL exists:", !!supabaseUrl);
@@ -110,17 +110,26 @@ serve(async (req) => {
     console.log("About to send email with Resend");
     
     try {
-      // Using the Resend sandbox mode with the verified onboarding email
+      // Using the Resend API to send the email invite
       const { data, error } = await resend.emails.send({
-        from: "Consensus Workshop <onboarding@resend.dev>", // Using Resend's default verified sender
+        from: "Workshop AI <onboarding@resend.dev>", 
         to: [email],
-        subject: `You've been invited to collaborate on a Consensus Workshop`,
+        subject: `You've been invited to collaborate on a Workshop AI project`,
         html: `
-          <h1>Workshop Collaboration Invite</h1>
-          <p>You've been invited to collaborate on the workshop "${workshopData.name}".</p>
-          <p>Click the link below to join:</p>
-          <a href="${siteUrl}/workshop?id=${workshopId}&invite=${invitation.id}">Join Workshop</a>
-          <p>If you didn't expect this invite, you can safely ignore this email.</p>
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #3b82f6;">Workshop Collaboration Invite</h2>
+            <p>You've been invited to collaborate on the workshop "${workshopData.name}".</p>
+            <p>Click the button below to join:</p>
+            <a href="${siteUrl}/workshop?id=${workshopId}&invite=${invitation.id}" 
+               style="display: inline-block; background-color: #3b82f6; color: white; 
+                      padding: 10px 20px; text-decoration: none; border-radius: 5px; 
+                      margin: 15px 0;">
+              Join Workshop
+            </a>
+            <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+              If you didn't expect this invite, you can safely ignore this email.
+            </p>
+          </div>
         `
       });
 

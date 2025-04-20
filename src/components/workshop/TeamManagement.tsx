@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Mail, Share, Check, X, Users, AlertCircle, Settings } from "lucide-react";
 import { TeamMember, useTeamCollaboration } from "@/hooks/useTeamCollaboration";
 import { useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import {
   Select,
@@ -32,12 +31,11 @@ export function TeamManagement() {
     generateShareableLink,
     copyLinkSuccess,
     workshopId,
-    setTeamMembers
   } = useTeamCollaboration();
 
   const { selectedModel, setSelectedModel } = usePromptCanvas();
 
-  useEffect(() => {
+  React.useEffect(() => {
     const checkInvitation = async () => {
       const params = new URLSearchParams(location.search);
       const inviteToken = params.get('invite');
@@ -52,47 +50,9 @@ export function TeamManagement() {
     checkInvitation();
   }, [location]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inviteEmail.trim() || !workshopId) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("You must be logged in to invite team members");
-        return;
-      }
-
-      const { data, error } = await supabase.functions.invoke('invite-team-member', {
-        body: {
-          workshopId,
-          email: inviteEmail,
-          inviterId: user.id
-        }
-      });
-
-      if (error) throw error;
-
-      toast.success(`Invitation sent to ${inviteEmail}`);
-      setInviteEmail("");
-
-      // Add the new team member to local state
-      const newMember: TeamMember = {
-        id: data.invitation.id,
-        email: inviteEmail,
-        status: "pending",
-        invitedAt: new Date()
-      };
-      
-      // Use the setTeamMembers function correctly with previous state
-      setTeamMembers(prev => [...prev, newMember]);
-    } catch (error) {
-      console.error("Error inviting team member:", error);
-      toast.error("Failed to send invitation");
-    }
+    inviteTeamMember();
   };
 
   const getCurrentUserCount = () => {

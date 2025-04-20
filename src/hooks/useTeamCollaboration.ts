@@ -95,10 +95,20 @@ export function useTeamCollaboration() {
     setIsInviting(true);
     
     try {
+      // Get current user
+      const { data: userData } = await supabase.auth.getUser();
+      const inviterId = userData.user?.id;
+      
+      if (!inviterId) {
+        toast.error("You must be logged in to invite team members");
+        setIsInviting(false);
+        return;
+      }
+      
       console.log("Calling invite-team-member function with:", {
         workshopId,
         email: inviteEmail,
-        inviterId: (await supabase.auth.getUser()).data.user?.id || 'anonymous'
+        inviterId
       });
       
       // Call the Supabase Edge function to send the invitation
@@ -106,7 +116,7 @@ export function useTeamCollaboration() {
         body: {
           workshopId,
           email: inviteEmail,
-          inviterId: (await supabase.auth.getUser()).data.user?.id || 'anonymous'
+          inviterId
         }
       });
       
@@ -153,15 +163,12 @@ export function useTeamCollaboration() {
     }
 
     try {
-      // In a real implementation, you would remove the invitation from your database
-      // For now, we'll just update the local state
+      const { error } = await supabase
+        .from('workshop_collaborators')
+        .delete()
+        .eq('id', id);
       
-      // const { error } = await supabase
-      //   .from('workshop_invitations')
-      //   .delete()
-      //   .eq('id', id);
-      
-      // if (error) throw error;
+      if (error) throw error;
       
       setTeamMembers(prev => prev.filter(member => member.id !== id));
       toast.success("Team member removed");
@@ -195,31 +202,6 @@ export function useTeamCollaboration() {
     return link;
   };
 
-  // Set up real-time updates for team members
-  useEffect(() => {
-    if (!workshopId) return;
-    
-    // In a real implementation, you would set up a real-time subscription 
-    // to listen for changes to the team members
-    
-    // const channel = supabase
-    //   .channel(`workshop:${workshopId}`)
-    //   .on('postgres_changes', {
-    //     event: '*',
-    //     schema: 'public',
-    //     table: 'workshop_invitations',
-    //     filter: `workshop_id=eq.${workshopId}`
-    //   }, (payload) => {
-    //     console.log('Change received!', payload);
-    //     fetchTeamMembers(workshopId);
-    //   })
-    //   .subscribe();
-    
-    // return () => {
-    //   supabase.removeChannel(channel);
-    // };
-  }, [workshopId]);
-
   return {
     teamMembers,
     inviteEmail,
@@ -230,6 +212,5 @@ export function useTeamCollaboration() {
     generateShareableLink,
     copyLinkSuccess,
     workshopId,
-    setTeamMembers // Export this function to make it available
   };
 }
