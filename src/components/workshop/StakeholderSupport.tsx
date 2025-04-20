@@ -6,6 +6,7 @@ import { useSharedWorkshop } from "@/hooks/useSharedWorkshop";
 import type { Stakeholder } from "@/hooks/useStakeholders";
 import { ShareDialog } from "./stakeholder/ShareDialog";
 import { StakeholderCard } from "./stakeholder/StakeholderCard";
+import { toast } from "@/components/ui/sonner";
 
 type StakeholderSupportProps = {
   stakeholders: Stakeholder[];
@@ -36,25 +37,42 @@ export function StakeholderSupport({
 }: StakeholderSupportProps) {
   const { shareId, createShareableWorkshop } = useSharedWorkshop();
   const [shareUrl, setShareUrl] = React.useState<string | null>(null);
+  const [isGettingShareLink, setIsGettingShareLink] = React.useState(false);
 
   const getShareLink = async () => {
-    if (shareId) {
-      return `${window.location.origin}${window.location.pathname}?share=${shareId}`;
+    setIsGettingShareLink(true);
+    try {
+      if (shareId) {
+        const url = `${window.location.origin}${window.location.pathname}?share=${shareId}`;
+        setShareUrl(url);
+        return url;
+      }
+      
+      const workshopData = {
+        problem: "Workshop content",
+        metrics: [],
+        constraints: [],
+        selectedModel: "gpt-4"
+      };
+      
+      const url = await createShareableWorkshop(workshopData);
+      setShareUrl(url);
+      return url;
+    } catch (error) {
+      console.error("Error getting share link:", error);
+      toast.error("Failed to create shareable link");
+      throw error;
+    } finally {
+      setIsGettingShareLink(false);
     }
-    
-    const workshopData = {
-      problem: "Workshop content",
-      metrics: [],
-      constraints: [],
-      selectedModel: "gpt-4"
-    };
-    
-    const url = await createShareableWorkshop(workshopData);
-    setShareUrl(url);
-    return url;
   };
 
   const handleInviteStakeholder = async (id: number) => {
+    if (isInviting) {
+      toast.info("Another invitation is already in progress");
+      return;
+    }
+    
     try {
       const link = await getShareLink();
       if (link) {
@@ -62,7 +80,17 @@ export function StakeholderSupport({
       }
     } catch (error) {
       console.error("Error inviting stakeholder:", error);
+      toast.error("Failed to invite stakeholder: " + (error.message || "Unknown error"));
     }
+  };
+
+  const handleAddStakeholder = () => {
+    if (!newRole.trim()) {
+      toast.error("Please enter a stakeholder role");
+      return;
+    }
+    
+    addStakeholder();
   };
 
   return (
@@ -85,7 +113,10 @@ export function StakeholderSupport({
               className="flex-1"
               type="email"
             />
-            <Button onClick={addStakeholder} variant="outline">
+            <Button 
+              onClick={handleAddStakeholder} 
+              variant="outline"
+            >
               Add
             </Button>
           </div>
@@ -101,7 +132,7 @@ export function StakeholderSupport({
                   <StakeholderCard
                     key={stakeholder.id}
                     stakeholder={stakeholder}
-                    isInviting={isInviting}
+                    isInviting={isInviting || isGettingShareLink}
                     onUpdate={(updates) => updateStakeholder(stakeholder.id, updates)}
                     onRemove={() => removeStakeholder(stakeholder.id)}
                     onInvite={() => handleInviteStakeholder(stakeholder.id)}

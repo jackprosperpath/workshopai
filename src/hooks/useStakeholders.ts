@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/components/ui/sonner";
 import { TeamMember, useTeamMembers } from "@/hooks/team/useTeamMembers";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,16 +29,18 @@ export function useStakeholders() {
   
   const { teamMembers } = useTeamMembers(workshopId);
 
+  // Track initialized stakeholders to avoid duplicate additions
+  const [initializedStakeholderEmails, setInitializedStakeholderEmails] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     const initializeStakeholders = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
-        const existingEmails = new Set(stakeholders.map(s => s.email));
-        
         const newStakeholders: Stakeholder[] = [];
         
-        if (user?.email && !existingEmails.has(user.email)) {
+        // Add workshop owner if not already added
+        if (user?.email && !initializedStakeholderEmails.has(user.email)) {
           newStakeholders.push({
             id: Date.now(),
             role: "Workshop Owner",
@@ -46,10 +48,14 @@ export function useStakeholders() {
             email: user.email,
             inviteSent: true
           });
+          
+          // Add to tracking set
+          setInitializedStakeholderEmails(prev => new Set([...prev, user.email]));
         }
         
+        // Add team members if not already added
         teamMembers.forEach(member => {
-          if (!existingEmails.has(member.email)) {
+          if (member.email && !initializedStakeholderEmails.has(member.email)) {
             newStakeholders.push({
               id: Date.now() + Math.random(),
               role: "Team Member",
@@ -57,6 +63,9 @@ export function useStakeholders() {
               email: member.email,
               inviteSent: true
             });
+            
+            // Add to tracking set
+            setInitializedStakeholderEmails(prev => new Set([...prev, member.email]));
           }
         });
         
@@ -69,39 +78,68 @@ export function useStakeholders() {
     };
 
     initializeStakeholders();
-  }, [teamMembers, stakeholders]);
+  }, [teamMembers, initializedStakeholderEmails]);
 
-  const addStakeholder = () => {
+  const addStakeholder = useCallback(() => {
     if (newRole.trim()) {
+      const email = newEmail.trim() || undefined;
+      
+      // Check if this email is already in the list
+      if (email && stakeholders.some(s => s.email === email)) {
+        toast.error("A stakeholder with this email already exists");
+        return;
+      }
+      
       setStakeholders((s) => [
         ...s,
         {
           id: Date.now(),
           role: newRole.trim(),
           status: "pending",
-          email: newEmail.trim() || undefined,
+          email,
           inviteSent: false
         }
       ]);
+      
+      // If we added a stakeholder with email, track it
+      if (email) {
+        setInitializedStakeholderEmails(prev => new Set([...prev, email]));
+      }
+      
       setNewRole("");
       setNewEmail("");
+    } else {
+      toast.error("Please enter a stakeholder role");
     }
-  };
+  }, [newRole, newEmail, stakeholders]);
 
-  const updateStakeholder = (
+  const updateStakeholder = useCallback((
     id: number,
     updates: Partial<Omit<Stakeholder, "id">>
   ) => {
     setStakeholders((s) =>
       s.map((st) => (st.id === id ? { ...st, ...updates } : st))
     );
-  };
+  }, []);
 
-  const removeStakeholder = (id: number) => {
-    setStakeholders((s) => s.filter((st) => st.id !== id));
-  };
+  const removeStakeholder = useCallback((id: number) => {
+    setStakeholders((s) => {
+      const stakeholderToRemove = s.find(st => st.id === id);
+      
+      // If the stakeholder has an email, remove it from our tracking set
+      if (stakeholderToRemove?.email) {
+        setInitializedStakeholderEmails(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(stakeholderToRemove.email!);
+          return newSet;
+        });
+      }
+      
+      return s.filter((st) => st.id !== id);
+    });
+  }, []);
 
-  const inviteStakeholder = async (id: number, workshopShareLink: string) => {
+  const inviteStakeholder = useCallback(async (id: number, workshopShareLink: string) => {
     setIsInviting(true);
     try {
       const stakeholder = stakeholders.find(s => s.id === id);
@@ -139,7 +177,7 @@ export function useStakeholders() {
       
       if (error) {
         console.error("Error from edge function:", error);
-        throw new Error(`Failed to invite stakeholder: ${error.message}`);
+        throw new Error(`Failed to send invitation: ${error.message || "Unknown error"}`);
       }
       
       console.log("Invitation response:", data);
@@ -156,7 +194,7 @@ export function useStakeholders() {
     } finally {
       setIsInviting(false);
     }
-  };
+  }, [stakeholders, workshopId, updateStakeholder]);
 
   return {
     stakeholders,
