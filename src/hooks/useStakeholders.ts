@@ -1,7 +1,7 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { toast } from "@/components/ui/sonner";
-import { TeamMember, useTeamMembers } from "@/hooks/team/useTeamMembers";
+import { supabase } from "@/integrations/supabase/client";
 
 export type Stakeholder = {
   id: number;
@@ -24,8 +24,6 @@ export function useStakeholders() {
     if (id) setWorkshopId(id);
   }, []);
   
-  const { teamMembers } = useTeamMembers(workshopId);
-
   // Track initialized stakeholders to avoid duplicate additions
   const [initializedStakeholderEmails, setInitializedStakeholderEmails] = useState<Set<string>>(new Set());
 
@@ -48,20 +46,6 @@ export function useStakeholders() {
           setInitializedStakeholderEmails(prev => new Set([...prev, user.email]));
         }
         
-        // Add team members if not already added
-        teamMembers.forEach(member => {
-          if (member.email && !initializedStakeholderEmails.has(member.email)) {
-            newStakeholders.push({
-              id: Date.now() + Math.random(),
-              role: "Team Member",
-              status: member.status === "accepted" ? "pending" : "pending",
-              email: member.email
-            });
-            
-            setInitializedStakeholderEmails(prev => new Set([...prev, member.email]));
-          }
-        });
-        
         if (newStakeholders.length > 0) {
           setStakeholders(prev => [...prev, ...newStakeholders]);
         }
@@ -71,7 +55,7 @@ export function useStakeholders() {
     };
 
     initializeStakeholders();
-  }, [teamMembers, initializedStakeholderEmails]);
+  }, [initializedStakeholderEmails]);
 
   const addStakeholder = useCallback(() => {
     if (newRole.trim()) {
