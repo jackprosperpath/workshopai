@@ -1,6 +1,7 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/sonner";
+import { TeamMember, useTeamCollaboration } from "@/hooks/useTeamCollaboration";
+import { supabase } from "@/integrations/supabase/client";
 
 export type Stakeholder = {
   id: number;
@@ -16,6 +17,49 @@ export function useStakeholders() {
   const [newRole, setNewRole] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [isInviting, setIsInviting] = useState(false);
+  const { teamMembers } = useTeamCollaboration();
+
+  useEffect(() => {
+    const initializeStakeholders = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        const existingEmails = new Set(stakeholders.map(s => s.email));
+        
+        const newStakeholders: Stakeholder[] = [];
+        
+        if (user?.email && !existingEmails.has(user.email)) {
+          newStakeholders.push({
+            id: Date.now(),
+            role: "Workshop Owner",
+            status: "pending",
+            email: user.email,
+            inviteSent: true
+          });
+        }
+        
+        teamMembers.forEach(member => {
+          if (!existingEmails.has(member.email)) {
+            newStakeholders.push({
+              id: Date.now() + Math.random(),
+              role: "Team Member",
+              status: member.status === "accepted" ? "pending" : "pending",
+              email: member.email,
+              inviteSent: true
+            });
+          }
+        });
+        
+        if (newStakeholders.length > 0) {
+          setStakeholders(prev => [...prev, ...newStakeholders]);
+        }
+      } catch (error) {
+        console.error("Error initializing stakeholders:", error);
+      }
+    };
+
+    initializeStakeholders();
+  }, [teamMembers]);
 
   const addStakeholder = () => {
     if (newRole.trim()) {
@@ -55,8 +99,6 @@ export function useStakeholders() {
         throw new Error("No email address found for this stakeholder");
       }
 
-      // In a real app, you would send an email here via an API
-      // For this demo, we'll simulate a successful email
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       updateStakeholder(id, { inviteSent: true });
