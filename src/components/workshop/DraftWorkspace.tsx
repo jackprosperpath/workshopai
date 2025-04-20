@@ -19,6 +19,7 @@ type DraftWorkspaceProps = {
   addFeedback: (sectionIdx: number, text: string) => void;
   onRePrompt: () => void;
   loading: boolean;
+  workshopId: string | null;
 };
 
 export function DraftWorkspace({
@@ -31,6 +32,7 @@ export function DraftWorkspace({
   addFeedback,
   onRePrompt,
   loading,
+  workshopId,
 }: DraftWorkspaceProps) {
   const [editingSection, setEditingSection] = useState<number | null>(null);
   const [editableContent, setEditableContent] = useState<string>("");
@@ -45,11 +47,9 @@ export function DraftWorkspace({
     }
   }, [editingSection]);
   
-  // Set up real-time presence for collaborative editing
   useEffect(() => {
     if (!currentDraft) return;
     
-    // Get current user
     const getUserInfo = async () => {
       const { data } = await supabase.auth.getUser();
       return data.user;
@@ -75,7 +75,6 @@ export function DraftWorkspace({
           }));
           setActiveUsers(currentUsers);
           
-          // Update editing sessions
           const sessions: {[key: string]: string} = {};
           currentUsers.forEach((user: any) => {
             if (user.editing_section !== null && user.content) {
@@ -92,13 +91,11 @@ export function DraftWorkspace({
           const leftUser = leftPresences[0];
           toast.info(`${leftUser.email} left the session`);
           
-          // If the user was editing, clear their editing status
           setActiveUsers(prev => prev.filter(user => user.id !== leftUser.user_id));
         })
         .subscribe(async (status) => {
           if (status !== 'SUBSCRIBED') return;
           
-          // Track presence
           await channel.track({
             user_id: userId,
             email: userEmail.substring(0, userEmail.indexOf('@')) || userEmail,
@@ -122,7 +119,6 @@ export function DraftWorkspace({
     setEditingSection(idx);
     setEditableContent(content);
     
-    // Update presence to show we're editing this section
     updateEditingSection(idx);
   };
   
@@ -154,7 +150,6 @@ export function DraftWorkspace({
     setIsSaving(true);
     
     try {
-      // Update in local state first
       const updatedVersions = versions.map((version, i) => {
         if (i === currentIdx) {
           const newOutput = [...version.output];
@@ -164,10 +159,6 @@ export function DraftWorkspace({
         return version;
       });
       
-      // Then update in database if needed
-      // This would be a proper database update in a real implementation
-      
-      // Apply optimistic update to UI
       setCurrentIdx(currentIdx || 0);
       setEditingSection(null);
       updateEditingSection(null);
@@ -183,13 +174,29 @@ export function DraftWorkspace({
   
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setEditableContent(e.target.value);
-    // Update in real-time for other users
     if (editingSection !== null) {
       updateEditingSection(editingSection, e.target.value);
     }
   };
 
-  if (!currentDraft) return null;
+  if (!currentDraft) {
+    return (
+      <section className="border rounded p-8 flex flex-col items-center justify-center text-center space-y-4">
+        <h3 className="text-xl font-medium">No solution draft available</h3>
+        <p className="text-muted-foreground">
+          Define your problem and requirements in the Topic tab, then generate a solution.
+        </p>
+        <Button
+          className="mt-4"
+          onClick={onRePrompt}
+          disabled={loading}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+          {loading ? "Generating…" : "Generate Solution"}
+        </Button>
+      </section>
+    );
+  }
 
   const highlightChanges = (text: string, idx: number) => {
     if (currentIdx === null || currentIdx === 0) return text;
@@ -228,24 +235,26 @@ export function DraftWorkspace({
               )}
             </div>
           )}
-          <select
-            value={currentDraft.id}
-            onChange={(e) =>
-              setCurrentIdx(versions.findIndex((v) => v.id === +e.target.value))
-            }
-            className="text-sm border rounded p-1"
-          >
-            {versions.map((v) => (
-              <option key={v.id} value={v.id}>
-                v{v.id}
-              </option>
-            ))}
-          </select>
+          {versions.length > 0 && (
+            <select
+              value={currentDraft.id}
+              onChange={(e) =>
+                setCurrentIdx(versions.findIndex((v) => v.id === +e.target.value))
+              }
+              className="text-sm border rounded p-1"
+            >
+              {versions.map((v) => (
+                <option key={v.id} value={v.id}>
+                  v{v.id}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 
       {currentDraft.output.map((para, idx) => (
-        <div key={idx} className="mb-6 relative">
+        <div key={`section-${idx}`} className="mb-6 relative">
           {editingSection === idx ? (
             <div className="space-y-2">
               <Textarea
@@ -334,7 +343,7 @@ export function DraftWorkspace({
 
               {(currentDraft.sectionFeedback[idx] || []).map((fb) => (
                 <div
-                  key={fb.threadId}
+                  key={`feedback-${idx}-${fb.threadId}`}
                   className="text-xs bg-gray-100 p-2 rounded mb-1 mt-1"
                 >
                   {fb.text}

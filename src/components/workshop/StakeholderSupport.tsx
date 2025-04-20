@@ -1,64 +1,153 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useSharedWorkshop } from "@/hooks/useSharedWorkshop";
 import type { Stakeholder } from "@/hooks/useStakeholders";
+import { ShareDialog } from "./stakeholder/ShareDialog";
+import { StakeholderCard } from "./stakeholder/StakeholderCard";
+import { toast } from "@/components/ui/sonner";
 
 type StakeholderSupportProps = {
   stakeholders: Stakeholder[];
   newRole: string;
   setNewRole: (role: string) => void;
+  newEmail?: string;
+  setNewEmail?: (email: string) => void;
+  isInviting?: boolean;
+  workshopId?: string | null;
   addStakeholder: () => void;
   updateStakeholder: (id: number, updates: Partial<Omit<Stakeholder, "id">>) => void;
+  removeStakeholder?: (id: number) => void;
+  inviteStakeholder?: (id: number, workshopShareLink: string) => Promise<void>;
 };
 
 export function StakeholderSupport({
   stakeholders,
   newRole,
   setNewRole,
+  newEmail = "",
+  setNewEmail = () => {},
+  isInviting = false,
+  workshopId = null,
   addStakeholder,
   updateStakeholder,
+  removeStakeholder = () => {},
+  inviteStakeholder = async () => {},
 }: StakeholderSupportProps) {
+  const { shareId, createShareableWorkshop } = useSharedWorkshop();
+  const [shareUrl, setShareUrl] = React.useState<string | null>(null);
+  const [isGettingShareLink, setIsGettingShareLink] = React.useState(false);
+
+  const getShareLink = async () => {
+    setIsGettingShareLink(true);
+    try {
+      if (shareId) {
+        const url = `${window.location.origin}${window.location.pathname}?share=${shareId}`;
+        setShareUrl(url);
+        return url;
+      }
+      
+      const workshopData = {
+        problem: "Workshop content",
+        metrics: [],
+        constraints: [],
+        selectedModel: "gpt-4"
+      };
+      
+      const url = await createShareableWorkshop(workshopData);
+      setShareUrl(url);
+      return url;
+    } catch (error) {
+      console.error("Error getting share link:", error);
+      toast.error("Failed to create shareable link");
+      throw error;
+    } finally {
+      setIsGettingShareLink(false);
+    }
+  };
+
+  const handleInviteStakeholder = async (id: number) => {
+    if (isInviting) {
+      toast.info("Another invitation is already in progress");
+      return;
+    }
+    
+    try {
+      const link = await getShareLink();
+      if (link) {
+        await inviteStakeholder(id, link);
+      }
+    } catch (error) {
+      console.error("Error inviting stakeholder:", error);
+      toast.error("Failed to invite stakeholder: " + (error.message || "Unknown error"));
+    }
+  };
+
+  const handleAddStakeholder = () => {
+    if (!newRole.trim()) {
+      toast.error("Please enter a stakeholder role");
+      return;
+    }
+    
+    addStakeholder();
+  };
+
   return (
-    <section className="border rounded p-4">
-      <h2 className="font-semibold mb-2">Stakeholder Support</h2>
-      <div className="flex gap-2 mb-4">
-        <input
-          placeholder="Add role"
-          className="border flex-1 p-2"
-          value={newRole}
-          onChange={(e) => setNewRole(e.target.value)}
-        />
-        <Button onClick={addStakeholder} variant="outline">
-          Add
-        </Button>
+    <section className="space-y-6">
+      <div className="border rounded-lg p-6 bg-white shadow-sm">
+        <h2 className="text-xl font-semibold mb-4">Stakeholder Endorsement</h2>
+        
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Input
+              placeholder="Stakeholder role or title"
+              value={newRole}
+              onChange={(e) => setNewRole(e.target.value)}
+              className="flex-1"
+            />
+            <Input
+              placeholder="Email address (optional)"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              className="flex-1"
+              type="email"
+            />
+            <Button 
+              onClick={handleAddStakeholder} 
+              variant="outline"
+            >
+              Add
+            </Button>
+          </div>
+          
+          <div className="mt-4">
+            {stakeholders.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No stakeholders added yet. Add stakeholders above to get their endorsements.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {stakeholders.map((stakeholder) => (
+                  <StakeholderCard
+                    key={stakeholder.id}
+                    stakeholder={stakeholder}
+                    isInviting={isInviting || isGettingShareLink}
+                    onUpdate={(updates) => updateStakeholder(stakeholder.id, updates)}
+                    onRemove={() => removeStakeholder(stakeholder.id)}
+                    onInvite={() => handleInviteStakeholder(stakeholder.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {stakeholders.map((st) => (
-        <div key={st.id} className="flex items-start gap-2 border-b py-2">
-          <span className="flex-1">{st.role}</span>
-          <select
-            value={st.status}
-            onChange={(e) =>
-              updateStakeholder(st.id, {
-                status: e.target.value as Stakeholder["status"]
-              })
-            }
-            className="border px-1 text-xs"
-          >
-            <option value="pending">–</option>
-            <option value="yes">👍</option>
-            <option value="no">👎</option>
-          </select>
-          <input
-            className="border flex-1 text-xs p-1"
-            placeholder="Comment"
-            value={st.comment || ""}
-            onChange={(e) =>
-              updateStakeholder(st.id, { comment: e.target.value })
-            }
-          />
-        </div>
-      ))}
+      <div className="border rounded-lg p-6 bg-white shadow-sm">
+        <h2 className="text-xl font-semibold mb-4">Share with Additional Stakeholders</h2>
+        <ShareDialog getShareLink={getShareLink} />
+      </div>
     </section>
   );
 }
