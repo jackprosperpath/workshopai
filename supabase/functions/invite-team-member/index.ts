@@ -38,9 +38,6 @@ serve(async (req) => {
       );
     }
 
-    // Instead of querying the users table, we'll use the inviterId directly
-    // We don't need to fetch the inviter's details, as we already have their ID
-
     // Fetch workshop details
     const { data: workshopData, error: workshopError } = await supabaseClient
       .from('workshops')
@@ -50,6 +47,30 @@ serve(async (req) => {
 
     if (workshopError) {
       throw workshopError;
+    }
+
+    // Check if the email has already been invited to this workshop
+    const { data: existingInvites, error: checkError } = await supabaseClient
+      .from("workshop_collaborators")
+      .select("id")
+      .eq("workshop_id", workshopId)
+      .eq("email", email);
+
+    if (checkError) {
+      throw checkError;
+    }
+
+    // If the email has already been invited, return an error
+    if (existingInvites && existingInvites.length > 0) {
+      return new Response(
+        JSON.stringify({
+          error: "This email has already been invited to this workshop",
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     // Insert the collaboration invitation
@@ -68,9 +89,9 @@ serve(async (req) => {
       throw invitationError;
     }
 
-    // Send invitation email
+    // Send invitation email using a verified Resend domain
     const { data, error } = await resend.emails.send({
-      from: "Consensus <onboarding@lovable.dev>",
+      from: "Consensus <onboarding@resend.dev>", // Use Resend's default verified domain
       to: email,
       subject: `You've been invited to collaborate on a Consensus Workshop`,
       html: `
