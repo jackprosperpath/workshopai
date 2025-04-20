@@ -1,4 +1,4 @@
-
+import React from 'react';
 import { Button } from "./ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,17 +30,14 @@ export const Navbar = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener FIRST (to catch all auth events)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       
       if (event === 'SIGNED_OUT') {
-        // Clear any user-specific cached data
         localStorage.removeItem('last-workshop-id');
       }
     });
 
-    // THEN check current session
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -153,19 +150,19 @@ export const Navbar = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
-                className="w-56 bg-[#1A1F2C] border border-gray-700 text-white" 
+                className="bg-background/95 backdrop-blur-md border shadow-lg rounded-md" 
                 align="end" 
                 forceMount
               >
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">Account</p>
-                    <p className="text-xs leading-none text-gray-400">
+                    <p className="text-xs leading-none text-muted-foreground">
                       {user.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-gray-700" />
+                <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   className="cursor-pointer hover:bg-gray-800"
                   onClick={() => navigate("/workshop")}
@@ -179,7 +176,7 @@ export const Navbar = () => {
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-gray-700" />
+                <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   className="cursor-pointer hover:bg-gray-800"
                   onClick={handleSignOut}
