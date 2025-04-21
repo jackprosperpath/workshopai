@@ -1,3 +1,4 @@
+
 import { Check } from "lucide-react";
 import { Button } from "./ui/button";
 
@@ -5,11 +6,12 @@ const tiers = [
   {
     name: "Starter",
     price: "Free",
-    description: "Perfect for trying out WorkshopAI",
+    description: "Perfect for trying out Converge.ai",
     features: [
-      "Up to 2 team members per workshop",
-      "3 active workshops",
-      "Open source model access"
+      "Up to 5 team members",
+      "3 AI models",
+      "Basic collaboration tools",
+      "Community support"
     ],
   },
   {
