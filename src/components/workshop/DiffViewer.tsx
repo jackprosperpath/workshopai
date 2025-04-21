@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import MonacoDiffEditor from "@monaco-editor/react";
+import { DiffEditor } from "@monaco-editor/react";
 
 interface DiffViewerProps {
   open: boolean;
@@ -31,7 +31,7 @@ export function DiffViewer({
           </DialogDescription>
         </DialogHeader>
         <div className="flex-1 overflow-hidden rounded border h-[calc(100%-4rem)]">
-          <MonacoDiffEditor
+          <DiffEditor
             height="100%"
             language="markdown"
             original={combinedOldContent}
@@ -42,7 +42,8 @@ export function DiffViewer({
               lineNumbers: 'on',
               scrollBeyondLastLine: false,
               automaticLayout: true,
-              wordWrap: 'on'
+              wordWrap: 'on',
+              renderSideBySide: true
             }}
             theme="vs-light"
           />

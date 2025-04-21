@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { SectionFeedback } from "@/hooks/useDraftWorkspace";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import Underline from "@tiptap/extension-underline";
 
 type User = {
   id: string;
@@ -66,7 +67,7 @@ export default function DraftSection({
   const editor = useEditor(
     editable
       ? {
-          extensions: [StarterKit],
+          extensions: [StarterKit, Underline],
           content: editableContent,
           onUpdate: ({ editor }) => {
             setEditableContent(editor.getHTML());
