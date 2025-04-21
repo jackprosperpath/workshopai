@@ -12,24 +12,24 @@ import type { DraftVersion } from "@/hooks/useDraftWorkspace";
 
 interface DraftVersionSelectorProps {
   versions: DraftVersion[];
-  currentDraftId: number;
-  onSelect: (idx: number) => void;
+  currentIdx: number | null;
+  setCurrentIdx: (idx: number) => void;
   onCompare?: (oldIdx: number, newIdx: number) => void;
 }
 
 export default function DraftVersionSelector({
   versions,
-  currentDraftId,
-  onSelect,
+  currentIdx,
+  setCurrentIdx,
   onCompare,
 }: DraftVersionSelectorProps) {
   if (versions.length === 0) return null;
   
-  const currentIdx = versions.findIndex((v) => v.id === currentDraftId);
+  const currentDraftId = currentIdx !== null && versions[currentIdx] ? versions[currentIdx].id : null;
   
   return (
     <div className="flex items-center gap-2">
-      {versions.length > 1 && onCompare && currentIdx > 0 && (
+      {versions.length > 1 && onCompare && currentIdx !== null && currentIdx > 0 && (
         <Button 
           variant="outline" 
           size="sm" 
@@ -44,14 +44,14 @@ export default function DraftVersionSelector({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="flex items-center gap-1">
-            v{currentDraftId}
+            {currentDraftId ? `v${currentDraftId}` : 'Select Version'}
             <ChevronDown className="h-3 w-3" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           {versions.map((v, idx) => (
-            <DropdownMenuItem key={v.id} onClick={() => onSelect(idx)}>
-              {v.id === currentDraftId ? (
+            <DropdownMenuItem key={v.id} onClick={() => setCurrentIdx(idx)}>
+              {currentIdx === idx ? (
                 <strong>v{v.id} (Current)</strong>
               ) : (
                 `v${v.id}`

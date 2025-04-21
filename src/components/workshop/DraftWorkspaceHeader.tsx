@@ -53,7 +53,7 @@ export function DraftWorkspaceHeader({
         />
       </div>
       <div className="flex gap-2 items-center">
-        <ActiveUsersAvatars users={activeUsers} />
+        <ActiveUsersAvatars activeUsers={activeUsers} />
         
         <Button
           size="sm"

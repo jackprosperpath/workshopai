@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 type User = {
   id: string;
   name: string;
+  section?: number | null;
 };
 
 type ActiveUsersAvatarsProps = {
