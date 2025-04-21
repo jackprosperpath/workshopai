@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
@@ -20,6 +21,7 @@ export function DraftWorkspace({
   onRePrompt,
   loading,
   workshopId,
+  updateDraftSection,
 }: {
   currentDraft: DraftVersion | null;
   versions: DraftVersion[];
@@ -31,12 +33,13 @@ export function DraftWorkspace({
   onRePrompt: () => void;
   loading: boolean;
   workshopId: string | null;
+  updateDraftSection: (draftId: number, sectionIdx: number, content: string) => Promise<boolean | undefined>;
 }) {
   const [editingSection, setEditingSection] = useState<number | null>(null);
   const [editableContent, setEditableContent] = useState<string>("");
   const [editingSessions, setEditingSessions] = useState<{ [key: string]: string }>({});
   const [isSaving, setIsSaving] = useState(false);
-  const [activeUsers, setActiveUsers] = useState<{ id: string; name: string; section: number | null }[]>([]);
+  const [activeUsers, setActiveUsers] = useState<{ id: string; name: string; section: number | null; content?: string }[]>([]);
   const [showDiffView, setShowDiffView] = useState(false);
   const [diffVersions, setDiffVersions] = useState<{ old: number; new: number }>({ old: 0, new: 0 });
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -68,6 +71,7 @@ export function DraftWorkspace({
               id: user.user_id,
               name: user.email,
               section: user.editing_section,
+              content: user.content
             }));
           setActiveUsers(currentUsers);
           const sessions: { [key: string]: string } = {};
@@ -137,18 +141,18 @@ export function DraftWorkspace({
     if (!currentDraft) return;
     setIsSaving(true);
     try {
-      const updatedVersions = versions.map((version, i) => {
-        if (i === currentIdx) {
-          const newOutput = [...version.output];
-          newOutput[idx] = editableContent;
-          return { ...version, output: newOutput };
+      // Call the updateDraftSection method from the hook to properly update the draft content
+      if (currentIdx !== null) {
+        const success = await updateDraftSection(currentDraft.id, idx, editableContent);
+        
+        if (success) {
+          setEditingSection(null);
+          updateEditingSection(null);
+          toast.success("Changes saved");
+        } else {
+          throw new Error("Failed to save changes");
         }
-        return version;
-      });
-      setCurrentIdx(currentIdx || 0);
-      setEditingSection(null);
-      updateEditingSection(null);
-      toast.success("Changes saved");
+      }
     } catch (error) {
       console.error("Error saving changes:", error);
       toast.error("Failed to save changes");
