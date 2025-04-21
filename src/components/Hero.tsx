@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 export const Hero = () => {
   return (
-    <section className="flex flex-col items-center text-center py-32 px-8">
+    <section className="flex flex-col items-center text-center py-16 px-6">
       <div className="max-w-3xl">
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
           TEAMS{" "}
