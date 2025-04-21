@@ -1,11 +1,22 @@
 
-import { Slack, Users, FileText, Video } from "lucide-react";
+import { Slack, Users } from "lucide-react";
+
+// Add logo image imports
+import ZoomLogo from "@/assets/logos/zoom.svg";
+import NotionLogo from "@/assets/logos/notion.svg";
 
 export const LogoStrip = () => {
   const logos = [
     {
       name: "Zoom",
-      icon: <Video className="h-10 w-auto opacity-70" aria-label="Zoom logo" />,
+      icon: (
+        <img
+          src={ZoomLogo}
+          alt="Zoom logo"
+          className="h-10 w-auto opacity-80"
+          aria-label="Zoom logo"
+        />
+      ),
       url: "https://zoom.us/",
     },
     {
@@ -20,7 +31,14 @@ export const LogoStrip = () => {
     },
     {
       name: "Notion",
-      icon: <FileText className="h-10 w-auto opacity-70" aria-label="Notion logo" />,
+      icon: (
+        <img
+          src={NotionLogo}
+          alt="Notion logo"
+          className="h-10 w-auto opacity-80"
+          aria-label="Notion logo"
+        />
+      ),
       url: "https://www.notion.so/",
     },
   ];
