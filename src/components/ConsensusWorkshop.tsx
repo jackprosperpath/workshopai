@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,6 +11,8 @@ import { usePromptCanvas } from "@/hooks/usePromptCanvas";
 import { useDraftWorkspace } from "@/hooks/useDraftWorkspace";
 import { useStakeholders } from "@/hooks/useStakeholders";
 import { useWorkshopActions } from "@/hooks/useWorkshopActions";
+import { LivePresenceLayer } from "./workshop/LivePresenceLayer";
+import { useRef } from "react";
 
 export default function ConsensusWorkshop() {
   const [activeTab, setActiveTab] = useState("draft");
@@ -67,6 +68,8 @@ export default function ConsensusWorkshop() {
 
   const { handleSaveWorkshop } = useWorkshopActions();
 
+  const workspaceRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
     if (hash && ['draft', 'prompt', 'stakeholders', 'team'].includes(hash)) {
@@ -102,9 +105,11 @@ export default function ConsensusWorkshop() {
   };
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-4 relative">
       <WorkshopActions />
-      
+      {workshopId && (
+        <LivePresenceLayer workshopId={workshopId} workspaceRef={workspaceRef} />
+      )}
       <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="team">Team</TabsTrigger>
@@ -140,18 +145,20 @@ export default function ConsensusWorkshop() {
             draftsCount={versions.length} 
             onNavigateToTeam={navigateToTeamTab}
           >
-            <DraftWorkspace 
-              currentDraft={currentDraft}
-              versions={versions}
-              currentIdx={currentIdx}
-              setCurrentIdx={setCurrentIdx}
-              activeThread={activeThread}
-              setActiveThread={setActiveThread}
-              addFeedback={addFeedback}
-              onRePrompt={handleGenerateSolution}
-              loading={loading}
-              workshopId={workshopId}
-            />
+            <div className="relative min-h-[500px]" ref={workspaceRef}>
+              <DraftWorkspace 
+                currentDraft={currentDraft}
+                versions={versions}
+                currentIdx={currentIdx}
+                setCurrentIdx={setCurrentIdx}
+                activeThread={activeThread}
+                setActiveThread={setActiveThread}
+                addFeedback={addFeedback}
+                onRePrompt={handleGenerateSolution}
+                loading={loading}
+                workshopId={workshopId}
+              />
+            </div>
           </DraftLimitWrapper>
         </TabsContent>
         <TabsContent value="endorsement">
