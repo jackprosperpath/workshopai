@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +8,7 @@ import Underline from "@tiptap/extension-underline";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import SectionFeedbackButton from "./SectionFeedbackButton";
 import SectionImproveActions from "./SectionImproveActions";
+import { Loader2 } from "lucide-react";
 
 type User = {
   id: string;
@@ -241,8 +243,9 @@ export default function DraftSection({
           )}
           {improving && (
             <div className="absolute left-0 top-0 right-0 flex flex-col z-20 pointer-events-none">
-              <div className="bg-gradient-to-br from-[#1A1F2C] via-[#221F26] to-[#1A1F2C] p-3 rounded-md text-xs text-white shadow border border-slate-700 animate-pulse mb-2">
-                Improving section with AI ({improving.replace("_", " ")}&hellip;)
+              <div className="flex items-center gap-2 bg-[#1A1F2C] p-3 rounded-md text-xs text-white shadow border border-slate-700 mb-2 select-none pointer-events-auto">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Improving section with AI ({improving.replace("_", " ")}&hellip;)</span>
               </div>
             </div>
           )}
@@ -322,3 +325,4 @@ export default function DraftSection({
     </div>
   );
 }
+
