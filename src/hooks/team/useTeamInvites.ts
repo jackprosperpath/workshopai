@@ -49,11 +49,11 @@ export function useTeamInvites() {
           return;
         }
         
-        // Get invitation count
+        // Get invitation count - fixed column name from inviter_id to invited_by
         const { data, error } = await supabase
           .from('workshop_collaborators')
           .select('*')
-          .eq('inviter_id', userData.user.id);
+          .eq('invited_by', userData.user.id);
         
         if (error) {
           console.error("Error fetching invitations:", error);
@@ -108,13 +108,16 @@ export function useTeamInvites() {
         inviterId
       });
       
-      const { data, error: inviteError } = await supabase.functions.invoke('invite-team-member', {
+      // Using explicit type annotation to avoid deep type inference
+      const response: { data: any; error: any } = await supabase.functions.invoke('invite-team-member', {
         body: {
           workshopId,
           email: inviteEmail,
           inviterId
         }
       });
+      
+      const { data, error: inviteError } = response;
       
       // Check if data contains an error response (which could be from a 400 status)
       if (data && data.error) {
