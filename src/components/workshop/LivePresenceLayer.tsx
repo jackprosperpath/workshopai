@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -43,6 +42,7 @@ export function LivePresenceLayer({ workshopId, workspaceRef }: Props) {
   const [pickedEmoji, setPickedEmoji] = useState<string | null>(null);
   const myColor = useRef<string | null>(null);
   const [myId, setMyId] = useState<string>("");
+  const [emojis, setEmojis] = useState<{emoji: string, x: number, y: number, userId: string, timestamp: number}[]>([]);
 
   useEffect(() => {
     let channel: any;
@@ -75,7 +75,22 @@ export function LivePresenceLayer({ workshopId, workspaceRef }: Props) {
               emoji: u.emoji,
               online_at: u.online_at,
             }));
+          
           setUsers(usersIn);
+          
+          const newEmojis = usersIn
+            .filter(u => u.emoji !== null)
+            .map(u => ({
+              emoji: u.emoji?.emoji || "",
+              x: u.emoji?.x || 0,
+              y: u.emoji?.y || 0,
+              userId: u.id,
+              timestamp: Date.now()
+            }));
+          
+          if (newEmojis.length > 0) {
+            setEmojis(prev => [...prev, ...newEmojis]);
+          }
         })
         .on("presence", { event: "join" }, () => { /* optional: toast or animation */ })
         .on("presence", { event: "leave" }, () => { /* optional: toast or animation  */ })
@@ -99,7 +114,15 @@ export function LivePresenceLayer({ workshopId, workspaceRef }: Props) {
     };
   }, [workshopId]);
 
-  // Broadcast cursor on mouse move inside the workspace
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setEmojis(prev => prev.filter(e => now - e.timestamp < 2000));
+    }, 500);
+    
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     if (!workspaceRef?.current || !myColor.current) return;
     let lastSent = 0;
@@ -110,12 +133,8 @@ export function LivePresenceLayer({ workshopId, workspaceRef }: Props) {
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
-      // Only send 24 fps max
       if (Date.now() - lastSent > 40) {
         lastSent = Date.now();
-        const payload = {
-          cursor: { x, y }
-        };
         const channel = supabase.channel(`workshop-cursors:${workshopId}`);
         channel.track({
           user_id: myId,
@@ -134,15 +153,18 @@ export function LivePresenceLayer({ workshopId, workspaceRef }: Props) {
       unsub = true;
       workspaceRef.current?.removeEventListener("mousemove", handleMove);
     };
-    // eslint-disable-next-line
   }, [workspaceRef, workshopId, myId, users]);
 
-  // Emoji reaction logic
   const handleEmojiSelect = (emoji: string) => {
-    setPickedEmoji(emoji);
     if (!workspaceRef?.current || !myColor.current) return;
+    
+    setPickedEmoji(emoji);
+    
+    if (workspaceRef.current) {
+      workspaceRef.current.style.cursor = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><text y='20' font-size='24'>${emoji}</text></svg>"), auto`;
+    }
 
-    const handle = (e: MouseEvent) => {
+    const handleClick = (e: MouseEvent) => {
       const rect = workspaceRef.current!.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
@@ -158,27 +180,31 @@ export function LivePresenceLayer({ workshopId, workspaceRef }: Props) {
       });
 
       setTimeout(() => {
-        // Remove emoji after 2s for that user
-        channel.track({
-          user_id: myId,
-          color: myColor.current,
-          cursor: { x, y },
-          emoji: null,
-          name: users.find((u) => u.id === myId)?.name || "Me",
-          online_at: new Date().toISOString(),
-        });
-      }, 2000);
+        if (workspaceRef.current) {
+          workspaceRef.current.style.cursor = "default";
+        }
+        
+        setTimeout(() => {
+          channel.track({
+            user_id: myId,
+            color: myColor.current,
+            cursor: { x, y },
+            emoji: null,
+            name: users.find((u) => u.id === myId)?.name || "Me",
+            online_at: new Date().toISOString(),
+          });
+        }, 2000);
+      }, 100);
 
-      workspaceRef.current?.removeEventListener("click", handle);
+      workspaceRef.current?.removeEventListener("click", handleClick);
       setPickedEmoji(null);
     };
-    workspaceRef.current.addEventListener("click", handle, { once: true });
+
+    workspaceRef.current.addEventListener("click", handleClick, { once: true });
   };
 
-  // Position layer absolutely over the workspace
   return (
     <div className="pointer-events-none absolute inset-0 z-50 select-none">
-      {/* Render live cursors of all users except self */}
       {users
         .filter((u) => u.cursor && u.id !== myId)
         .map((u) => (
@@ -197,32 +223,38 @@ export function LivePresenceLayer({ workshopId, workspaceRef }: Props) {
                 {u.name?.slice(0, 2) || "??"}
               </AvatarFallback>
             </Avatar>
-            {/* Show emoji reaction if present */}
-            {u.emoji && (
-              <span
-                className="text-2xl ml-1"
-                style={{
-                  animation: "fade-in 0.2s ease",
-                  filter: "drop-shadow(1px 2px 2px #fff)",
-                }}
-              >
-                {u.emoji.emoji}
-              </span>
-            )}
           </div>
         ))}
 
-      {/* Floating emoji picker (for self) */}
+      {users
+        .filter((u) => u.emoji)
+        .map((u) => (
+          <div
+            key={`emoji-${u.id}-${u.emoji?.emoji}`}
+            className="absolute text-2xl pointer-events-none"
+            style={{
+              left: u.emoji?.x,
+              top: u.emoji?.y,
+              zIndex: 100,
+              filter: "drop-shadow(1px 2px 2px rgba(0,0,0,0.1))",
+              transform: "translate(-50%, -50%) scale(1.5)",
+              animation: "pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards"
+            }}
+          >
+            {u.emoji?.emoji}
+          </div>
+        ))}
+
       <div className="fixed bottom-4 left-4 bg-white shadow-lg rounded-md px-2 py-1 flex gap-2 z-[100] border border-slate-200 pointer-events-auto">
         <span className="font-semibold text-xs mr-2 text-muted-foreground flex items-center gap-1">
           React
-          <SmilePlus className="inline h-3 w-3 ml-1" />
+          <SmilePlus className="inline h-3.5 w-3.5 ml-1" />
         </span>
         {EMOJIS.map((emo) => (
           <button
             key={emo}
             type="button"
-            className="bg-transparent transition-transform hover:scale-125 text-2xl"
+            className={`bg-transparent transition-transform hover:scale-125 text-2xl ${pickedEmoji === emo ? 'ring-2 ring-blue-400 rounded-full' : ''}`}
             aria-label={`React with ${emo}`}
             onClick={() => handleEmojiSelect(emo)}
             disabled={!!pickedEmoji}
@@ -231,6 +263,14 @@ export function LivePresenceLayer({ workshopId, workspaceRef }: Props) {
           </button>
         ))}
       </div>
+
+      <style jsx global>{`
+        @keyframes pop-in {
+          0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+          70% { transform: translate(-50%, -50%) scale(1.8); opacity: 1; }
+          100% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }

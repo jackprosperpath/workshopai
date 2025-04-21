@@ -141,10 +141,7 @@ export default function ConsensusWorkshop() {
           />
         </TabsContent>
         <TabsContent value="draft">
-          <DraftLimitWrapper 
-            draftsCount={versions.length} 
-            onNavigateToTeam={navigateToTeamTab}
-          >
+          <DraftLimitWrapper>
             <div className="relative min-h-[500px]" ref={workspaceRef}>
               <DraftWorkspace 
                 currentDraft={currentDraft}
