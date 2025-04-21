@@ -13,7 +13,7 @@ export const Hero = () => {
           </span> WORKING TOGETHER
         </h1>
         <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
-          WorkshopAI transforms any meeting into an interactive AI co‑creation workshop that drives instant team buy‑in.
+          Turn every meeting into a powerful, AI-driven workshop that creates solutions, sparks meaningful discussions, and moves ideas to action—fast.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link to="/auth">
@@ -26,3 +26,4 @@ export const Hero = () => {
     </section>
   );
 };
+
