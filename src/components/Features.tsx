@@ -34,7 +34,7 @@ export const Features = () => {
             Why Teams Love WorkshopAI
           </h2>
           <p className="mt-6 text-lg leading-8 text-gray-600">
-            Built for teams who want to harness the full potential of AI through collaborative prompt engineering.
+            Generate a solution, debate it together, and walk out with an endorsed deliverable&nbsp;&mdash;&nbsp;all in under an hour.
           </p>
         </div>
         <div className="mx-auto mt-16 max-w-7xl sm:mt-20 lg:mt-24">
