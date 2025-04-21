@@ -4,8 +4,8 @@ import { ArrowRight } from "lucide-react";
 const steps = [
   {
     number: "01",
-    title: "Start a Meeting",
-    description: "Schedule or start an instant meeting with your team through our platform."
+    title: "Pick Your Team",
+    description: "Choose which humans and AI models you want to workshop your problem with."
   },
   {
     number: "02",
@@ -54,3 +54,4 @@ export const HowItWorks = () => {
     </section>
   );
 };
+
