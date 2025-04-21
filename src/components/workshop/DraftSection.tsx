@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
@@ -8,6 +7,8 @@ import type { SectionFeedback } from "@/hooks/useDraftWorkspace";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge as FeedbackBadge } from "@/components/ui/badge";
 
 type User = {
   id: string;
@@ -63,15 +64,12 @@ export default function DraftSection({
   setActiveThread,
   sectionFeedback
 }: DraftSectionProps) {
-  // Create a ref to store the latest content
   const contentRef = React.useRef(editableContent);
   
-  // Update the ref whenever editableContent changes
   React.useEffect(() => {
     contentRef.current = editableContent;
   }, [editableContent]);
 
-  // Initialize TipTap editor with default options even when not editing
   const editor = useEditor({
     extensions: [StarterKit, Underline],
     content: editableContent,
@@ -80,7 +78,6 @@ export default function DraftSection({
       setEditableContent(newContent);
     },
     editable: !!editable,
-    // Only enable editor when in editing mode
     editorProps: {
       attributes: {
         class: editable ? 'min-h-[120px] focus:outline-none' : 'hidden'
@@ -88,10 +85,8 @@ export default function DraftSection({
     }
   });
 
-  // Synchronize editor with content when entering edit mode or when content changes
   React.useEffect(() => {
     if (editor && editable) {
-      // Only update content if it's different to avoid cursor jumping
       if (editor.getHTML() !== contentRef.current) {
         editor.commands.setContent(contentRef.current);
       }
@@ -102,13 +97,16 @@ export default function DraftSection({
     }
   }, [editable, editor]);
 
+  const firstFeedbackLine =
+    sectionFeedback && sectionFeedback.length > 0
+      ? sectionFeedback[0].text.split('\n')[0].slice(0, 60)
+      : "";
+
   return (
     <div className="mb-6 relative">
       {editingSection === idx ? (
         <div className="space-y-2">
-          {/* TipTap Rich Text Editor, in place */}
           <div className="border rounded min-h-[120px] bg-white py-2 px-3">
-            {/* Basic formatting controls */}
             <div className="mb-2 flex gap-1">
               <Button
                 variant="ghost"
@@ -177,7 +175,6 @@ export default function DraftSection({
             <div
               className={`${editingSection !== idx ? "cursor-pointer hover:bg-slate-50" : ""}`}
               onClick={() => editingSection === null && onEditStart(idx, para)}
-              // Render HTML directly from either editingSessions or para (para is plain text fallback).
               dangerouslySetInnerHTML={{
                 __html: editingSessions[idx]
                   ? editingSessions[idx]
@@ -186,15 +183,39 @@ export default function DraftSection({
             />
           </div>
           <div className="flex items-center mt-2 gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-xs h-7 px-2 rounded-full"
-              onClick={() => setActiveThread(activeThread === idx ? null : idx)}
-            >
-              <MessageCircle className="h-3 w-3 mr-1" />
-              {activeThread === idx ? "Hide" : "Comment"}
-            </Button>
+            <TooltipProvider>
+              <Tooltip disableHoverableContent={!(sectionFeedback.length > 0 && activeThread !== idx)}>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-xs h-7 px-2 rounded-full relative"
+                    onClick={() => setActiveThread(activeThread === idx ? null : idx)}
+                  >
+                    <MessageCircle className="h-3 w-3 mr-1" />
+                    {activeThread === idx ? "Hide" : "Comment"}
+                    {sectionFeedback.length > 0 && activeThread !== idx && (
+                      <FeedbackBadge
+                        variant="default"
+                        className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 text-[10px] h-4 px-1"
+                      >
+                        {sectionFeedback.length}
+                      </FeedbackBadge>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                {sectionFeedback.length > 0 && activeThread !== idx && (
+                  <TooltipContent side="top" className="max-w-xs">
+                    <span className="block text-xs">
+                      {firstFeedbackLine}
+                      {sectionFeedback.length > 1 && (
+                        <span className="text-muted-foreground ml-2">+{sectionFeedback.length - 1} more</span>
+                      )}
+                    </span>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
             <Button
               size="sm"
               variant="ghost"
