@@ -51,7 +51,6 @@ export function DraftWorkspace({
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [showCommentsSidebar, setShowCommentsSidebar] = useState(false);
 
-  // Presence and comments refactored to hooks
   const { activeUsers, editingSessions } = useDraftPresence(currentDraft);
   const {
     comments, setComments, activeComment, setActiveComment,
@@ -385,7 +384,7 @@ export function DraftWorkspace({
         isSystem: true,
         question: q.question
       }));
-  };
+  });
 
   const allComments = [
     ...aiDiscussionComments,
