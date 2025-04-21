@@ -14,8 +14,8 @@ const steps = [
   },
   {
     number: "03",
-    title: "Generate Solutions",
-    description: "Let AI generate solutions based on your team's collaborative input."
+    title: "Collaborate on Solutions",
+    description: "Rapidly iterate potential solutions and generate a tangible output in one session."
   },
   {
     number: "04",
