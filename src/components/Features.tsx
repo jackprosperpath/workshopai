@@ -29,6 +29,9 @@ export const Features = () => {
   return (
     <div className="bg-white py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <p className="mb-10 text-center text-xl font-semibold text-primary">
+          Experience the future of collaborative problem-solving
+        </p>
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-display text-3xl font-bold tracking-tight text-primary sm:text-4xl">
             Why Teams Love WorkshopAI
@@ -58,4 +61,3 @@ export const Features = () => {
     </div>
   );
 };
-
