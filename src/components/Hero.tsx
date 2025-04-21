@@ -17,7 +17,7 @@ export const Hero = () => {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link to="/auth">
-            <Button size="lg" variant="outline" className="hover:bg-gray-800">
+            <Button size="lg" variant="outline" className="hover:bg-accent/90">
               Try It Now
             </Button>
           </Link>
