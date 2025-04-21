@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -264,13 +265,15 @@ export function LivePresenceLayer({ workshopId, workspaceRef }: Props) {
         ))}
       </div>
 
-      <style jsx global>{`
-        @keyframes pop-in {
-          0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-          70% { transform: translate(-50%, -50%) scale(1.8); opacity: 1; }
-          100% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
-        }
-      `}</style>
+      <style>
+        {`
+          @keyframes pop-in {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            70% { transform: translate(-50%, -50%) scale(1.8); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+          }
+        `}
+      </style>
     </div>
   );
 }

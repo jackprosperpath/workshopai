@@ -1,6 +1,6 @@
 
 // Remove all draft/unlock logic, always enable premium for everyone.
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -27,7 +27,7 @@ export function useTeamInvites() {
   const [lastInviteResult, setLastInviteResult] = useState<InviteResult | null>(null);
 
   // Get current workshop ID from URL once; devMode flag only for edge case UI
-  React.useEffect(() => {
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id') ?? params.get('share');
     if (id) setWorkshopId(id);
