@@ -1,11 +1,12 @@
 
-import React, { useRef, useEffect, useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { SectionFeedback } from "@/hooks/useDraftWorkspace";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
 
 type User = {
   id: string;
@@ -61,16 +62,68 @@ export default function DraftSection({
   setActiveThread,
   sectionFeedback
 }: DraftSectionProps) {
+  // Initialize TipTap editor (only for editing mode of this section)
+  const editor = useEditor(
+    editable
+      ? {
+          extensions: [StarterKit],
+          content: editableContent,
+          onUpdate: ({ editor }) => {
+            setEditableContent(editor.getHTML());
+          },
+        }
+      : null
+  );
+
+  React.useEffect(() => {
+    if (editable && editor) {
+      editor.commands.setContent(editableContent);
+      editor.commands.focus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editable]);
+
   return (
     <div className="mb-6 relative">
       {editingSection === idx ? (
         <div className="space-y-2">
-          <Textarea
-            ref={editTextareaRef}
-            value={editableContent}
-            onChange={onContentChange}
-            className="min-h-[120px] w-full"
-          />
+          {/* TipTap Rich Text Editor, in place */}
+          <div className="border rounded min-h-[120px] bg-white py-2 px-3">
+            {/* Basic formatting controls (optional, could expand as needed) */}
+            <div className="mb-2 flex gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => editor?.chain().focus().toggleBold().run()}
+                className={editor?.isActive('bold') ? "!bg-slate-200" : ""}
+                type="button"
+                aria-label="Bold"
+              >
+                <span className="font-bold">B</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => editor?.chain().focus().toggleItalic().run()}
+                className={editor?.isActive('italic') ? "!bg-slate-200" : ""}
+                type="button"
+                aria-label="Italic"
+              >
+                <span className="italic">I</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => editor?.chain().focus().toggleUnderline().run()}
+                className={editor?.isActive('underline') ? "!bg-slate-200" : ""}
+                type="button"
+                aria-label="Underline"
+              >
+                <span className="underline">U</span>
+              </Button>
+            </div>
+            <EditorContent editor={editor} />
+          </div>
           <div className="flex justify-end gap-2">
             <Button 
               variant="outline" 
@@ -102,12 +155,16 @@ export default function DraftSection({
                 {getEditingUserForSection(idx)?.name} is editing...
               </Badge>
             )}
-            <p 
+            <div
               className={`${editingSection !== idx ? "cursor-pointer hover:bg-slate-50" : ""}`}
               onClick={() => editingSection === null && onEditStart(idx, para)}
-            >
-              {editingSessions[idx] ? editingSessions[idx] : highlightChanges(para, idx)}
-            </p>
+              // Render HTML directly from either editingSessions or para (para is plain text fallback).
+              dangerouslySetInnerHTML={{
+                __html: editingSessions[idx]
+                  ? editingSessions[idx]
+                  : highlightChanges(para, idx) as string
+              }}
+            />
           </div>
           <div className="flex items-center mt-2 gap-2">
             <Button
