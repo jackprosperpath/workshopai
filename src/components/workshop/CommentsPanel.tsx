@@ -4,7 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { MessageCircle, X } from "lucide-react";
+import { MessageCircle, X, MessageSquare, Lightbulb } from "lucide-react";
 
 export type Comment = {
   id: string;
@@ -18,6 +18,8 @@ export type Comment = {
     endOffset: number;
     content: string;
   };
+  isSystem?: boolean;
+  question?: string;
 };
 
 interface CommentsPanelProps {
@@ -35,6 +37,10 @@ export function CommentsPanel({
   onDeleteComment,
   onJumpToComment,
 }: CommentsPanelProps) {
+  // Separate user comments from AI discussion prompts
+  const userComments = comments.filter(comment => !comment.isSystem);
+  const aiDiscussionComments = comments.filter(comment => comment.isSystem);
+
   if (comments.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-center p-4">
@@ -50,47 +56,93 @@ export function CommentsPanel({
   return (
     <ScrollArea className="h-full">
       <div className="p-4 space-y-4">
-        {comments.map((comment) => (
-          <div 
-            key={comment.id}
-            className={`rounded-lg border p-3 ${
-              activeComment === comment.id ? "bg-accent" : ""
-            }`}
-          >
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex items-center gap-2">
-                <Avatar className="h-6 w-6">
-                  <div className="bg-primary text-primary-foreground w-full h-full flex items-center justify-center text-xs font-medium">
-                    {comment.authorName.charAt(0).toUpperCase()}
-                  </div>
-                </Avatar>
-                <div>
-                  <div className="text-sm font-medium">{comment.authorName}</div>
-                  <div className="text-xs text-muted-foreground">{comment.timestamp}</div>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0"
-                onClick={() => onDeleteComment(comment.id)}
-              >
-                <X className="h-4 w-4" />
-                <span className="sr-only">Delete comment</span>
-              </Button>
+        {aiDiscussionComments.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Lightbulb className="h-4 w-4 text-primary" />
+              <h4 className="text-sm font-medium">AI Discussion Points</h4>
             </div>
-            
-            {comment.selection.content && (
-              <div className="bg-muted px-2 py-1 rounded text-xs italic mb-2 cursor-pointer" onClick={() => onJumpToComment(comment)}>
-                "{comment.selection.content.length > 60 
-                  ? comment.selection.content.substring(0, 60) + "..." 
-                  : comment.selection.content}"
+            {aiDiscussionComments.map((comment) => (
+              <div 
+                key={comment.id}
+                className={`rounded-lg border p-3 mb-2 ${
+                  activeComment === comment.id ? "bg-accent" : "bg-muted/30"
+                }`}
+                onClick={() => setActiveComment(comment.id !== activeComment ? comment.id : null)}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-6 w-6">
+                      <div className="bg-primary text-primary-foreground w-full h-full flex items-center justify-center text-xs font-medium">
+                        AI
+                      </div>
+                    </Avatar>
+                    <div className="text-sm font-medium">{comment.authorName}</div>
+                  </div>
+                </div>
+                
+                <div className="bg-background px-2 py-1 rounded text-sm mb-2 cursor-pointer" onClick={() => onJumpToComment(comment)}>
+                  <span className="font-medium">Q:</span> {comment.selection.content}
+                </div>
+                
+                <div className="text-sm whitespace-pre-wrap">{comment.text}</div>
+              </div>
+            ))}
+            {userComments.length > 0 && <Separator className="my-4" />}
+          </div>
+        )}
+
+        {userComments.length > 0 && (
+          <div>
+            {userComments.length > 0 && aiDiscussionComments.length > 0 && (
+              <div className="flex items-center gap-2 mb-2">
+                <MessageSquare className="h-4 w-4 text-primary" />
+                <h4 className="text-sm font-medium">User Comments</h4>
               </div>
             )}
-            
-            <div className="text-sm whitespace-pre-wrap">{comment.text}</div>
+            {userComments.map((comment) => (
+              <div 
+                key={comment.id}
+                className={`rounded-lg border p-3 ${
+                  activeComment === comment.id ? "bg-accent" : ""
+                }`}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-6 w-6">
+                      <div className="bg-primary text-primary-foreground w-full h-full flex items-center justify-center text-xs font-medium">
+                        {comment.authorName.charAt(0).toUpperCase()}
+                      </div>
+                    </Avatar>
+                    <div>
+                      <div className="text-sm font-medium">{comment.authorName}</div>
+                      <div className="text-xs text-muted-foreground">{comment.timestamp}</div>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={() => onDeleteComment(comment.id)}
+                  >
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Delete comment</span>
+                  </Button>
+                </div>
+                
+                {comment.selection.content && (
+                  <div className="bg-muted px-2 py-1 rounded text-xs italic mb-2 cursor-pointer" onClick={() => onJumpToComment(comment)}>
+                    "{comment.selection.content.length > 60 
+                      ? comment.selection.content.substring(0, 60) + "..." 
+                      : comment.selection.content}"
+                  </div>
+                )}
+                
+                <div className="text-sm whitespace-pre-wrap">{comment.text}</div>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
     </ScrollArea>
   );

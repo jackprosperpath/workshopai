@@ -364,7 +364,6 @@ export function DraftWorkspace({
     return newVersionIdx >= 0 ? versions[newVersionIdx].output : [];
   };
 
-  // Synthesize "system" comments for AI discussion points using sectionPrompts
   const aiDiscussionComments = Object.entries(sectionPrompts).flatMap(([sectionIdxStr, section]) => {
     if (!section || !section.questions) return [];
     const idx = parseInt(sectionIdxStr, 10);
@@ -387,14 +386,13 @@ export function DraftWorkspace({
       }));
   });
 
-  // The panel now receives both
   const allComments = [
     ...aiDiscussionComments,
     ...comments,
   ];
 
   return (
-    <section>
+    <section className="h-full">
       <div className="flex justify-between items-center p-4 border-b">
         <h2 className="font-semibold">Draft v{currentDraft.id}</h2>
         <div className="flex items-center gap-2">
@@ -439,108 +437,110 @@ export function DraftWorkspace({
         </div>
       </div>
 
-      <div className="flex">
-        <Card className={`flex-1 p-6 m-4 bg-card rounded-xl shadow-sm min-h-[300px] transition-all duration-200`}>
-          {currentDraft?.output.map((para, idx) => (
-            <DraftSection
-              key={`section-${idx}`}
-              idx={idx}
-              para={para}
-              currentDraftId={currentDraft.id}
-              editable={editingDraft && editingSection === idx}
-              editingSection={editingSection}
-              editingSessions={editingSessions}
-              setEditableContent={setEditableContent}
-              editableContent={editableContent}
-              editTextareaRef={editTextareaRef}
-              onEditStart={handleEditStart}
-              onEditCancel={handleEditCancel}
-              onEditSave={handleEditSave}
-              onContentChange={handleContentChange}
-              isSaving={isSaving}
-              isUserEditingSection={isUserEditingSection}
-              getEditingUserForSection={getEditingUserForSection}
-              highlightChanges={highlightChanges}
-              activeComment={activeComment}
-              setActiveComment={setActiveComment}
-              comments={comments}
-              addComment={addComment}
-              improveSection={improveSection}
-              updateDraftSection={handleUpdateSection}
-              discussionPrompts={sectionPrompts[idx]}
-              onGeneratePrompts={generatePrompts}
-              onTogglePrompts={togglePromptsVisibility}
-              onAddPromptAnswer={addAnswer}
-            />
-          ))}
-          
-          {Object.entries(sectionPrompts).some(([_, prompts]) => 
-            prompts.questions.some(q => q.isAnswered)
-          ) && (
-            <div className="mt-4 p-3 border rounded-md bg-muted/20">
-              <h4 className="font-medium text-sm mb-2">Discussion answers</h4>
-              <p className="text-sm text-muted-foreground mb-3">
-                Submit discussion answers as feedback to improve the next draft generation.
-              </p>
-              <div className="space-y-2">
-                {Object.entries(sectionPrompts).map(([sectionIdxStr, prompts]) => {
-                  const sectionIdx = parseInt(sectionIdxStr);
-                  const answeredCount = prompts.questions.filter(q => q.isAnswered).length;
-                  
-                  if (answeredCount === 0) return null;
-                  
-                  return (
-                    <div key={sectionIdxStr} className="flex justify-between items-center">
-                      <span className="text-sm">
-                        Section {sectionIdx + 1}: {answeredCount} answered
-                      </span>
-                      <Button 
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleSubmitPromptFeedback(sectionIdx)}
-                      >
-                        Submit as feedback
-                      </Button>
-                    </div>
-                  );
-                })}
+      <div className="flex h-[calc(100vh-15rem)] overflow-hidden">
+        <div className={`flex-1 overflow-auto transition-all duration-200 ${showCommentsSidebar ? 'w-3/4' : 'w-full'}`}>
+          <Card className="p-6 m-4 bg-card rounded-xl shadow-sm">
+            {currentDraft?.output.map((para, idx) => (
+              <DraftSection
+                key={`section-${idx}`}
+                idx={idx}
+                para={para}
+                currentDraftId={currentDraft.id}
+                editable={editingDraft && editingSection === idx}
+                editingSection={editingSection}
+                editingSessions={editingSessions}
+                setEditableContent={setEditableContent}
+                editableContent={editableContent}
+                editTextareaRef={editTextareaRef}
+                onEditStart={handleEditStart}
+                onEditCancel={handleEditCancel}
+                onEditSave={handleEditSave}
+                onContentChange={handleContentChange}
+                isSaving={isSaving}
+                isUserEditingSection={isUserEditingSection}
+                getEditingUserForSection={getEditingUserForSection}
+                highlightChanges={highlightChanges}
+                activeComment={activeComment}
+                setActiveComment={setActiveComment}
+                comments={comments}
+                addComment={addComment}
+                improveSection={improveSection}
+                updateDraftSection={handleUpdateSection}
+                discussionPrompts={sectionPrompts[idx]}
+                onGeneratePrompts={generatePrompts}
+                onTogglePrompts={togglePromptsVisibility}
+                onAddPromptAnswer={addAnswer}
+              />
+            ))}
+            
+            {Object.entries(sectionPrompts).some(([_, prompts]) => 
+              prompts.questions.some(q => q.isAnswered)
+            ) && (
+              <div className="mt-4 p-3 border rounded-md bg-muted/20">
+                <h4 className="font-medium text-sm mb-2">Discussion answers</h4>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Submit discussion answers as feedback to improve the next draft generation.
+                </p>
+                <div className="space-y-2">
+                  {Object.entries(sectionPrompts).map(([sectionIdxStr, prompts]) => {
+                    const sectionIdx = parseInt(sectionIdxStr);
+                    const answeredCount = prompts.questions.filter(q => q.isAnswered).length;
+                    
+                    if (answeredCount === 0) return null;
+                    
+                    return (
+                      <div key={sectionIdxStr} className="flex justify-between items-center">
+                        <span className="text-sm">
+                          Section {sectionIdx + 1}: {answeredCount} answered
+                        </span>
+                        <Button 
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleSubmitPromptFeedback(sectionIdx)}
+                        >
+                          Submit as feedback
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
-          
-          <div className="flex gap-2 mt-4">
-            <Button
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-              onClick={onRePrompt}
-              disabled={loading}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-              {loading ? "Generating…" : "Re‑prompt"}
-            </Button>
+            )}
+            
+            <div className="flex gap-2 mt-4">
+              <Button
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                onClick={onRePrompt}
+                disabled={loading}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+                {loading ? "Generating…" : "Re‑prompt"}
+              </Button>
 
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (currentDraft) {
-                  const finalVersion = {
-                    ...currentDraft,
-                    isFinal: true,
-                  };
-                  const updatedVersions = versions.map((v, i) =>
-                    i === currentIdx ? finalVersion : v
-                  );
-                  setCurrentIdx(currentIdx || 0);
-                  window.location.hash = "endorsement";
-                }
-              }}
-            >
-              Finalise
-            </Button>
-          </div>
-        </Card>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (currentDraft) {
+                    const finalVersion = {
+                      ...currentDraft,
+                      isFinal: true,
+                    };
+                    const updatedVersions = versions.map((v, i) =>
+                      i === currentIdx ? finalVersion : v
+                    );
+                    setCurrentIdx(currentIdx || 0);
+                    window.location.hash = "endorsement";
+                  }
+                }}
+              >
+                Finalise
+              </Button>
+            </div>
+          </Card>
+        </div>
         
         {showCommentsSidebar && (
-          <div className="w-1/4 border-l h-[calc(100vh-15rem)] overflow-hidden">
+          <div className="w-1/4 border-l h-full overflow-hidden flex flex-col">
             <div className="flex justify-between items-center p-3 border-b">
               <h3 className="font-medium">Comments & Discussion</h3>
               <Button 
@@ -553,13 +553,15 @@ export function DraftWorkspace({
                 <span>×</span>
               </Button>
             </div>
-            <CommentsPanel
-              comments={allComments}
-              activeComment={activeComment}
-              setActiveComment={setActiveComment}
-              onDeleteComment={handleDeleteComment}
-              onJumpToComment={handleJumpToComment}
-            />
+            <div className="flex-1 overflow-hidden">
+              <CommentsPanel
+                comments={allComments}
+                activeComment={activeComment}
+                setActiveComment={setActiveComment}
+                onDeleteComment={handleDeleteComment}
+                onJumpToComment={handleJumpToComment}
+              />
+            </div>
           </div>
         )}
       </div>

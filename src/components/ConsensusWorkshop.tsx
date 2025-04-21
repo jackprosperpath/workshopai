@@ -116,7 +116,7 @@ export default function ConsensusWorkshop() {
   };
 
   return (
-    <div className="w-full space-y-4 relative flex">
+    <div className="w-full h-full space-y-4 relative">
       <WorkshopActions />
       {workshopId && (
         <LivePresenceLayer workshopId={workshopId} workspaceRef={workspaceRef} />
@@ -156,7 +156,7 @@ export default function ConsensusWorkshop() {
               loading={loading}
             />
           </TabsContent>
-          <TabsContent value="draft">
+          <TabsContent value="draft" className="overflow-hidden">
             <DraftLimitWrapper>
               <div className="relative min-h-[500px]" ref={workspaceRef}>
                 <DraftWorkspace 

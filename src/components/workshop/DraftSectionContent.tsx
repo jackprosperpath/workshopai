@@ -89,6 +89,12 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
     return parts;
   };
 
+  // Count AI discussion prompts for this section
+  const hasDiscussionPrompts = discussionPrompts && discussionPrompts.questions && discussionPrompts.questions.length > 0;
+  const answeredPromptsCount = hasDiscussionPrompts 
+    ? discussionPrompts.questions.filter(q => q.isAnswered).length 
+    : 0;
+
   return (
     <div
       ref={sectionRef}
@@ -109,6 +115,13 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
           <Badge variant="outline" className="flex items-center gap-1 h-7 px-2">
             <MessageSquare className="h-3 w-3" />
             {sectionComments.length}
+          </Badge>
+        )}
+        
+        {answeredPromptsCount > 0 && (
+          <Badge variant="outline" className="flex items-center gap-1 h-7 px-2 bg-primary/10">
+            <Lightbulb className="h-3 w-3" />
+            {answeredPromptsCount} answered
           </Badge>
         )}
       </div>
