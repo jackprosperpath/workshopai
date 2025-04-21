@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import SectionImproveActions from "./SectionImproveActions";
@@ -31,14 +32,6 @@ interface DraftSectionProps {
   addComment: (sectionIdx: number, text: string, startOffset: number, endOffset: number, selectedText: string) => void;
   improveSection: (type: "redraft" | "add_detail" | "simplify", idx: number, para: string) => Promise<{ newText?: string; reasoning?: string }>;
   updateDraftSection: (sectionIdx: number, content: string) => Promise<boolean>;
-  discussionPrompts?: {
-    questions: any[];
-    isLoading: boolean;
-    isVisible: boolean;
-  };
-  onGeneratePrompts?: (sectionIdx: number, text: string) => void;
-  onTogglePrompts?: (sectionIdx: number) => void;
-  onAddPromptAnswer?: (sectionIdx: number, promptId: string, answer: string) => void;
 }
 
 const DraftSection: React.FC<DraftSectionProps> = ({
@@ -64,11 +57,7 @@ const DraftSection: React.FC<DraftSectionProps> = ({
   comments,
   addComment,
   improveSection,
-  updateDraftSection,
-  discussionPrompts,
-  onGeneratePrompts,
-  onTogglePrompts,
-  onAddPromptAnswer
+  updateDraftSection
 }) => {
   const [selection, setSelection] = useState<{ start: number; end: number; text: string } | null>(null);
   const [showCommentInput, setShowCommentInput] = useState(false);
@@ -80,13 +69,6 @@ const DraftSection: React.FC<DraftSectionProps> = ({
   const [diffIndices, setDiffIndices] = useState<number[]>([]);
   const sectionRef = useRef<HTMLDivElement>(null);
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    if (onGeneratePrompts && para && !editable) {
-      console.log("Triggering prompt generation for section", idx);
-      onGeneratePrompts(idx, para);
-    }
-  }, [idx, para, onGeneratePrompts, editable]);
 
   const handleStartEdit = () => {
     setShowVisualDiff(false);
@@ -300,9 +282,6 @@ const DraftSection: React.FC<DraftSectionProps> = ({
             setActiveComment={setActiveComment}
             sectionRef={sectionRef}
             onEditStart={onEditStart}
-            discussionPrompts={discussionPrompts}
-            onTogglePrompts={onTogglePrompts ? () => onTogglePrompts(idx) : undefined}
-            onAddPromptAnswer={onAddPromptAnswer ? (promptId, answer) => onAddPromptAnswer(idx, promptId, answer) : undefined}
           />
 
           {selection && selection.text && !showCommentInput && (

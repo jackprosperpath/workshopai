@@ -14,7 +14,6 @@ import { useStakeholders } from "@/hooks/useStakeholders";
 import { useWorkshopActions } from "@/hooks/useWorkshopActions";
 import { LivePresenceLayer } from "./workshop/LivePresenceLayer";
 import { useRef } from "react";
-// (No more import { DiscussionPanel } ... )
 
 export default function ConsensusWorkshop() {
   const [activeTab, setActiveTab] = useState("draft");
@@ -71,16 +70,7 @@ export default function ConsensusWorkshop() {
   const { handleSaveWorkshop } = useWorkshopActions();
 
   const workspaceRef = useRef<HTMLDivElement>(null);
-
-  // Remove useDiscussionPrompts/global section prompts here
   
-  const [discussionCollapsed, setDiscussionCollapsed] = useState(false);
-
-  useEffect(() => {
-    // Remove generatePrompts
-    // AI discussion handled in DraftWorkspace sidebar now
-  }, [currentDraft]);
-
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
     if (hash && ['draft', 'prompt', 'stakeholders', 'team'].includes(hash)) {
@@ -121,8 +111,6 @@ export default function ConsensusWorkshop() {
       {workshopId && (
         <LivePresenceLayer workshopId={workshopId} workspaceRef={workspaceRef} />
       )}
-
-      {/* No more DiscussionPanel */}
 
       {/* --- Main Workshop Tabs/Content --- */}
       <div className="flex-1">
@@ -171,7 +159,6 @@ export default function ConsensusWorkshop() {
                   loading={loading}
                   workshopId={workshopId}
                   updateDraftSection={updateDraftSection}
-                  // No need to pass sectionPrompts as prop, will load inside workspace
                 />
               </div>
             </DraftLimitWrapper>

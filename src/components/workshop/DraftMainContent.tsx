@@ -28,16 +28,9 @@ export function DraftMainContent({
   addComment,
   improveSection,
   updateDraftSection,
-  sectionPrompts,
-  generatePrompts,
-  togglePromptsVisibility,
-  addAnswer,
+  handleSubmitPromptFeedback,
   onRePrompt,
   loading,
-  currentIdx,
-  versions,
-  handleSubmitPromptFeedback,
-  setCurrentIdx
 }: any) {
   return (
     <Card className="p-6 m-4 bg-card rounded-xl shadow-sm">
@@ -67,14 +60,9 @@ export function DraftMainContent({
           addComment={addComment}
           improveSection={improveSection}
           updateDraftSection={updateDraftSection}
-          discussionPrompts={sectionPrompts[idx]}
-          onGeneratePrompts={generatePrompts}
-          onTogglePrompts={togglePromptsVisibility}
-          onAddPromptAnswer={addAnswer}
         />
       ))}
       <DraftFeedbackDiscussion
-        sectionPrompts={sectionPrompts}
         handleSubmitPromptFeedback={handleSubmitPromptFeedback}
       />
       <div className="flex gap-2 mt-4">
@@ -86,7 +74,6 @@ export function DraftMainContent({
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
           {loading ? "Generating…" : "Re‑prompt"}
         </Button>
-        {/* Finalise logic left inside DraftWorkspace for now */}
       </div>
     </Card>
   );

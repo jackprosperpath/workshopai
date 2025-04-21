@@ -14,15 +14,15 @@ serve(async (req) => {
   }
 
   try {
-    const { sectionText } = await req.json();
+    const { fullText, sectionTexts } = await req.json();
 
-    if (!sectionText || typeof sectionText !== 'string' || sectionText.trim().length === 0) {
-      console.error('Invalid section text:', sectionText);
+    if (!fullText || typeof fullText !== 'string' || fullText.trim().length === 0) {
+      console.error('Invalid document text:', fullText);
       return new Response(
         JSON.stringify({ 
-          error: 'Invalid or empty section text',
+          error: 'Invalid or empty document text',
           questions: getDefaultQuestions(),
-          sectionHash: generateSimpleHash(sectionText || ''),
+          documentHash: generateSimpleHash(fullText || ''),
           timestamp: new Date().toISOString()
         }),
         { 
@@ -33,14 +33,15 @@ serve(async (req) => {
     }
 
     // Generate a hash for caching/identifying this text
-    const sectionHash = generateSimpleHash(sectionText);
+    const documentHash = generateSimpleHash(fullText);
     
     const SYSTEM = `
     You are a world-class facilitator helping cross-functional teams stress-test ideas.
-    Given a solution section, output 3 thought-provoking questions that:
-    - Spark constructive debate
-    - Expose risks or missing data
-    - Are answerable within 2 minutes
+    Given a proposed solution document, output exactly 3 thought-provoking questions that:
+    - Address the document holistically, considering the entire solution
+    - Expose potential risks, implementation challenges, or missing data
+    - Are specific enough to be answered but broad enough to prompt meaningful discussion
+    - Would be valuable for stakeholders to consider before approving
     Return JSON: { "questions": [ ... ] }
     `;
 
@@ -58,10 +59,10 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: 'gpt-4o-mini',
-          temperature: 0.8,
+          temperature: 0.7,
           messages: [
             { role: 'system', content: SYSTEM },
-            { role: 'user', content: sectionText }
+            { role: 'user', content: fullText }
           ],
         }),
       });
@@ -103,7 +104,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           questions,
-          sectionHash,
+          documentHash,
           timestamp: new Date().toISOString()
         }),
         { 
@@ -116,7 +117,7 @@ serve(async (req) => {
         JSON.stringify({ 
           error: error.message,
           questions: getDefaultQuestions(),
-          sectionHash,
+          documentHash,
           timestamp: new Date().toISOString()
         }),
         { 
@@ -130,7 +131,7 @@ serve(async (req) => {
       JSON.stringify({ 
         error: error.message,
         questions: getDefaultQuestions(),
-        sectionHash: generateSimpleHash(''),
+        documentHash: generateSimpleHash(''),
         timestamp: new Date().toISOString()
       }),
       { 
@@ -144,13 +145,13 @@ serve(async (req) => {
 // Helper functions
 function getDefaultQuestions() {
   return [
-    "What assumptions is this section making?",
-    "What challenges might arise during implementation?",
-    "Is there anything missing from this recommendation?"
+    "What are the key assumptions underlying this proposed solution?",
+    "What implementation challenges might the team face with this approach?",
+    "Are there any stakeholder perspectives that haven't been addressed in this solution?"
   ];
 }
 
 function generateSimpleHash(text: string): string {
-  // Simple hash function for consistent section identification
+  // Simple hash function for consistent document identification
   return btoa(text.substring(0, 100)).substring(0, 10);
 }

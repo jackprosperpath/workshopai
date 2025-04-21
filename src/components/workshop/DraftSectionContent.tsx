@@ -1,11 +1,8 @@
+
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Lightbulb } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { Comment } from "./CommentsPanel";
-import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
 
 interface DraftSectionContentProps {
   para: string;
@@ -18,13 +15,6 @@ interface DraftSectionContentProps {
   setActiveComment: (id: string | null) => void;
   sectionRef: React.RefObject<HTMLDivElement>;
   onEditStart: (idx: number, content: string) => void;
-  discussionPrompts?: {
-    questions: any[];
-    isLoading: boolean;
-    isVisible: boolean;
-  };
-  onTogglePrompts?: () => void;
-  onAddPromptAnswer?: (promptId: string, answer: string) => void;
 }
 
 export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
@@ -38,12 +28,8 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
   setActiveComment,
   sectionRef,
   onEditStart,
-  discussionPrompts,
-  onTogglePrompts,
-  onAddPromptAnswer
 }) => {
   const sectionComments = comments.filter(comment => comment.selection.sectionIndex === idx);
-  const [promptAnswers, setPromptAnswers] = useState<Record<string, string>>({});
 
   const renderContentWithCommentHighlights = () => {
     if (sectionComments.length === 0 || editingSection === idx) {
@@ -87,28 +73,6 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
     return parts;
   };
 
-  const handlePromptAnswerChange = (promptId: string, value: string) => {
-    setPromptAnswers(prev => ({
-      ...prev,
-      [promptId]: value
-    }));
-  };
-
-  const handleSubmitAnswer = (promptId: string) => {
-    if (onAddPromptAnswer && promptAnswers[promptId]?.trim()) {
-      onAddPromptAnswer(promptId, promptAnswers[promptId].trim());
-      setPromptAnswers(prev => ({
-        ...prev,
-        [promptId]: ''
-      }));
-    }
-  };
-
-  const hasDiscussionPrompts = discussionPrompts && discussionPrompts.questions && discussionPrompts.questions.length > 0;
-  const answeredPromptsCount = hasDiscussionPrompts 
-    ? discussionPrompts.questions.filter(q => q.isAnswered).length 
-    : 0;
-
   return (
     <div
       ref={sectionRef}
@@ -125,84 +89,12 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
     >
       {renderContentWithCommentHighlights()}
       
-      <div className="flex items-center mt-2 gap-2">
-        {sectionComments.length > 0 && (
+      {sectionComments.length > 0 && (
+        <div className="flex items-center mt-2 gap-2">
           <Badge variant="outline" className="flex items-center gap-1 h-7 px-2">
             <MessageSquare className="h-3 w-3" />
             {sectionComments.length}
           </Badge>
-        )}
-        
-        {hasDiscussionPrompts && (
-          <Badge 
-            variant="outline" 
-            className="flex items-center gap-1 h-7 px-2 bg-primary/10 cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (onTogglePrompts) onTogglePrompts();
-            }}
-          >
-            <Lightbulb className="h-3 w-3" />
-            {answeredPromptsCount > 0 ? `${answeredPromptsCount} answered` : "Discuss"}
-          </Badge>
-        )}
-      </div>
-      
-      {hasDiscussionPrompts && discussionPrompts.isVisible && (
-        <div 
-          className="mt-3 border rounded-md p-3 bg-muted/20"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="text-sm font-medium mb-2 flex justify-between items-center">
-            <span>Discussion Points</span>
-            {discussionPrompts.isLoading && <span className="text-xs italic">Loading...</span>}
-          </div>
-          
-          <div className="space-y-3">
-            {discussionPrompts.questions.map((question, qIdx) => (
-              <Collapsible key={question.id} className="border-b border-dashed border-slate-200 pb-2 last:border-0 last:pb-0">
-                <div className="flex justify-between items-start">
-                  <CollapsibleTrigger className="text-left font-medium text-sm hover:text-primary transition-colors">
-                    {question.question}
-                  </CollapsibleTrigger>
-                  {question.isAnswered && (
-                    <Badge variant="outline" className="text-xs bg-green-50">
-                      Answered
-                    </Badge>
-                  )}
-                </div>
-                
-                <CollapsibleContent className="pt-2">
-                  {question.answers.length > 0 && (
-                    <div className="mb-2 space-y-1">
-                      {question.answers.map((answer: string, aIdx: number) => (
-                        <div key={aIdx} className="bg-background p-2 rounded text-sm">
-                          {answer}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  <div className="flex gap-2 mt-2">
-                    <Textarea
-                      placeholder="Add your thoughts..."
-                      className="text-sm min-h-[60px]"
-                      value={promptAnswers[question.id] || ''}
-                      onChange={(e) => handlePromptAnswerChange(question.id, e.target.value)}
-                    />
-                    <Button 
-                      size="sm" 
-                      className="self-end"
-                      disabled={!promptAnswers[question.id]?.trim()}
-                      onClick={() => handleSubmitAnswer(question.id)}
-                    >
-                      Submit
-                    </Button>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            ))}
-          </div>
         </div>
       )}
     </div>
