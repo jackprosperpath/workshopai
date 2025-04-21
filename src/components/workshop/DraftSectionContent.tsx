@@ -145,4 +145,3 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
     </div>
   );
 };
-
