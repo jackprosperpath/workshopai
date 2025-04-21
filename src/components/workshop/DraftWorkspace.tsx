@@ -7,7 +7,7 @@ import { toast } from "@/components/ui/sonner";
 import DraftSection from "./DraftSection";
 import ActiveUsersAvatars from "./ActiveUsersAvatars";
 import DraftVersionSelector from "./DraftVersionSelector";
-import OGCardShareButton from "./OGCardShareButton";
+import { OGCardShareButton } from "./OGCardShareButton";
 
 export function DraftWorkspace({
   currentDraft,

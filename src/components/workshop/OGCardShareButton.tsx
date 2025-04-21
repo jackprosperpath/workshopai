@@ -1,7 +1,7 @@
 
 import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ProgressBar } from "lucide-react";
+import { Share } from "lucide-react";
 import domtoimage from "dom-to-image";
 import { toast } from "@/components/ui/sonner";
 
@@ -56,7 +56,7 @@ export function OGCardShareButton({ captureSelector, remixUrl }: OGCardShareButt
         variant="outline"
         title="Share solution recap to LinkedIn"
       >
-        <ProgressBar className="h-4 w-4 mr-1" />
+        <Share className="h-4 w-4 mr-1" />
         Publish Recap (LinkedIn)
       </Button>
       <Button
@@ -65,7 +65,7 @@ export function OGCardShareButton({ captureSelector, remixUrl }: OGCardShareButt
         variant="outline"
         title="Share solution recap to X"
       >
-        <ProgressBar className="h-4 w-4 mr-1" />
+        <Share className="h-4 w-4 mr-1" />
         Publish Recap (X)
       </Button>
       <a
@@ -80,3 +80,4 @@ export function OGCardShareButton({ captureSelector, remixUrl }: OGCardShareButt
     </div>
   );
 }
+
