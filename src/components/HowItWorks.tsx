@@ -19,8 +19,8 @@ const steps = [
   },
   {
     number: "04",
-    title: "Iterate & Approve",
-    description: "Refine results and get stakeholder approval all in one place."
+    title: "Approve and Export",
+    description: "Hit Sign‑off to lock the version and ship a ready‑to‑present artefact."
   }
 ];
 
@@ -54,4 +54,3 @@ export const HowItWorks = () => {
     </section>
   );
 };
-
