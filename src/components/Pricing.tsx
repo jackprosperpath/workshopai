@@ -8,10 +8,9 @@ const tiers = [
     price: "Free",
     description: "Perfect for trying out Converge.ai",
     features: [
-      "Up to 5 team members",
-      "3 AI models",
-      "Basic collaboration tools",
-      "Community support"
+      "Up to 2 team members",
+      "Open source AI models",
+      "Basic collaboration tools"
     ],
   },
   {
@@ -20,10 +19,8 @@ const tiers = [
     description: "Best for growing teams",
     features: [
       "Up to 20 team members",
-      "10 AI models",
-      "Advanced collaboration",
-      "Priority support",
-      "Analytics dashboard"
+      "Frontier AI models",
+      "Advanced collaboration"
     ],
   },
   {
@@ -33,10 +30,8 @@ const tiers = [
     features: [
       "Unlimited team members",
       "Custom AI model integration",
-      "Advanced security",
-      "Dedicated support",
-      "Custom analytics",
-      "SLA guarantee"
+      "Enterprise knowledge",
+      "Advanced security"
     ],
   }
 ];
