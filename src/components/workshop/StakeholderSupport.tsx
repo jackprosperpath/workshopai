@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSharedWorkshop } from "@/hooks/useSharedWorkshop";
 import type { Stakeholder } from "@/hooks/useStakeholders";
-import { ShareDialog } from "./stakeholder/ShareDialog";
 import { StakeholderCard } from "./stakeholder/StakeholderCard";
 import { ApprovalProgressBar } from "../workshop/ApprovalProgressBar";
 import { toast } from "@/components/ui/sonner";
@@ -32,39 +31,11 @@ export function StakeholderSupport({
   updateStakeholder,
   removeStakeholder = () => {},
 }: StakeholderSupportProps) {
-  const { shareId, createShareableWorkshop } = useSharedWorkshop();
-  const [shareUrl, setShareUrl] = React.useState<string | null>(null);
-  const [isGettingShareLink, setIsGettingShareLink] = React.useState(false);
+  // Removed the useSharedWorkshop hook and related states as they're not needed anymore.
 
   // Gamified Approval Progress Bar
   const totalStakeholders = stakeholders.length;
   const approved = stakeholders.filter((s) => s.status === "yes").length;
-
-  const getShareLink = async () => {
-    setIsGettingShareLink(true);
-    try {
-      if (shareId) {
-        const url = `${window.location.origin}${window.location.pathname}?share=${shareId}`;
-        setShareUrl(url);
-        return url;
-      }
-      const workshopData = {
-        problem: "Workshop content",
-        metrics: [],
-        constraints: [],
-        selectedModel: "gpt-4",
-      };
-      const url = await createShareableWorkshop(workshopData);
-      setShareUrl(url);
-      return url;
-    } catch (error) {
-      console.error("Error getting share link:", error);
-      toast.error("Failed to create shareable link");
-      throw error;
-    } finally {
-      setIsGettingShareLink(false);
-    }
-  };
 
   const handleAddStakeholder = () => {
     if (!newRole.trim()) {
@@ -121,10 +92,7 @@ export function StakeholderSupport({
           </div>
         </div>
       </div>
-      <div className="border rounded-lg p-6 bg-white shadow-sm">
-        <h2 className="text-xl font-semibold mb-4">Share with Additional Stakeholders</h2>
-        <ShareDialog getShareLink={getShareLink} />
-      </div>
     </section>
   );
 }
+
