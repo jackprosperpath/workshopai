@@ -13,7 +13,7 @@ export const Hero = () => {
           Co-create with your team & AI
         </h1>
         <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
-          Turn every meeting into a powerful, AI-driven workshop that creates solutions, sparks meaningful discussions, and moves ideas to action—fast.
+          Turn every meeting into an AI-powered workshop that sparks meaningful discussion and gets you from ideas to action quickly
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link to="/auth">
