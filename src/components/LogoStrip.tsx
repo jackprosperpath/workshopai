@@ -1,5 +1,6 @@
 
-import { Slack, Users, FileText, Video, Zap } from "lucide-react";
+import { Users, FileText, Video, Zap } from "lucide-react";
+import SlackLogo from "./SlackLogo";
 
 export const LogoStrip = () => {
   const logos = [
@@ -10,7 +11,7 @@ export const LogoStrip = () => {
     },
     {
       name: "Slack",
-      icon: <Slack className="h-10 w-auto opacity-70" aria-label="Slack logo" />,
+      icon: <SlackLogo className="h-10 w-auto opacity-70" />,
       url: "https://slack.com/",
     },
     {
@@ -27,7 +28,7 @@ export const LogoStrip = () => {
       name: "Zapier",
       icon: <Zap className="h-10 w-auto opacity-70" aria-label="Zapier logo" />,
       url: "https://zapier.com/",
-    }
+    },
   ];
 
   return (
