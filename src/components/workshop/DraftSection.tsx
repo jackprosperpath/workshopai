@@ -63,26 +63,32 @@ export default function DraftSection({
   setActiveThread,
   sectionFeedback
 }: DraftSectionProps) {
-  // Initialize TipTap editor (only for editing mode of this section)
-  const editor = useEditor(
-    editable
-      ? {
-          extensions: [StarterKit, Underline],
-          content: editableContent,
-          onUpdate: ({ editor }) => {
-            setEditableContent(editor.getHTML());
-          },
-        }
-      : null
-  );
+  // Initialize TipTap editor with default options even when not editing
+  // This prevents the null object error in the TipTap library
+  const editor = useEditor({
+    extensions: [StarterKit, Underline],
+    content: editableContent,
+    onUpdate: ({ editor }) => {
+      setEditableContent(editor.getHTML());
+    },
+    editable: !!editable,
+    // Only enable editor when in editing mode
+    editorProps: {
+      attributes: {
+        class: editable ? 'min-h-[120px] focus:outline-none' : 'hidden'
+      }
+    }
+  });
 
   React.useEffect(() => {
     if (editable && editor) {
       editor.commands.setContent(editableContent);
       editor.commands.focus();
+      editor.setEditable(true);
+    } else if (editor) {
+      editor.setEditable(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editable]);
+  }, [editable, editableContent, editor]);
 
   return (
     <div className="mb-6 relative">
@@ -90,7 +96,7 @@ export default function DraftSection({
         <div className="space-y-2">
           {/* TipTap Rich Text Editor, in place */}
           <div className="border rounded min-h-[120px] bg-white py-2 px-3">
-            {/* Basic formatting controls (optional, could expand as needed) */}
+            {/* Basic formatting controls */}
             <div className="mb-2 flex gap-1">
               <Button
                 variant="ghost"

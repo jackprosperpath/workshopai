@@ -34,6 +34,8 @@ export function DiffViewer({
           <DiffEditor
             height="100%"
             language="markdown"
+            originalModelPath="file://original.md"
+            modifiedModelPath="file://modified.md"
             original={combinedOldContent}
             modified={combinedNewContent}
             options={{
