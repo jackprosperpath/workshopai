@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Lightbulb } from "lucide-react";
@@ -43,11 +42,9 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
   onTogglePrompts,
   onAddPromptAnswer
 }) => {
-  // Filter comments for this section
   const sectionComments = comments.filter(comment => comment.selection.sectionIndex === idx);
   const [promptAnswers, setPromptAnswers] = useState<Record<string, string>>({});
 
-  // Highlight text with comments
   const renderContentWithCommentHighlights = () => {
     if (sectionComments.length === 0 || editingSection === idx) {
       return highlightChanges(para, idx);
@@ -56,7 +53,6 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
     let content = para;
     const parts: React.ReactNode[] = [];
 
-    // Sort comments by their position to handle overlapping highlights
     const sortedComments = [...sectionComments].sort((a, b) => a.selection.startOffset - b.selection.startOffset);
 
     let lastIndex = 0;
@@ -64,12 +60,10 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
     sortedComments.forEach((comment) => {
       const { startOffset, endOffset } = comment.selection;
 
-      // Add text before the highlighted part
       if (startOffset > lastIndex) {
         parts.push(content.substring(lastIndex, startOffset));
       }
 
-      // Add the highlighted part
       const highlightedText = content.substring(startOffset, endOffset);
       const isActive = activeComment === comment.id;
 
@@ -86,7 +80,6 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
       lastIndex = endOffset;
     });
 
-    // Add remaining text
     if (lastIndex < content.length) {
       parts.push(content.substring(lastIndex));
     }
@@ -94,7 +87,6 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
     return parts;
   };
 
-  // Handle prompt answers
   const handlePromptAnswerChange = (promptId: string, value: string) => {
     setPromptAnswers(prev => ({
       ...prev,
@@ -112,7 +104,6 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
     }
   };
 
-  // Count AI discussion prompts for this section
   const hasDiscussionPrompts = discussionPrompts && discussionPrompts.questions && discussionPrompts.questions.length > 0;
   const answeredPromptsCount = hasDiscussionPrompts 
     ? discussionPrompts.questions.filter(q => q.isAnswered).length 
@@ -157,7 +148,6 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
         )}
       </div>
       
-      {/* Discussion prompts section */}
       {hasDiscussionPrompts && discussionPrompts.isVisible && (
         <div 
           className="mt-3 border rounded-md p-3 bg-muted/20"
@@ -176,7 +166,7 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
                     {question.question}
                   </CollapsibleTrigger>
                   {question.isAnswered && (
-                    <Badge variant="outline" size="sm" className="text-xs bg-green-50">
+                    <Badge variant="outline" className="text-xs bg-green-50">
                       Answered
                     </Badge>
                   )}
