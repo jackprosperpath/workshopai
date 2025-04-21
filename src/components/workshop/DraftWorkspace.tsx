@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
@@ -8,6 +7,7 @@ import { toast } from "@/components/ui/sonner";
 import DraftSection from "./DraftSection";
 import ActiveUsersAvatars from "./ActiveUsersAvatars";
 import DraftVersionSelector from "./DraftVersionSelector";
+import OGCardShareButton from "./OGCardShareButton";
 
 export function DraftWorkspace({
   currentDraft,
@@ -200,6 +200,10 @@ export function DraftWorkspace({
     <section className="border rounded p-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="font-semibold">Draft v{currentDraft.id}</h2>
+        <OGCardShareButton
+          captureSelector=".border.rounded.p-4"
+          remixUrl={window.location.href}
+        />
         <div className="flex items-center gap-2">
           <ActiveUsersAvatars activeUsers={activeUsers} />
           <DraftVersionSelector

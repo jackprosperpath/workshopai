@@ -6,6 +6,7 @@ import { useSharedWorkshop } from "@/hooks/useSharedWorkshop";
 import type { Stakeholder } from "@/hooks/useStakeholders";
 import { ShareDialog } from "./stakeholder/ShareDialog";
 import { StakeholderCard } from "./stakeholder/StakeholderCard";
+import { ApprovalProgressBar } from "../workshop/ApprovalProgressBar";
 import { toast } from "@/components/ui/sonner";
 
 type StakeholderSupportProps = {
@@ -35,6 +36,10 @@ export function StakeholderSupport({
   const [shareUrl, setShareUrl] = React.useState<string | null>(null);
   const [isGettingShareLink, setIsGettingShareLink] = React.useState(false);
 
+  // Gamified Approval Progress Bar
+  const totalStakeholders = stakeholders.length;
+  const approved = stakeholders.filter((s) => s.status === "yes").length;
+
   const getShareLink = async () => {
     setIsGettingShareLink(true);
     try {
@@ -43,14 +48,12 @@ export function StakeholderSupport({
         setShareUrl(url);
         return url;
       }
-      
       const workshopData = {
         problem: "Workshop content",
         metrics: [],
         constraints: [],
-        selectedModel: "gpt-4"
+        selectedModel: "gpt-4",
       };
-      
       const url = await createShareableWorkshop(workshopData);
       setShareUrl(url);
       return url;
@@ -68,7 +71,6 @@ export function StakeholderSupport({
       toast.error("Please enter a stakeholder role");
       return;
     }
-    
     addStakeholder();
   };
 
@@ -76,7 +78,7 @@ export function StakeholderSupport({
     <section className="space-y-6">
       <div className="border rounded-lg p-6 bg-white shadow-sm">
         <h2 className="text-xl font-semibold mb-4">Stakeholder Endorsement</h2>
-        
+        <ApprovalProgressBar approved={approved} total={totalStakeholders} />
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-2">
             <Input
@@ -99,7 +101,6 @@ export function StakeholderSupport({
               Add
             </Button>
           </div>
-          
           <div className="mt-4">
             {stakeholders.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
@@ -120,7 +121,6 @@ export function StakeholderSupport({
           </div>
         </div>
       </div>
-
       <div className="border rounded-lg p-6 bg-white shadow-sm">
         <h2 className="text-xl font-semibold mb-4">Share with Additional Stakeholders</h2>
         <ShareDialog getShareLink={getShareLink} />
