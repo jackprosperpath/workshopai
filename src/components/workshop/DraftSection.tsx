@@ -279,14 +279,7 @@ const DraftSection: React.FC<DraftSectionProps> = ({
                 return (
                   <div className="space-y-1">
                     {lines.map((ln, i) => (
-                      <div
-                        key={i}
-                        className={
-                          diffIndices.includes(i)
-                            ? "bg-[#D6BCFA] transition-colors duration-500 rounded px-1"
-                            : ""
-                        }
-                      >
+                      <div key={i}>
                         {ln}
                       </div>
                     ))}
