@@ -23,6 +23,8 @@ export function useTeamInvites() {
   const [error, setError] = useState<string | null>(null);
   const [devMode, setDevMode] = useState(false);
   const [lastInviteResult, setLastInviteResult] = useState<InviteResult | null>(null);
+  const [invitationsSent, setInvitationsSent] = useState<number>(0);
+  const [hasUnlockedPremium, setHasUnlockedPremium] = useState<boolean>(false);
 
   // Get current workshop ID from URL
   useEffect(() => {
@@ -34,6 +36,41 @@ export function useTeamInvites() {
     // Check if we're in development mode
     const hostname = window.location.hostname;
     setDevMode(hostname === 'localhost' || hostname === '127.0.0.1');
+  }, []);
+
+  // Fetch invitation count on load
+  useEffect(() => {
+    const fetchInvitationStats = async () => {
+      try {
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !userData.user) {
+          console.log("No authenticated user found");
+          return;
+        }
+        
+        // Get invitation count
+        const { data, error } = await supabase
+          .from('workshop_collaborators')
+          .select('*')
+          .eq('inviter_id', userData.user.id);
+        
+        if (error) {
+          console.error("Error fetching invitations:", error);
+          return;
+        }
+
+        const inviteCount = data?.length || 0;
+        setInvitationsSent(inviteCount);
+        setHasUnlockedPremium(inviteCount >= 3);
+        
+        console.log(`User has sent ${inviteCount} invitations`);
+      } catch (err) {
+        console.error("Error checking invitation status:", err);
+      }
+    };
+
+    fetchInvitationStats();
   }, []);
 
   const inviteTeamMember = async () => {
@@ -102,6 +139,21 @@ export function useTeamInvites() {
       console.log("Invitation response:", data);
       
       if (data && data.success) {
+        // Increment invitation count
+        setInvitationsSent(prev => {
+          const newCount = prev + 1;
+          const newUnlocked = newCount >= 3;
+          if (newUnlocked && !hasUnlockedPremium) {
+            toast({
+              title: "Premium Features Unlocked! 🎉",
+              description: "You've successfully invited 3 team members and unlocked unlimited drafts!",
+              variant: "default"
+            });
+            setHasUnlockedPremium(true);
+          }
+          return newCount;
+        });
+        
         // Store the invitation result for dev mode display
         if (data.isDevelopment || data.emailSent === false) {
           setLastInviteResult(data);
@@ -155,6 +207,8 @@ export function useTeamInvites() {
     workshopId,
     error,
     devMode,
-    lastInviteResult
+    lastInviteResult,
+    invitationsSent,
+    hasUnlockedPremium
   };
 }

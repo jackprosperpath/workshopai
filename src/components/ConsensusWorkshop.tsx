@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,6 +7,7 @@ import { PromptCanvas } from "@/components/workshop/PromptCanvas";
 import { StakeholderSupport } from "@/components/workshop/StakeholderSupport";
 import { TeamManagement } from "@/components/workshop/TeamManagement";
 import { WorkshopActions } from "@/components/workshop/WorkshopActions";
+import { DraftLimitWrapper } from "@/components/workshop/DraftLimitWrapper";
 import { usePromptCanvas } from "@/hooks/usePromptCanvas";
 import { useDraftWorkspace } from "@/hooks/useDraftWorkspace";
 import { useStakeholders } from "@/hooks/useStakeholders";
@@ -95,6 +97,10 @@ export default function ConsensusWorkshop() {
     }
   };
 
+  const navigateToTeamTab = () => {
+    handleTabChange("team");
+  };
+
   return (
     <div className="w-full space-y-4">
       <WorkshopActions />
@@ -130,18 +136,23 @@ export default function ConsensusWorkshop() {
           />
         </TabsContent>
         <TabsContent value="draft">
-          <DraftWorkspace 
-            currentDraft={currentDraft}
-            versions={versions}
-            currentIdx={currentIdx}
-            setCurrentIdx={setCurrentIdx}
-            activeThread={activeThread}
-            setActiveThread={setActiveThread}
-            addFeedback={addFeedback}
-            onRePrompt={handleGenerateSolution}
-            loading={loading}
-            workshopId={workshopId}
-          />
+          <DraftLimitWrapper 
+            draftsCount={versions.length} 
+            onNavigateToTeam={navigateToTeamTab}
+          >
+            <DraftWorkspace 
+              currentDraft={currentDraft}
+              versions={versions}
+              currentIdx={currentIdx}
+              setCurrentIdx={setCurrentIdx}
+              activeThread={activeThread}
+              setActiveThread={setActiveThread}
+              addFeedback={addFeedback}
+              onRePrompt={handleGenerateSolution}
+              loading={loading}
+              workshopId={workshopId}
+            />
+          </DraftLimitWrapper>
         </TabsContent>
         <TabsContent value="endorsement">
           <StakeholderSupport 
