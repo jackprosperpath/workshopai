@@ -31,7 +31,7 @@ export function DraftMainContent({
   handleSubmitPromptFeedback,
   onRePrompt,
   loading,
-  sectionPrompts,
+  sectionPrompts = {},
 }: any) {
   return (
     <Card className="p-6 m-4 bg-card rounded-xl shadow-sm">

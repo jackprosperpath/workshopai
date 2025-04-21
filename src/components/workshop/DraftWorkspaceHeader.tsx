@@ -1,9 +1,17 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { MessageSquare } from "lucide-react";
-import ActiveUsersAvatars from "./ActiveUsersAvatars";
+import { 
+  MessageSquare, 
+  PencilLine, 
+  X, 
+  History, 
+  ArrowLeftRight 
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import DraftVersionSelector from "./DraftVersionSelector";
+import ActiveUsersAvatars from "./ActiveUsersAvatars";
+import type { DraftVersion } from "@/hooks/useDraftWorkspace";
 
 export function DraftWorkspaceHeader({
   currentDraft,
@@ -17,48 +25,65 @@ export function DraftWorkspaceHeader({
   setShowCommentsSidebar,
   editingDraft,
   handleStartEditingDraft,
-  handleCancelEditingDraft,
-}: any) {
+  handleCancelEditingDraft
+}: {
+  currentDraft: DraftVersion | null;
+  versions: DraftVersion[];
+  currentIdx: number | null;
+  setCurrentIdx: (idx: number) => void;
+  activeUsers: { id: string; name: string; section: number | null }[];
+  onCompare: (oldIdx: number, newIdx: number) => void;
+  comments: any[];
+  showCommentsSidebar: boolean;
+  setShowCommentsSidebar: (show: boolean) => void;
+  editingDraft: boolean;
+  handleStartEditingDraft: () => void;
+  handleCancelEditingDraft: () => void;
+}) {
+  const totalComments = comments.length || 0;
+  
   return (
-    <div className="flex justify-between items-center p-4 border-b">
-      <h2 className="font-semibold">Draft v{currentDraft.id}</h2>
-      <div className="flex items-center gap-2">
-        <ActiveUsersAvatars activeUsers={activeUsers} />
+    <div className="flex justify-between items-center border-b p-4 gap-4">
+      <div className="flex gap-2 items-center">
         <DraftVersionSelector
           versions={versions}
-          currentDraftId={currentDraft.id}
-          onSelect={setCurrentIdx}
+          currentIdx={currentIdx}
+          setCurrentIdx={setCurrentIdx}
           onCompare={onCompare}
         />
-        <Button 
-          variant="outline" 
+      </div>
+      <div className="flex gap-2 items-center">
+        <ActiveUsersAvatars users={activeUsers} />
+        
+        <Button
           size="sm"
+          variant={showCommentsSidebar ? "secondary" : "outline"}
           className="flex items-center gap-1"
           onClick={() => setShowCommentsSidebar(!showCommentsSidebar)}
         >
           <MessageSquare className="h-4 w-4" />
           Comments
-          {comments.length > 0 && (
-            <span className="bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs">
-              {comments.length}
-            </span>
+          {totalComments > 0 && !showCommentsSidebar && (
+            <Badge variant="secondary" className="ml-1">
+              {totalComments}
+            </Badge>
           )}
         </Button>
-        {!editingDraft ? (
+        
+        {editingDraft ? (
           <Button
-            variant="outline"
             size="sm"
-            onClick={handleStartEditingDraft}
-          >
-            Edit Draft
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            className="text-red-500"
             onClick={handleCancelEditingDraft}
           >
-            Exit Edit Mode
+            <X className="h-4 w-4 mr-1" />
+            Cancel editing
+          </Button>
+        ) : (
+          <Button size="sm" onClick={handleStartEditingDraft}>
+            <PencilLine className="h-4 w-4 mr-1" />
+            Edit draft
           </Button>
         )}
       </div>

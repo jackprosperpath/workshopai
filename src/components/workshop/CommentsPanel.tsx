@@ -71,7 +71,11 @@ export function CommentsPanel({
     }
   };
 
-  if (comments.length === 0 && (!discussionPrompts || discussionPrompts.questions.length === 0)) {
+  const noContentToShow = 
+    comments.length === 0 && 
+    (!discussionPrompts || discussionPrompts.questions.length === 0);
+
+  if (noContentToShow) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-center p-4">
         <MessageCircle className="h-8 w-8 text-muted-foreground mb-2" />
@@ -91,7 +95,7 @@ export function CommentsPanel({
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Lightbulb className="h-4 w-4 text-primary" />
-              <h4 className="text-sm font-medium">AI Discussion Points</h4>
+              <h4 className="text-sm font-medium">Document Discussion Points</h4>
             </div>
             
             {discussionPrompts.isLoading ? (
@@ -156,7 +160,7 @@ export function CommentsPanel({
           </div>
         )}
 
-        {/* AI Discussion Comments (from previous implementation, can be removed in future) */}
+        {/* AI Discussion Comments (section-level) */}
         {aiDiscussionComments.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-2">

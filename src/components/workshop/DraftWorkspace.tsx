@@ -11,6 +11,7 @@ import DraftVersionSelector from "./DraftVersionSelector";
 import { DiffViewer } from "./DiffViewer";
 import { Comment, CommentsPanel } from "./CommentsPanel";
 import { useDiscussionPrompts } from "@/hooks/useDiscussionPrompts";
+import { useDocumentDiscussionPrompts } from "@/hooks/useDocumentDiscussionPrompts";
 import { v4 as uuidv4 } from "uuid";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
@@ -64,6 +65,20 @@ export function DraftWorkspace({
     addAnswer,
     getPromptAnswers
   } = useDiscussionPrompts(workshopId);
+
+  const {
+    prompts: documentPrompts,
+    isLoading: isLoadingDocPrompts,
+    generatePrompts: generateDocPrompts,
+    addAnswer: addDocAnswer
+  } = useDocumentDiscussionPrompts(workshopId);
+
+  useEffect(() => {
+    if (currentDraft && currentDraft.output && currentDraft.output.length > 0) {
+      const fullText = currentDraft.output.join('\n\n');
+      generateDocPrompts(fullText);
+    }
+  }, [currentDraft?.id]);
 
   useEffect(() => {
     if (editingSection !== null && editTextareaRef.current) {
@@ -364,32 +379,59 @@ export function DraftWorkspace({
     return newVersionIdx >= 0 ? versions[newVersionIdx].output : [];
   };
 
-  const aiDiscussionComments = Object.entries(sectionPrompts).flatMap(([sectionIdxStr, section]) => {
-    if (!section || !section.questions) return [];
-    const idx = parseInt(sectionIdxStr, 10);
-    return section.questions
-      .filter((q) => q.answers.length > 0)
-      .map((q) => ({
-        id: `ai-discussion-${q.id}`,
-        text: q.answers.map((a, i) => `A${q.answers.length > 1 ? `${i + 1}` : ""}: ${a}`).join("\n"),
-        authorId: "ai-system",
-        authorName: "Discussion AI",
-        timestamp: "",
-        selection: {
-          sectionIndex: idx,
-          startOffset: 0,
-          endOffset: 0,
-          content: q.question,
-        },
-        isSystem: true,
-        question: q.question
-      }));
-  });
+  const aiDiscussionComments = [
+    ...Object.entries(sectionPrompts).flatMap(([sectionIdxStr, section]) => {
+      if (!section || !section.questions) return [];
+      const idx = parseInt(sectionIdxStr, 10);
+      return section.questions
+        .filter((q) => q.answers.length > 0)
+        .map((q) => ({
+          id: `ai-discussion-${q.id}`,
+          text: q.answers.map((a, i) => `A${q.answers.length > 1 ? `${i + 1}` : ""}: ${a}`).join("\n"),
+          authorId: "ai-system",
+          authorName: "Discussion AI",
+          timestamp: "",
+          selection: {
+            sectionIndex: idx,
+            startOffset: 0,
+            endOffset: 0,
+            content: q.question,
+          },
+          isSystem: true,
+          question: q.question
+        }));
+    }),
+    ...documentPrompts.filter(p => p.answers.length > 0).map((p) => ({
+      id: `doc-discussion-${p.id}`,
+      text: p.answers.map((a, i) => `A${p.answers.length > 1 ? `${i + 1}` : ""}: ${a}`).join("\n"),
+      authorId: "ai-system",
+      authorName: "Document Discussion",
+      timestamp: "",
+      selection: {
+        sectionIndex: -1,
+        startOffset: 0,
+        endOffset: 0,
+        content: p.question,
+      },
+      isSystem: true,
+      question: p.question
+    }))
+  ];
 
   const allComments = [
     ...aiDiscussionComments,
     ...comments,
   ];
+
+  const discussionPrompts = {
+    questions: documentPrompts.map(p => ({
+      id: p.id,
+      question: p.question,
+      answers: p.answers,
+      isAnswered: p.isAnswered
+    })),
+    isLoading: isLoadingDocPrompts
+  };
 
   return (
     <section className="h-full">
@@ -469,6 +511,8 @@ export function DraftWorkspace({
                 setActiveComment={setActiveComment}
                 onDeleteComment={onDeleteComment}
                 onJumpToComment={onJumpToComment}
+                discussionPrompts={discussionPrompts}
+                onAddPromptAnswer={addDocAnswer}
               />
             </div>
           </div>
