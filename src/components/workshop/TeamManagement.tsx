@@ -31,7 +31,7 @@ export function TeamManagement() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Team Collaboration
+            Team
             {getCurrentUserCount() > 0 && (
               <Badge variant="outline" className="ml-2">
                 {getCurrentUserCount()} {getCurrentUserCount() === 1 ? 'user' : 'users'} online
@@ -64,7 +64,7 @@ export function TeamManagement() {
             <AlertCircle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
             <p className="text-xs text-muted-foreground">
               All invited team members will be able to view and edit this workshop in real-time. 
-              They will need a Consensus account to join. Changes are synchronized automatically.
+              They will need a WorkshopAI account to join. Changes are synchronised automatically.
             </p>
           </div>
         </CardContent>
@@ -74,7 +74,7 @@ export function TeamManagement() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            Workshop Settings
+            AI Models
           </CardTitle>
           <CardDescription>
             Configure the AI model that will be used for solution generation
