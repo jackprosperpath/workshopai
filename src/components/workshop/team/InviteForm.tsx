@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +16,6 @@ export function InviteForm() {
     error, 
     devMode,
     lastInviteResult,
-    invitationsSent,
     hasUnlockedPremium
   } = useTeamInvites();
 
@@ -26,38 +24,14 @@ export function InviteForm() {
     await inviteTeamMember();
   };
 
-  const progressValue = Math.min(100, (invitationsSent / 3) * 100);
-
   return (
     <div className="space-y-5">
-      {!hasUnlockedPremium && (
-        <div className="bg-muted p-4 rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <Award className="h-5 w-5 text-primary" />
-            <h3 className="font-medium">Unlock Unlimited Drafts</h3>
-          </div>
-          <p className="text-sm text-muted-foreground mb-3">
-            Invite 3 team members to unlock unlimited drafts in your workshops.
-          </p>
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs">
-              <span>{invitationsSent} of 3 invitations sent</span>
-              <span>{invitationsSent >= 3 ? "Unlocked!" : `${3 - invitationsSent} more to go`}</span>
-            </div>
-            <Progress value={progressValue} className="h-2" />
-          </div>
-        </div>
-      )}
-
-      {hasUnlockedPremium && (
-        <Alert className="bg-primary/10 border-primary/20">
-          <Award className="h-4 w-4 text-primary" />
-          <AlertDescription className="text-foreground">
-            You've unlocked unlimited drafts! Enjoy creating as many solutions as you need.
-          </AlertDescription>
-        </Alert>
-      )}
-
+      <Alert className="bg-primary/10 border-primary/20">
+        <Award className="h-4 w-4 text-primary" />
+        <AlertDescription className="text-foreground">
+          You've unlocked unlimited drafts! Enjoy creating as many solutions as you need.
+        </AlertDescription>
+      </Alert>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex flex-col space-y-1.5">
           <Label htmlFor="email-invite">Email address</Label>
@@ -86,11 +60,9 @@ export function InviteForm() {
             </Button>
           </div>
         </div>
-        
         {error && (
           <p className="text-sm text-destructive mt-2">{error}</p>
         )}
-        
         {devMode && lastInviteResult && (
           <Alert variant="warning" className="mt-4">
             <AlertTriangle className="h-4 w-4" />

@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+
+// Remove all draft/unlock logic, always enable premium for everyone.
+import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -15,6 +17,7 @@ interface InviteResult {
   };
 }
 
+// All users now always have premium/unlimited drafts unlocked.
 export function useTeamInvites() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [isInviting, setIsInviting] = useState(false);
@@ -22,66 +25,18 @@ export function useTeamInvites() {
   const [error, setError] = useState<string | null>(null);
   const [devMode, setDevMode] = useState(false);
   const [lastInviteResult, setLastInviteResult] = useState<InviteResult | null>(null);
-  const [invitationsSent, setInvitationsSent] = useState<number>(0);
-  const [hasUnlockedPremium, setHasUnlockedPremium] = useState<boolean>(false);
 
-  // Get current workshop ID from URL
-  useEffect(() => {
+  // Get current workshop ID from URL once; devMode flag only for edge case UI
+  React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    // Check for both id and share parameters for robustness
     const id = params.get('id') ?? params.get('share');
     if (id) setWorkshopId(id);
-
-    // Check if we're in development mode
     const hostname = window.location.hostname;
     const isDev = hostname === 'localhost' || hostname === '127.0.0.1';
     setDevMode(isDev);
-
-    // If we are in dev mode, disable invite rule by setting premium
-    if (isDev) {
-      setHasUnlockedPremium(true);
-    }
   }, []);
 
-  // Fetch invitation count on load
-  useEffect(() => {
-    if (devMode) {
-      // Skip fetching invitation stats and keep premium unlocked in dev mode
-      return;
-    }
-    const fetchInvitationStats = async () => {
-      try {
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-
-        if (userError || !userData.user) {
-          console.log("No authenticated user found");
-          return;
-        }
-
-        // Get invitation count - fixed column name from inviter_id to invited_by
-        const { data, error } = await supabase
-          .from('workshop_collaborators')
-          .select('*')
-          .eq('invited_by', userData.user.id);
-
-        if (error) {
-          console.error("Error fetching invitations:", error);
-          return;
-        }
-
-        const inviteCount = data?.length || 0;
-        setInvitationsSent(inviteCount);
-        setHasUnlockedPremium(inviteCount >= 3);
-
-        console.log(`User has sent ${inviteCount} invitations`);
-      } catch (err) {
-        console.error("Error checking invitation status:", err);
-      }
-    };
-
-    fetchInvitationStats();
-  }, [devMode]);
-
+  // Invitation still works, but does NOT impact premium/unlocked state.
   const inviteTeamMember = async () => {
     setError(null);
     setLastInviteResult(null);
@@ -97,7 +52,7 @@ export function useTeamInvites() {
     }
 
     setIsInviting(true);
-    
+
     try {
       const { data: userData, error: userError } = await supabase.auth.getUser();
       
@@ -106,18 +61,10 @@ export function useTeamInvites() {
       }
       
       const inviterId = userData.user?.id;
-      
       if (!inviterId) {
         throw new Error("You must be logged in to invite team members");
       }
-      
-      console.log("Sending team invitation with:", {
-        workshopId,
-        email: inviteEmail,
-        inviterId
-      });
-      
-      // Using explicit type annotation to avoid deep type inference
+      // Only calls the backend, no limit logic.
       const response: { data: any; error: any } = await supabase.functions.invoke('invite-team-member', {
         body: {
           workshopId,
@@ -127,50 +74,28 @@ export function useTeamInvites() {
       });
       
       const { data, error: inviteError } = response;
-      
-      // Check if data contains an error response (which could be from a 400 status)
+
       if (data && data.error) {
-        // For duplicate invites, show a warning instead of an error
         if (data.error.includes("already been invited")) {
           toast({
             description: data.error,
             variant: "default"
           });
           setInviteEmail("");
-          return; // Early return to prevent throwing error
-        } else {
-          throw new Error(data.error);
+          return;
         }
+        throw new Error(data.error);
       }
-      
       if (inviteError) {
-        console.error("Error from edge function:", inviteError);
         throw new Error(`Failed to send invitation: ${inviteError.message || "Unknown error"}`);
       }
-      
-      console.log("Invitation response:", data);
-      
+
+      // Show toast for success, ignore limits.
       if (data && data.success) {
-        // Increment invitation count
-        setInvitationsSent(prev => {
-          const newCount = prev + 1;
-          const newUnlocked = newCount >= 3;
-          if (newUnlocked && !hasUnlockedPremium) {
-            toast({
-              title: "Premium Features Unlocked! 🎉",
-              description: "You've successfully invited 3 team members and unlocked unlimited drafts!",
-              variant: "default"
-            });
-            setHasUnlockedPremium(true);
-          }
-          return newCount;
-        });
-        
-        // Store the invitation result for dev mode display
+        // Show development-mode alerts for email delivery status, if needed
         if (data.isDevelopment || data.emailSent === false) {
           setLastInviteResult(data);
         }
-        
         if (data.emailSent === false) {
           if (devMode) {
             toast({
@@ -194,13 +119,11 @@ export function useTeamInvites() {
             variant: "default"
           });
         }
-        
         setInviteEmail("");
       } else {
         throw new Error(data?.error || "Unknown error occurred");
       }
-    } catch (error) {
-      console.error("Error inviting team member:", error);
+    } catch (error: any) {
       setError("Failed to send invitation: " + (error.message || "Unknown error"));
       toast({
         description: "Failed to send invitation: " + (error.message || "Unknown error"),
@@ -211,6 +134,7 @@ export function useTeamInvites() {
     }
   };
 
+  // Always unlocked, invitationsSent always 0, no effect.
   return {
     inviteEmail,
     setInviteEmail,
@@ -220,7 +144,7 @@ export function useTeamInvites() {
     error,
     devMode,
     lastInviteResult,
-    invitationsSent,
-    hasUnlockedPremium
+    invitationsSent: 0,
+    hasUnlockedPremium: true
   };
 }
