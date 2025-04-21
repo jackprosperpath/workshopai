@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -277,3 +276,4 @@ export function LivePresenceLayer({ workshopId, workspaceRef }: Props) {
     </div>
   );
 }
+
