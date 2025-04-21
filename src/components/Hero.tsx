@@ -9,7 +9,7 @@ export const Hero = () => {
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
           TEAMS{" "}
           <span className="relative">
-            <span className="bg-gray-800 text-white rounded px-2.5 py-1.5">
+            <span className="bg-gray-800 text-white rounded px-1.5 py-0.5">
               AI MODELS
             </span>
             <span className="absolute inset-x-0 bottom-2 h-3 bg-primary/20 -z-10 rounded"></span>
