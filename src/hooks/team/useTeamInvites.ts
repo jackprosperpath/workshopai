@@ -122,7 +122,7 @@ export function useTeamInvites() {
         if (data.error.includes("already been invited")) {
           toast({
             description: data.error,
-            variant: "default" // Changed from "warning" to "default"
+            variant: "default"
           });
           setInviteEmail("");
           return; // Early return to prevent throwing error
@@ -163,23 +163,23 @@ export function useTeamInvites() {
           if (devMode) {
             toast({
               description: "Invitation created but email could not be sent due to development restrictions.",
-              variant: "default" // Changed from "warning" to "default"
+              variant: "default"
             });
           } else {
             toast({
               description: `Invitation created but email could not be sent. ${data.emailError || ''}`,
-              variant: "default" // Changed from "warning" to "default"
+              variant: "default"
             });
           }
         } else if (data.isDevelopment && data.emailSentTo !== data.invitation.email) {
           toast({
             description: `Invitation created and development email sent to ${data.emailSentTo}`,
-            variant: "default" // Changed from "success" to "default"
+            variant: "default"
           });
         } else {
           toast({
             description: `Invitation sent to ${inviteEmail}`,
-            variant: "default" // Changed from "success" to "default"
+            variant: "default"
           });
         }
         
