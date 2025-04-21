@@ -1,4 +1,3 @@
-
 import { Hero } from "@/components/Hero";
 import { Navbar } from "@/components/Navbar";
 import { LogoStrip } from "@/components/LogoStrip";
@@ -7,6 +6,7 @@ import { HowItWorks } from "@/components/HowItWorks";
 import { Testimonials } from "@/components/Testimonials";
 import { Pricing } from "@/components/Pricing";
 import { CTA } from "@/components/CTA";
+import { WhyTeamsLove } from "@/components/WhyTeamsLove";
 
 const Index = () => {
   return (
@@ -16,6 +16,7 @@ const Index = () => {
       <LogoStrip />
       <Features />
       <HowItWorks />
+      <WhyTeamsLove />
       <Testimonials />
       <Pricing />
       <CTA />
