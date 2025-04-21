@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -242,7 +241,7 @@ export default function DraftSection({
           )}
           {improving && (
             <div className="absolute left-0 top-0 right-0 flex flex-col z-20 pointer-events-none">
-              <div className="bg-gradient-to-br from-slate-50/90 to-slate-100/90 p-3 rounded-md text-xs text-slate-900 shadow border border-slate-200 animate-pulse mb-2">
+              <div className="bg-gradient-to-br from-[#1A1F2C] via-[#221F26] to-[#1A1F2C] p-3 rounded-md text-xs text-white shadow border border-slate-700 animate-pulse mb-2">
                 Improving section with AI ({improving.replace("_", " ")}&hellip;)
               </div>
             </div>
