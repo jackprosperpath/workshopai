@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
@@ -8,7 +7,7 @@ import { useWorkshop } from "@/hooks/useWorkshop";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, Save } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 
 const Workshop = () => {
@@ -20,12 +19,10 @@ const Workshop = () => {
   const [isLoadingWorkshops, setIsLoadingWorkshops] = useState(true);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
   
-  // Name editing states
   const [name, setName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Check authentication first
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -55,7 +52,6 @@ const Workshop = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Load workshop or workshops list
   useEffect(() => {
     if (isAuthenticating) return;
 
@@ -169,14 +165,28 @@ const Workshop = () => {
                 New Workshop
               </Button>
             </div>
-            <WorkshopHistory 
-              workshops={workshops} 
-              isLoading={isLoadingWorkshops} 
+            <WorkshopHistory
+              workshops={workshops}
+              isLoading={isLoadingWorkshops}
             />
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col gap-2 mb-6">
+              <div className="flex justify-end gap-2">
+                <Button onClick={createWorkshop} variant="outline" className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  New Workshop
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  disabled={isSaving || !name.trim()}
+                  className="gap-2"
+                >
+                  <Save className="h-4 w-4" />
+                  {isSaving ? "Saving..." : "Save Workshop"}
+                </Button>
+              </div>
               <div className="flex items-center gap-4">
                 {isEditing ? (
                   <div className="flex gap-2 items-center">
@@ -187,15 +197,15 @@ const Workshop = () => {
                       placeholder="Enter workshop name..."
                       onBlur={handleSave}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSave();
-                        if (e.key === 'Escape') setIsEditing(false);
+                        if (e.key === "Enter") handleSave();
+                        if (e.key === "Escape") setIsEditing(false);
                       }}
                       autoFocus
                     />
                     {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
                   </div>
                 ) : (
-                  <h1 
+                  <h1
                     className="text-2xl font-semibold cursor-pointer hover:bg-accent hover:text-accent-foreground rounded px-2 py-1 transition-colors"
                     onClick={() => setIsEditing(true)}
                   >
