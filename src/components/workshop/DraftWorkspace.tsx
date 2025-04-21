@@ -367,6 +367,23 @@ export function DraftWorkspace({
               </span>
             )}
           </Button>
+          {!editingDraft ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleStartEditingDraft}
+            >
+              Edit Draft
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCancelEditingDraft}
+            >
+              Exit Edit Mode
+            </Button>
+          )}
         </div>
       </div>
 
