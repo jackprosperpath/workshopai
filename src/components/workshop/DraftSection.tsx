@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import SectionImproveActions from "./SectionImproveActions";
@@ -261,6 +260,18 @@ const DraftSection: React.FC<DraftSectionProps> = ({
         </div>
       ) : (
         <div className="p-0 hover:bg-muted/20 transition-colors rounded group">
+          <SectionImproveActions
+            disabled={
+              !!improving ||
+              !!improveResult ||
+              editable ||
+              isUserEditingSection(idx)
+            }
+            onRedraft={() => handleImproveSection("redraft")}
+            onAddDetail={() => handleImproveSection("add_detail")}
+            onSimplify={() => handleImproveSection("simplify")}
+          />
+
           <SectionAIActions
             improveResult={improveResult}
             improving={improving}
