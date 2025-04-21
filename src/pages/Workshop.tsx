@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
@@ -8,8 +7,9 @@ import { useWorkshop } from "@/hooks/useWorkshop";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Loader2, Save } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
+import { WorkshopActions } from "@/components/workshop/WorkshopActions";
 
 const Workshop = () => {
   const navigate = useNavigate();
@@ -174,20 +174,7 @@ const Workshop = () => {
         ) : (
           <>
             <div className="flex flex-col gap-2 mb-6">
-              <div className="flex justify-end gap-2">
-                <Button onClick={createWorkshop} variant="outline" className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  New Workshop
-                </Button>
-                <Button
-                  onClick={handleSave}
-                  disabled={isSaving || !name.trim()}
-                  className="gap-2"
-                >
-                  <Save className="h-4 w-4" />
-                  {isSaving ? "Saving..." : "Save Workshop"}
-                </Button>
-              </div>
+              <WorkshopActions />
               <div className="flex items-center gap-4">
                 {isEditing ? (
                   <div className="flex gap-2 items-center">
