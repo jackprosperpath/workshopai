@@ -9,7 +9,6 @@ import {
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
@@ -189,11 +188,10 @@ export const Navbar = () => {
           ) : (
             <div className="hidden md:flex">
               <ul className="flex gap-8 font-medium items-center">
-                <li><a href="#features" className="hover:text-primary transition-colors">Features</a></li>
-                <li><a href="#integrations" className="hover:text-primary transition-colors">Integrations</a></li>
-                <li><a href="#workshop" className="hover:text-primary transition-colors">Workshop</a></li>
-                <li><a href="#pricing" className="hover:text-primary transition-colors">Pricing</a></li>
-                <li><a href="#community" className="hover:text-primary transition-colors">Community</a></li>
+                <li><a href="/#features" className="hover:text-primary transition-colors">Features</a></li>
+                <li><a href="/#integrations" className="hover:text-primary transition-colors">Integrations</a></li>
+                <li><a href="/#pricing" className="hover:text-primary transition-colors">Pricing</a></li>
+                <li><a href="/#community" className="hover:text-primary transition-colors">Community</a></li>
                 <li>
                   <Link to="/auth">
                     <Button variant="outline" className="font-medium">Sign In</Button>
