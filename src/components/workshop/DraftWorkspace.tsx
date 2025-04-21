@@ -387,32 +387,6 @@ export function DraftWorkspace({
         </div>
       </div>
 
-      <div className="flex flex-col p-4 gap-2 border-b bg-muted/50">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
-          <span className="text-muted-foreground text-xs">
-            Tip: Select text in any section and click <b>Add Comment</b> to leave feedback. You can <b>edit</b> the draft by clicking the button below.
-          </span>
-          {!editingDraft && (
-            <Button
-              className="mt-2 sm:mt-0 w-full sm:w-auto"
-              variant="outline"
-              onClick={handleStartEditingDraft}
-            >
-              Edit Draft
-            </Button>
-          )}
-          {editingDraft && (
-            <Button
-              className="mt-2 sm:mt-0 w-full sm:w-auto"
-              variant="outline"
-              onClick={handleCancelEditingDraft}
-            >
-              Exit Edit Mode
-            </Button>
-          )}
-        </div>
-      </div>
-
       <div className="flex">
         <Card className={`flex-1 p-6 m-4 bg-card rounded-xl shadow-sm min-h-[300px] transition-all duration-200`}>
           {currentDraft.output.map((para, idx) => (
@@ -508,3 +482,5 @@ export function DraftWorkspace({
     </section>
   );
 }
+
+export default DraftWorkspace;
