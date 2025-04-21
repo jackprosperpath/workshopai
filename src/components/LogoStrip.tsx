@@ -1,9 +1,8 @@
 
-import { Slack, Users } from "lucide-react";
-
-// Add logo image imports
 import ZoomLogo from "@/assets/logos/zoom.svg";
 import NotionLogo from "@/assets/logos/notion.svg";
+import SlackLogo from "@/assets/logos/slack.svg";
+import TeamsLogo from "@/assets/logos/teams.svg";
 
 export const LogoStrip = () => {
   const logos = [
@@ -21,12 +20,26 @@ export const LogoStrip = () => {
     },
     {
       name: "Slack",
-      icon: <Slack className="h-10 w-auto opacity-70" aria-label="Slack logo" />,
+      icon: (
+        <img
+          src={SlackLogo}
+          alt="Slack logo"
+          className="h-10 w-auto opacity-80"
+          aria-label="Slack logo"
+        />
+      ),
       url: "https://slack.com/",
     },
     {
       name: "Teams",
-      icon: <Users className="h-10 w-auto opacity-70" aria-label="Teams logo" />,
+      icon: (
+        <img
+          src={TeamsLogo}
+          alt="Microsoft Teams logo"
+          className="h-10 w-auto opacity-80"
+          aria-label="Teams logo"
+        />
+      ),
       url: "https://www.microsoft.com/en/microsoft-teams/group-chat-software",
     },
     {
