@@ -22,9 +22,6 @@ export const Hero = () => {
             </Button>
           </Link>
         </div>
-        <p className="mt-6 text-lg font-semibold text-primary">
-          Experience the future of collaborative problem-solving
-        </p>
       </div>
     </section>
   );
