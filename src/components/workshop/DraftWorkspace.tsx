@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
@@ -8,6 +9,7 @@ import DraftSection from "./DraftSection";
 import ActiveUsersAvatars from "./ActiveUsersAvatars";
 import DraftVersionSelector from "./DraftVersionSelector";
 import { OGCardShareButton } from "./OGCardShareButton";
+import { DiffViewer } from "./DiffViewer";
 
 export function DraftWorkspace({
   currentDraft,
@@ -37,6 +39,8 @@ export function DraftWorkspace({
   const [editingSessions, setEditingSessions] = useState<{ [key: string]: string }>({});
   const [isSaving, setIsSaving] = useState(false);
   const [activeUsers, setActiveUsers] = useState<{ id: string; name: string; section: number | null }[]>([]);
+  const [showDiffView, setShowDiffView] = useState(false);
+  const [diffVersions, setDiffVersions] = useState<{ old: number; new: number }>({ old: 0, new: 0 });
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -162,6 +166,16 @@ export function DraftWorkspace({
     }
   };
 
+  const handleCompareDrafts = (oldIdx: number, newIdx: number) => {
+    if (oldIdx >= 0 && newIdx >= 0 && oldIdx < versions.length && newIdx < versions.length) {
+      setDiffVersions({
+        old: versions[oldIdx].id,
+        new: versions[newIdx].id
+      });
+      setShowDiffView(true);
+    }
+  };
+
   if (!currentDraft) {
     return (
       <section className="border rounded p-8 flex flex-col items-center justify-center text-center space-y-4">
@@ -195,6 +209,18 @@ export function DraftWorkspace({
     return activeUsers.find((user) => user.section === sectionIdx);
   };
 
+  // Get previous version content for diff view
+  const getOldContent = () => {
+    const oldVersionIdx = versions.findIndex(v => v.id === diffVersions.old);
+    return oldVersionIdx >= 0 ? versions[oldVersionIdx].output : [];
+  };
+
+  // Get current version content for diff view
+  const getNewContent = () => {
+    const newVersionIdx = versions.findIndex(v => v.id === diffVersions.new);
+    return newVersionIdx >= 0 ? versions[newVersionIdx].output : [];
+  };
+
   // Render UI
   return (
     <section className="border rounded p-4">
@@ -210,11 +236,12 @@ export function DraftWorkspace({
             versions={versions}
             currentDraftId={currentDraft.id}
             onSelect={setCurrentIdx}
+            onCompare={handleCompareDrafts}
           />
         </div>
       </div>
 
-      {/* Render draft sections using the new DraftSection component */}
+      {/* Render draft sections using the DraftSection component */}
       {currentDraft.output.map((para, idx) => (
         <DraftSection
           key={`section-${idx}`}
@@ -271,6 +298,15 @@ export function DraftWorkspace({
           Finalise
         </Button>
       </div>
+
+      {/* Diff Viewer Modal */}
+      <DiffViewer
+        open={showDiffView}
+        onOpenChange={setShowDiffView}
+        oldContent={getOldContent()}
+        newContent={getNewContent()}
+        versionNumbers={diffVersions}
+      />
     </section>
   );
 }
