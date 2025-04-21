@@ -1,11 +1,12 @@
-
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
+import { HeroBackgroundAnimation } from "./HeroBackgroundAnimation";
 
 export const Hero = () => {
   return (
-    <section className="flex flex-col items-center text-center py-32 px-8">
-      <div className="max-w-3xl">
+    <section className="relative flex flex-col items-center text-center py-32 px-8 overflow-hidden">
+      <HeroBackgroundAnimation />
+      <div className="max-w-3xl relative z-10">
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
           Co-Create With Your Team & AI
         </h1>
