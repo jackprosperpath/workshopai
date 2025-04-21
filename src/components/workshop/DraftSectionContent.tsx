@@ -3,7 +3,6 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Lightbulb } from "lucide-react";
 import { Comment } from "./CommentsPanel";
-import { DiscussionPrompts } from "./DiscussionPrompts";
 
 interface DraftSectionContentProps {
   para: string;
@@ -111,16 +110,6 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
             <MessageSquare className="h-3 w-3" />
             {sectionComments.length}
           </Badge>
-        )}
-        
-        {/* Add discussion prompts if available */}
-        {discussionPrompts && onTogglePrompts && onAddPromptAnswer && (
-          <DiscussionPrompts
-            sectionIdx={idx}
-            prompts={discussionPrompts}
-            onToggleVisibility={onTogglePrompts}
-            onAddAnswer={(promptId, answer) => onAddPromptAnswer(promptId, answer)}
-          />
         )}
       </div>
     </div>
