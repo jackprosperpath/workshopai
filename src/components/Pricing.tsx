@@ -6,7 +6,7 @@ const tiers = [
   {
     name: "Starter",
     price: "Free",
-    description: "Perfect for trying out Converge.ai",
+    description: "Perfect for trying out WorkshopAI",
     features: [
       "Up to 2 team members",
       "Open source AI models",
@@ -15,8 +15,8 @@ const tiers = [
   },
   {
     name: "Pro",
-    price: "$49",
-    description: "Best for growing teams",
+    price: "$20",
+    description: "Best for larger teams and longer projects",
     features: [
       "Up to 20 team members",
       "Frontier AI models",
