@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { type Stakeholder } from "@/hooks/useStakeholders";
-import { UserX, check as CheckIcon, x as XIcon, messageSquare as MessageSquareIcon } from "lucide-react";
+import { UserX, Check, X, MessageSquare } from "lucide-react";
 import React, { useState } from "react";
 
 interface StakeholderCardProps {
@@ -65,7 +65,7 @@ export function StakeholderCard({ stakeholder, onUpdate, onRemove }: Stakeholder
                 onClick={() => onUpdate({ status: "yes" })}
                 className="flex items-center gap-1"
               >
-                <CheckIcon className="h-4 w-4" /> Approve
+                <Check className="h-4 w-4" /> Approve
               </Button>
             )}
             {status !== "no" && (
@@ -75,7 +75,7 @@ export function StakeholderCard({ stakeholder, onUpdate, onRemove }: Stakeholder
                 onClick={() => onUpdate({ status: "no" })}
                 className="flex items-center gap-1"
               >
-                <XIcon className="h-4 w-4" /> Reject
+                <X className="h-4 w-4" /> Reject
               </Button>
             )}
             <Button
@@ -86,7 +86,7 @@ export function StakeholderCard({ stakeholder, onUpdate, onRemove }: Stakeholder
               className="flex-shrink-0"
               onClick={() => setShowComment((v) => !v)}
             >
-              <MessageSquareIcon className="h-4 w-4" />
+              <MessageSquare className="h-4 w-4" />
             </Button>
           </div>
           {showComment && (
