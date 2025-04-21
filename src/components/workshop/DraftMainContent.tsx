@@ -31,6 +31,7 @@ export function DraftMainContent({
   handleSubmitPromptFeedback,
   onRePrompt,
   loading,
+  sectionPrompts,
 }: any) {
   return (
     <Card className="p-6 m-4 bg-card rounded-xl shadow-sm">
@@ -63,6 +64,7 @@ export function DraftMainContent({
         />
       ))}
       <DraftFeedbackDiscussion
+        sectionPrompts={sectionPrompts || {}}
         handleSubmitPromptFeedback={handleSubmitPromptFeedback}
       />
       <div className="flex gap-2 mt-4">
