@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,29 +31,39 @@ export function useTeamInvites() {
     // Check for both id and share parameters for robustness
     const id = params.get('id') ?? params.get('share');
     if (id) setWorkshopId(id);
-    
+
     // Check if we're in development mode
     const hostname = window.location.hostname;
-    setDevMode(hostname === 'localhost' || hostname === '127.0.0.1');
+    const isDev = hostname === 'localhost' || hostname === '127.0.0.1';
+    setDevMode(isDev);
+
+    // If we are in dev mode, disable invite rule by setting premium
+    if (isDev) {
+      setHasUnlockedPremium(true);
+    }
   }, []);
 
   // Fetch invitation count on load
   useEffect(() => {
+    if (devMode) {
+      // Skip fetching invitation stats and keep premium unlocked in dev mode
+      return;
+    }
     const fetchInvitationStats = async () => {
       try {
         const { data: userData, error: userError } = await supabase.auth.getUser();
-        
+
         if (userError || !userData.user) {
           console.log("No authenticated user found");
           return;
         }
-        
+
         // Get invitation count - fixed column name from inviter_id to invited_by
         const { data, error } = await supabase
           .from('workshop_collaborators')
           .select('*')
           .eq('invited_by', userData.user.id);
-        
+
         if (error) {
           console.error("Error fetching invitations:", error);
           return;
@@ -63,7 +72,7 @@ export function useTeamInvites() {
         const inviteCount = data?.length || 0;
         setInvitationsSent(inviteCount);
         setHasUnlockedPremium(inviteCount >= 3);
-        
+
         console.log(`User has sent ${inviteCount} invitations`);
       } catch (err) {
         console.error("Error checking invitation status:", err);
@@ -71,7 +80,7 @@ export function useTeamInvites() {
     };
 
     fetchInvitationStats();
-  }, []);
+  }, [devMode]);
 
   const inviteTeamMember = async () => {
     setError(null);
