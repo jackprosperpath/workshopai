@@ -1,5 +1,5 @@
-
-import React, { useState, useRef, useEffect } from "react";
+import React from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import type { DraftVersion } from "@/hooks/useDraftWorkspace";
@@ -141,7 +141,6 @@ export function DraftWorkspace({
     if (!currentDraft) return;
     setIsSaving(true);
     try {
-      // Call the updateDraftSection method from the hook to properly update the draft content
       if (currentIdx !== null) {
         const success = await updateDraftSection(currentDraft.id, idx, editableContent);
         
@@ -177,6 +176,30 @@ export function DraftWorkspace({
       setShowDiffView(true);
     }
   };
+
+  async function improveSection(
+    type: "redraft" | "add_detail" | "simplify",
+    idx: number,
+    para: string
+  ): Promise<{ newText?: string; reasoning?: string }> {
+    try {
+      const { data, error } = await supabase.functions.invoke('improve-section', {
+        body: {
+          action: type,
+          section: para,
+        }
+      });
+      if (error) {
+        throw error;
+      }
+      return {
+        newText: data?.newText || "",
+        reasoning: data?.reasoning || ""
+      };
+    } catch (e) {
+      return {};
+    }
+  }
 
   if (!currentDraft) {
     return (
@@ -260,6 +283,7 @@ export function DraftWorkspace({
           activeThread={activeThread}
           setActiveThread={setActiveThread}
           sectionFeedback={currentDraft.sectionFeedback[idx] || []}
+          improveSection={improveSection}
         />
       ))}
 
