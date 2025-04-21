@@ -38,9 +38,7 @@ export function DiffViewer({
             modified={combinedNewContent}
             options={{
               readOnly: true,
-              diffEditor: {
-                renderSideBySide: true
-              },
+              renderSideBySide: true,
               minimap: { enabled: false },
               lineNumbers: 'on',
               scrollBeyondLastLine: false,
