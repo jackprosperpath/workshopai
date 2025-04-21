@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Plus, Save } from "lucide-react";
 import { useWorkshopActions } from "@/hooks/useWorkshopActions";
@@ -25,17 +24,6 @@ export function WorkshopActions() {
 
   return (
     <div className="flex justify-end gap-2 mb-4">
-      <Button onClick={handleCreateNewWorkshop} variant="outline">
-        <Plus className="h-4 w-4 mr-2" />
-        New Workshop
-      </Button>
-      <Button 
-        onClick={onSaveWorkshop} 
-        disabled={!workshopId || isSaving}
-      >
-        <Save className="h-4 w-4 mr-2" />
-        {isSaving ? "Saving..." : "Save Workshop"}
-      </Button>
     </div>
   );
 }
