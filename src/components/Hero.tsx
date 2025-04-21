@@ -7,10 +7,10 @@ export const Hero = () => {
     <section className="flex flex-col items-center text-center py-32 px-8">
       <div className="max-w-3xl">
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-          TEAMS <span className="relative text-primary">
-            & AI MODELS
+          Co-Create Solutions With Your Team <span className="relative text-primary">
+            & AI
             <span className="absolute inset-x-0 bottom-2 h-3 bg-primary/20 -z-10 rounded"></span>
-          </span> WORKING TOGETHER
+          </span>
         </h1>
         <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
           Turn every meeting into a powerful, AI-driven workshop that creates solutions, sparks meaningful discussions, and moves ideas to action—fast.
@@ -29,4 +29,3 @@ export const Hero = () => {
     </section>
   );
 };
-
