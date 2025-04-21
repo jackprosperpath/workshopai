@@ -9,6 +9,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge as FeedbackBadge } from "@/components/ui/badge";
+import SectionFeedbackButton from "./SectionFeedbackButton";
 
 type User = {
   id: string;
@@ -183,39 +184,12 @@ export default function DraftSection({
             />
           </div>
           <div className="flex items-center mt-2 gap-2">
-            <TooltipProvider>
-              <Tooltip disableHoverableContent={!(sectionFeedback.length > 0 && activeThread !== idx)}>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-xs h-7 px-2 rounded-full relative"
-                    onClick={() => setActiveThread(activeThread === idx ? null : idx)}
-                  >
-                    <MessageCircle className="h-3 w-3 mr-1" />
-                    {activeThread === idx ? "Hide" : "Comment"}
-                    {sectionFeedback.length > 0 && activeThread !== idx && (
-                      <FeedbackBadge
-                        variant="default"
-                        className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 text-[10px] h-4 px-1"
-                      >
-                        {sectionFeedback.length}
-                      </FeedbackBadge>
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                {sectionFeedback.length > 0 && activeThread !== idx && (
-                  <TooltipContent side="top" className="max-w-xs">
-                    <span className="block text-xs">
-                      {firstFeedbackLine}
-                      {sectionFeedback.length > 1 && (
-                        <span className="text-muted-foreground ml-2">+{sectionFeedback.length - 1} more</span>
-                      )}
-                    </span>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
+            <SectionFeedbackButton
+              idx={idx}
+              sectionFeedback={sectionFeedback}
+              activeThread={activeThread}
+              onClick={() => setActiveThread(activeThread === idx ? null : idx)}
+            />
             <Button
               size="sm"
               variant="ghost"
