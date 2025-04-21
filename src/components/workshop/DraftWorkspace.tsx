@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
@@ -8,7 +7,6 @@ import { toast } from "@/components/ui/sonner";
 import DraftSection from "./DraftSection";
 import ActiveUsersAvatars from "./ActiveUsersAvatars";
 import DraftVersionSelector from "./DraftVersionSelector";
-import { OGCardShareButton } from "./OGCardShareButton";
 import { DiffViewer } from "./DiffViewer";
 
 export function DraftWorkspace({
@@ -209,27 +207,20 @@ export function DraftWorkspace({
     return activeUsers.find((user) => user.section === sectionIdx);
   };
 
-  // Get previous version content for diff view
   const getOldContent = () => {
     const oldVersionIdx = versions.findIndex(v => v.id === diffVersions.old);
     return oldVersionIdx >= 0 ? versions[oldVersionIdx].output : [];
   };
 
-  // Get current version content for diff view
   const getNewContent = () => {
     const newVersionIdx = versions.findIndex(v => v.id === diffVersions.new);
     return newVersionIdx >= 0 ? versions[newVersionIdx].output : [];
   };
 
-  // Render UI
   return (
     <section className="border rounded p-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="font-semibold">Draft v{currentDraft.id}</h2>
-        <OGCardShareButton
-          captureSelector=".border.rounded.p-4"
-          remixUrl={window.location.href}
-        />
         <div className="flex items-center gap-2">
           <ActiveUsersAvatars activeUsers={activeUsers} />
           <DraftVersionSelector
@@ -241,7 +232,6 @@ export function DraftWorkspace({
         </div>
       </div>
 
-      {/* Render draft sections using the DraftSection component */}
       {currentDraft.output.map((para, idx) => (
         <DraftSection
           key={`section-${idx}`}
@@ -299,7 +289,6 @@ export function DraftWorkspace({
         </Button>
       </div>
 
-      {/* Diff Viewer Modal */}
       <DiffViewer
         open={showDiffView}
         onOpenChange={setShowDiffView}
