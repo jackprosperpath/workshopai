@@ -7,7 +7,7 @@ export const Hero = () => {
     <section className="flex flex-col items-center text-center py-32 px-8">
       <div className="max-w-3xl">
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-          Co-create with your team and AI
+          Co-Create With Your Team & AI
         </h1>
         <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
           Turn every meeting into a powerful, AI-driven workshop that creates solutions, sparks meaningful discussions, and moves ideas to action—fast.
