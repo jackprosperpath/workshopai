@@ -15,6 +15,10 @@ import { v4 as uuidv4 } from "uuid";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import { Card } from "@/components/ui/card";
+import { useDraftPresence } from "./hooks/useDraftPresence";
+import { useDraftComments } from "./hooks/useDraftComments";
+import { DraftWorkspaceHeader } from "./DraftWorkspaceHeader";
+import { DraftMainContent } from "./DraftMainContent";
 
 export function DraftWorkspace({
   currentDraft,
@@ -43,16 +47,16 @@ export function DraftWorkspace({
 }) {
   const [editingSection, setEditingSection] = useState<number | null>(null);
   const [editableContent, setEditableContent] = useState<string>("");
-  const [editingSessions, setEditingSessions] = useState<{ [key: string]: string }>({});
-  const [isSaving, setIsSaving] = useState(false);
-  const [activeUsers, setActiveUsers] = useState<{ id: string; name: string; section: number | null; content?: string }[]>([]);
-  const [showDiffView, setShowDiffView] = useState(false);
-  const [diffVersions, setDiffVersions] = useState<{ old: number; new: number }>({ old: 0, new: 0 });
+  const [editingDraft, setEditingDraft] = useState(false);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [showCommentsSidebar, setShowCommentsSidebar] = useState(false);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [activeComment, setActiveComment] = useState<string | null>(null);
-  const [editingDraft, setEditingDraft] = useState(false);
+
+  // Presence and comments refactored to hooks
+  const { activeUsers, editingSessions } = useDraftPresence(currentDraft);
+  const {
+    comments, setComments, activeComment, setActiveComment,
+    addComment, onDeleteComment, onJumpToComment
+  } = useDraftComments(currentDraft);
 
   const { 
     sectionPrompts,
@@ -68,17 +72,14 @@ export function DraftWorkspace({
     }
   }, [editingSection]);
 
+  const [isSaving, setIsSaving] = useState(false);
+  const [activeUsersOld, setActiveUsersOld] = useState<{ id: string; name: string; section: number | null; content?: string }[]>([]);
+  const [showDiffView, setShowDiffView] = useState(false);
+  const [diffVersions, setDiffVersions] = useState<{ old: number; new: number }>({ old: 0, new: 0 });
+  const [editingSessionsOld, setEditingSessionsOld] = useState<{ [key: string]: string }>({});
+
   useEffect(() => {
     if (!currentDraft) return;
-    
-    const loadComments = () => {
-      const storedComments = localStorage.getItem(`draft-comments-${currentDraft.id}`);
-      if (storedComments) {
-        setComments(JSON.parse(storedComments));
-      }
-    };
-    
-    loadComments();
     
     const getUserInfo = async () => {
       const { data } = await supabase.auth.getUser();
@@ -102,14 +103,14 @@ export function DraftWorkspace({
               section: user.editing_section,
               content: user.content
             }));
-          setActiveUsers(currentUsers);
+          setActiveUsersOld(currentUsers);
           const sessions: { [key: string]: string } = {};
           currentUsers.forEach((user: any) => {
             if (user.editing_section !== null && user.content) {
               sessions[`${user.editing_section}`] = user.content;
             }
           });
-          setEditingSessions(sessions);
+          setEditingSessionsOld(sessions);
         })
         .on("presence", { event: "join" }, ({ key, newPresences }) => {
           const newUser = newPresences[0];
@@ -118,7 +119,7 @@ export function DraftWorkspace({
         .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
           const leftUser = leftPresences[0];
           toast.info(`${leftUser.email} left the session`);
-          setActiveUsers((prev) => prev.filter((user) => user.id !== leftUser.user_id));
+          setActiveUsersOld((prev) => prev.filter((user) => user.id !== leftUser.user_id));
         })
         .subscribe(async (status) => {
           if (status !== "SUBSCRIBED") return;
@@ -212,7 +213,7 @@ export function DraftWorkspace({
     }
   };
 
-  const addComment = async (
+  const addCommentOld = async (
     sectionIdx: number, 
     text: string, 
     startOffset: number, 
@@ -242,7 +243,7 @@ export function DraftWorkspace({
     toast.success("Comment added");
   };
 
-  const handleDeleteComment = (id: string) => {
+  const handleDeleteCommentOld = (id: string) => {
     setComments(prev => prev.filter(comment => comment.id !== id));
     if (activeComment === id) {
       setActiveComment(null);
@@ -250,7 +251,7 @@ export function DraftWorkspace({
     toast.success("Comment deleted");
   };
 
-  const handleJumpToComment = (comment: Comment) => {
+  const handleJumpToCommentOld = (comment: Comment) => {
     setActiveComment(comment.id);
     // If needed, we could add scrolling to the specific section/comment here
   };
@@ -384,7 +385,7 @@ export function DraftWorkspace({
         isSystem: true,
         question: q.question
       }));
-  });
+  };
 
   const allComments = [
     ...aiDiscussionComments,
@@ -393,152 +394,61 @@ export function DraftWorkspace({
 
   return (
     <section className="h-full">
-      <div className="flex justify-between items-center p-4 border-b">
-        <h2 className="font-semibold">Draft v{currentDraft.id}</h2>
-        <div className="flex items-center gap-2">
-          <ActiveUsersAvatars activeUsers={activeUsers} />
-          <DraftVersionSelector
-            versions={versions}
-            currentDraftId={currentDraft.id}
-            onSelect={setCurrentIdx}
-            onCompare={handleCompareDrafts}
-          />
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="flex items-center gap-1"
-            onClick={() => setShowCommentsSidebar(!showCommentsSidebar)}
-          >
-            <MessageSquare className="h-4 w-4" />
-            Comments
-            {comments.length > 0 && (
-              <span className="bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs">
-                {comments.length}
-              </span>
-            )}
-          </Button>
-          {!editingDraft ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleStartEditingDraft}
-            >
-              Edit Draft
-            </Button>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCancelEditingDraft}
-            >
-              Exit Edit Mode
-            </Button>
-          )}
-        </div>
-      </div>
-
+      <DraftWorkspaceHeader
+        currentDraft={currentDraft}
+        versions={versions}
+        currentIdx={currentIdx}
+        setCurrentIdx={setCurrentIdx}
+        activeUsers={activeUsers}
+        onCompare={handleCompareDrafts}
+        comments={comments}
+        showCommentsSidebar={showCommentsSidebar}
+        setShowCommentsSidebar={setShowCommentsSidebar}
+        editingDraft={editingDraft}
+        handleStartEditingDraft={() => setEditingDraft(true)}
+        handleCancelEditingDraft={() => {
+          setEditingDraft(false);
+          setEditingSection(null);
+          setEditableContent("");
+          updateEditingSection(null);
+        }}
+      />
       <div className="flex h-[calc(100vh-15rem)] overflow-hidden">
         <div className={`flex-1 overflow-auto transition-all duration-200 ${showCommentsSidebar ? 'w-3/4' : 'w-full'}`}>
-          <Card className="p-6 m-4 bg-card rounded-xl shadow-sm">
-            {currentDraft?.output.map((para, idx) => (
-              <DraftSection
-                key={`section-${idx}`}
-                idx={idx}
-                para={para}
-                currentDraftId={currentDraft.id}
-                editable={editingDraft && editingSection === idx}
-                editingSection={editingSection}
-                editingSessions={editingSessions}
-                setEditableContent={setEditableContent}
-                editableContent={editableContent}
-                editTextareaRef={editTextareaRef}
-                onEditStart={handleEditStart}
-                onEditCancel={handleEditCancel}
-                onEditSave={handleEditSave}
-                onContentChange={handleContentChange}
-                isSaving={isSaving}
-                isUserEditingSection={isUserEditingSection}
-                getEditingUserForSection={getEditingUserForSection}
-                highlightChanges={highlightChanges}
-                activeComment={activeComment}
-                setActiveComment={setActiveComment}
-                comments={comments}
-                addComment={addComment}
-                improveSection={improveSection}
-                updateDraftSection={handleUpdateSection}
-                discussionPrompts={sectionPrompts[idx]}
-                onGeneratePrompts={generatePrompts}
-                onTogglePrompts={togglePromptsVisibility}
-                onAddPromptAnswer={addAnswer}
-              />
-            ))}
-            
-            {Object.entries(sectionPrompts).some(([_, prompts]) => 
-              prompts.questions.some(q => q.isAnswered)
-            ) && (
-              <div className="mt-4 p-3 border rounded-md bg-muted/20">
-                <h4 className="font-medium text-sm mb-2">Discussion answers</h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Submit discussion answers as feedback to improve the next draft generation.
-                </p>
-                <div className="space-y-2">
-                  {Object.entries(sectionPrompts).map(([sectionIdxStr, prompts]) => {
-                    const sectionIdx = parseInt(sectionIdxStr);
-                    const answeredCount = prompts.questions.filter(q => q.isAnswered).length;
-                    
-                    if (answeredCount === 0) return null;
-                    
-                    return (
-                      <div key={sectionIdxStr} className="flex justify-between items-center">
-                        <span className="text-sm">
-                          Section {sectionIdx + 1}: {answeredCount} answered
-                        </span>
-                        <Button 
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleSubmitPromptFeedback(sectionIdx)}
-                        >
-                          Submit as feedback
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            
-            <div className="flex gap-2 mt-4">
-              <Button
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-                onClick={onRePrompt}
-                disabled={loading}
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-                {loading ? "Generating…" : "Re‑prompt"}
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => {
-                  if (currentDraft) {
-                    const finalVersion = {
-                      ...currentDraft,
-                      isFinal: true,
-                    };
-                    const updatedVersions = versions.map((v, i) =>
-                      i === currentIdx ? finalVersion : v
-                    );
-                    setCurrentIdx(currentIdx || 0);
-                    window.location.hash = "endorsement";
-                  }
-                }}
-              >
-                Finalise
-              </Button>
-            </div>
-          </Card>
+          <DraftMainContent
+            currentDraft={currentDraft}
+            editingDraft={editingDraft}
+            editingSection={editingSection}
+            editingSessions={editingSessions}
+            setEditableContent={setEditableContent}
+            editableContent={editableContent}
+            editTextareaRef={editTextareaRef}
+            onEditStart={handleEditStart}
+            onEditCancel={handleEditCancel}
+            onEditSave={handleEditSave}
+            onContentChange={handleContentChange}
+            isSaving={isSaving}
+            isUserEditingSection={isUserEditingSection}
+            getEditingUserForSection={getEditingUserForSection}
+            highlightChanges={highlightChanges}
+            activeComment={activeComment}
+            setActiveComment={setActiveComment}
+            comments={comments}
+            addComment={addComment}
+            improveSection={improveSection}
+            updateDraftSection={handleUpdateSection}
+            sectionPrompts={sectionPrompts}
+            generatePrompts={generatePrompts}
+            togglePromptsVisibility={togglePromptsVisibility}
+            addAnswer={addAnswer}
+            onRePrompt={onRePrompt}
+            loading={loading}
+            currentIdx={currentIdx}
+            versions={versions}
+            handleSubmitPromptFeedback={handleSubmitPromptFeedback}
+            setCurrentIdx={setCurrentIdx}
+          />
         </div>
-        
         {showCommentsSidebar && (
           <div className="w-1/4 border-l h-full overflow-hidden flex flex-col">
             <div className="flex justify-between items-center p-3 border-b">
@@ -558,14 +468,13 @@ export function DraftWorkspace({
                 comments={allComments}
                 activeComment={activeComment}
                 setActiveComment={setActiveComment}
-                onDeleteComment={handleDeleteComment}
-                onJumpToComment={handleJumpToComment}
+                onDeleteComment={onDeleteComment}
+                onJumpToComment={onJumpToComment}
               />
             </div>
           </div>
         )}
       </div>
-
       <DiffViewer
         open={showDiffView}
         onOpenChange={setShowDiffView}
