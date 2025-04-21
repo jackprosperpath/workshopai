@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,8 +14,7 @@ import { useStakeholders } from "@/hooks/useStakeholders";
 import { useWorkshopActions } from "@/hooks/useWorkshopActions";
 import { LivePresenceLayer } from "./workshop/LivePresenceLayer";
 import { useRef } from "react";
-import { useDiscussionPrompts } from "@/hooks/useDiscussionPrompts";
-import { DiscussionPanel } from "./workshop/DiscussionPanel";
+// (No more import { DiscussionPanel } ... )
 
 export default function ConsensusWorkshop() {
   const [activeTab, setActiveTab] = useState("draft");
@@ -72,18 +72,13 @@ export default function ConsensusWorkshop() {
 
   const workspaceRef = useRef<HTMLDivElement>(null);
 
-  const { sectionPrompts, generatePrompts, addAnswer } = useDiscussionPrompts(workshopId);
-
+  // Remove useDiscussionPrompts/global section prompts here
+  
   const [discussionCollapsed, setDiscussionCollapsed] = useState(false);
 
   useEffect(() => {
-    if (currentDraft && currentDraft.output) {
-      currentDraft.output.forEach((section, idx) => {
-        if (!sectionPrompts[idx]?.questions?.length && section?.trim()) {
-          generatePrompts(idx, section);
-        }
-      });
-    }
+    // Remove generatePrompts
+    // AI discussion handled in DraftWorkspace sidebar now
   }, [currentDraft]);
 
   useEffect(() => {
@@ -127,13 +122,7 @@ export default function ConsensusWorkshop() {
         <LivePresenceLayer workshopId={workshopId} workspaceRef={workspaceRef} />
       )}
 
-      {/* --- AI Discussion Prompts Panel --- */}
-      <DiscussionPanel
-        sectionPrompts={sectionPrompts}
-        addAnswer={addAnswer}
-        collapsed={discussionCollapsed}
-        setCollapsed={setDiscussionCollapsed}
-      />
+      {/* No more DiscussionPanel */}
 
       {/* --- Main Workshop Tabs/Content --- */}
       <div className="flex-1">
@@ -182,6 +171,7 @@ export default function ConsensusWorkshop() {
                   loading={loading}
                   workshopId={workshopId}
                   updateDraftSection={updateDraftSection}
+                  // No need to pass sectionPrompts as prop, will load inside workspace
                 />
               </div>
             </DraftLimitWrapper>

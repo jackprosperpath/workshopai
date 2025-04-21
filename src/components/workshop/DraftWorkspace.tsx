@@ -364,6 +364,35 @@ export function DraftWorkspace({
     return newVersionIdx >= 0 ? versions[newVersionIdx].output : [];
   };
 
+  // Synthesize "system" comments for AI discussion points using sectionPrompts
+  const aiDiscussionComments = Object.entries(sectionPrompts).flatMap(([sectionIdxStr, section]) => {
+    if (!section || !section.questions) return [];
+    const idx = parseInt(sectionIdxStr, 10);
+    return section.questions
+      .filter((q) => q.answers.length > 0)
+      .map((q) => ({
+        id: `ai-discussion-${q.id}`,
+        text: q.answers.map((a, i) => `A${q.answers.length > 1 ? `${i + 1}` : ""}: ${a}`).join("\n"),
+        authorId: "ai-system",
+        authorName: "Discussion AI",
+        timestamp: "",
+        selection: {
+          sectionIndex: idx,
+          startOffset: 0,
+          endOffset: 0,
+          content: q.question,
+        },
+        isSystem: true,
+        question: q.question
+      }));
+  });
+
+  // The panel now receives both
+  const allComments = [
+    ...aiDiscussionComments,
+    ...comments,
+  ];
+
   return (
     <section>
       <div className="flex justify-between items-center p-4 border-b">
@@ -513,7 +542,7 @@ export function DraftWorkspace({
         {showCommentsSidebar && (
           <div className="w-1/4 border-l h-[calc(100vh-15rem)] overflow-hidden">
             <div className="flex justify-between items-center p-3 border-b">
-              <h3 className="font-medium">Comments</h3>
+              <h3 className="font-medium">Comments & Discussion</h3>
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -525,7 +554,7 @@ export function DraftWorkspace({
               </Button>
             </div>
             <CommentsPanel
-              comments={comments}
+              comments={allComments}
               activeComment={activeComment}
               setActiveComment={setActiveComment}
               onDeleteComment={handleDeleteComment}
