@@ -4,24 +4,24 @@ import { Card, CardContent } from "@/components/ui/card";
 
 const features = [
   {
-    name: "Real-time Collaboration",
-    description: "Work together seamlessly with your team in real-time on AI prompts and solutions.",
+    name: "AI-Driven Solution Drafts",
+    description: "Quickly turn ideas into structured, ready-to-share documents.",
+    icon: Zap,
+  },
+  {
+    name: "Real-Time Collaboration",
+    description: "Edit, comment, and iterate together, seamlessly.",
     icon: Users,
   },
   {
-    name: "Version History",
-    description: "Track changes and iterate on prompts with comprehensive version control.",
+    name: "Intelligent Discussion Prompts",
+    description: "AI-generated questions guide impactful team conversations.",
     icon: History,
   },
   {
-    name: "Stakeholder Approval",
-    description: "Streamline sign-offs with built-in approval workflows.",
+    name: "Integrated Stakeholder Approval",
+    description: "Smoothly manage feedback and secure approvals directly within the platform.",
     icon: ThumbsUp,
-  },
-  {
-    name: "Instant Iterations",
-    description: "Refine and improve prompts quickly with immediate AI feedback.",
-    icon: Zap,
   },
 ];
 
