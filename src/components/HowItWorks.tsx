@@ -4,24 +4,28 @@ import { ArrowRight } from "lucide-react";
 const steps = [
   {
     number: "01",
-    title: "Pick Your Team",
-    description: "Choose which humans and AI models you want to workshop your problem with."
+    title: "Define Your Challenge",
+    description:
+      "Clearly outline your problem, objectives, and constraints - WorkshopAI structures it all effortlessly.",
   },
   {
     number: "02",
-    title: "Set Your Brief",
-    description: "Define your problem or opportunity and establish context to get everyone on the same page."
+    title: "Generate Instant Solutions",
+    description:
+      "Tap into cutting-edge AI models to instantly draft comprehensive, structured solutions tailored to your goals.",
   },
   {
     number: "03",
-    title: "Collaborate on Solutions",
-    description: "Rapidly iterate potential solutions and generate a tangible output in one session."
+    title: "Facilitate Engaging Discussions",
+    description:
+      "Automatically-generated, thought-provoking prompts guide your team’s conversation, ensuring everyone contributes valuable insights.",
   },
   {
     number: "04",
-    title: "Approve and Export",
-    description: "Hit Sign‑off to lock the version and ship a ready‑to‑present artefact."
-  }
+    title: "Refine, Iterate, Approve",
+    description:
+      "Real-time collaboration tools help you quickly iterate and refine until your team and stakeholders are aligned.",
+  },
 ];
 
 export const HowItWorks = () => {
@@ -54,3 +58,4 @@ export const HowItWorks = () => {
     </section>
   );
 };
+
