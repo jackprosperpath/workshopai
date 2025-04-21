@@ -13,6 +13,7 @@ import { Comment, CommentsPanel } from "./CommentsPanel";
 import { v4 as uuidv4 } from "uuid";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
+import { Card } from "@/components/ui/card";
 
 export function DraftWorkspace({
   currentDraft,
@@ -341,7 +342,7 @@ export function DraftWorkspace({
   };
 
   return (
-    <section className="border rounded">
+    <section>
       <div className="flex justify-between items-center p-4 border-b">
         <h2 className="font-semibold">Draft v{currentDraft.id}</h2>
         <div className="flex items-center gap-2">
@@ -396,7 +397,7 @@ export function DraftWorkspace({
       </div>
 
       <div className="flex">
-        <div className={`flex-1 p-4 ${showCommentsSidebar ? 'w-3/4' : 'w-full'}`}>
+        <Card className={`flex-1 p-6 m-4 bg-card rounded-xl shadow-sm min-h-[300px] transition-all duration-200`}>
           {currentDraft.output.map((para, idx) => (
             <DraftSection
               key={`section-${idx}`}
@@ -425,7 +426,6 @@ export function DraftWorkspace({
               updateDraftSection={handleUpdateSection}
             />
           ))}
-
           <div className="flex gap-2 mt-4">
             <Button
               className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
@@ -455,8 +455,7 @@ export function DraftWorkspace({
               Finalise
             </Button>
           </div>
-        </div>
-
+        </Card>
         {showCommentsSidebar && (
           <div className="w-1/4 border-l h-[calc(100vh-15rem)] overflow-hidden">
             <div className="flex justify-between items-center p-3 border-b">

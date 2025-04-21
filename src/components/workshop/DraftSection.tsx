@@ -227,11 +227,11 @@ const DraftSection: React.FC<DraftSectionProps> = ({
 
   return (
     <div
-      className="relative group mb-4"
+      className="relative group mb-2"
       onMouseUp={handleTextSelection}
     >
       {editable ? (
-        <div className="border rounded p-2">
+        <div className="border rounded p-2 bg-muted/30">
           <textarea
             ref={editTextareaRef}
             value={editableContent}
@@ -259,7 +259,7 @@ const DraftSection: React.FC<DraftSectionProps> = ({
           </div>
         </div>
       ) : (
-        <div className="border rounded p-2 hover:border-primary transition-colors">
+        <div className="p-0 hover:bg-muted/20 transition-colors rounded group">
           <SectionAIActions
             improveResult={improveResult}
             improving={improving}
@@ -273,21 +273,9 @@ const DraftSection: React.FC<DraftSectionProps> = ({
             idx={idx}
             editingSection={editingSection}
             isUserEditingSection={isUserEditingSection}
-            highlightChanges={(text, idxRender) => {
-              if (showVisualDiff && diffIndices.length > 0) {
-                const lines = text.split("\n");
-                return (
-                  <div className="space-y-1">
-                    {lines.map((ln, i) => (
-                      <div key={i}>
-                        {ln}
-                      </div>
-                    ))}
-                  </div>
-                );
-              }
-              return highlightChanges(text, idxRender);
-            }}
+            highlightChanges={(text, idxRender) =>
+              highlightChanges(text, idxRender)
+            }
             comments={comments}
             activeComment={activeComment}
             setActiveComment={setActiveComment}
