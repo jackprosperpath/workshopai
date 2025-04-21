@@ -1,11 +1,11 @@
 
-import { Slack, Users, Notion, Zoom } from "lucide-react";
+import { Slack, Users, Notion, Video } from "lucide-react";
 
 export const LogoStrip = () => {
   const logos = [
     {
       name: "Zoom",
-      icon: <Zoom className="h-10 w-auto opacity-70" aria-label="Zoom logo" />,
+      icon: <Video className="h-10 w-auto opacity-70" aria-label="Zoom logo" />,
       url: "https://zoom.us/",
     },
     {
