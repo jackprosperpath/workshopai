@@ -17,6 +17,7 @@ serve(async (req) => {
     const { sectionText } = await req.json();
 
     if (!sectionText || typeof sectionText !== 'string' || sectionText.trim().length === 0) {
+      console.error('Invalid section text:', sectionText);
       return new Response(
         JSON.stringify({ 
           error: 'Invalid or empty section text',
@@ -44,10 +45,15 @@ serve(async (req) => {
     `;
 
     try {
+      const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+      if (!OPENAI_API_KEY) {
+        throw new Error('OPENAI_API_KEY is not set');
+      }
+
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -72,8 +78,11 @@ serve(async (req) => {
       try {
         // Try to parse the response content as JSON
         const content = data.choices[0].message.content;
+        console.log('OpenAI response content:', content);
+        
         const parsed = JSON.parse(content);
         questions = parsed.questions || [];
+        console.log('Parsed questions:', questions);
       } catch (error) {
         console.error('Error parsing response as JSON:', error);
         // Fallback: Extract questions from text response
@@ -82,6 +91,7 @@ serve(async (req) => {
         const matches = content.match(/"([^"]+)"/g);
         if (matches && matches.length > 0) {
           questions = matches.slice(0, 3).map(q => q.replace(/"/g, ''));
+          console.log('Extracted questions using regex:', questions);
         }
       }
 
@@ -142,5 +152,5 @@ function getDefaultQuestions() {
 
 function generateSimpleHash(text: string): string {
   // Simple hash function for consistent section identification
-  return Buffer.from(text.substring(0, 100)).toString('base64').substring(0, 10);
+  return btoa(text.substring(0, 100)).substring(0, 10);
 }

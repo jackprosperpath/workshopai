@@ -52,7 +52,10 @@ export function useDiscussionPrompts(workshopId: string | null) {
   }, [cachedPrompts, workshopId]);
 
   const generatePrompts = useCallback(async (sectionIdx: number, sectionText: string) => {
-    if (!sectionText?.trim()) return;
+    if (!sectionText?.trim()) {
+      console.log("Empty section text, skipping prompt generation");
+      return;
+    }
     
     // Generate a simple hash of the section text for caching
     const sectionHash = btoa(sectionText.substring(0, 50)).substring(0, 10);
@@ -68,12 +71,12 @@ export function useDiscussionPrompts(workshopId: string | null) {
     const now = Date.now();
     if (lastErrorTime > 0 && now - lastErrorTime < 30000) { // 30 second cooldown
       console.log("Error cooldown active for section", sectionIdx);
-      toast.info("Discussions temporarily unavailable for this section");
       return;
     }
     
     // Check if we have cached prompts for this section text
     if (cachedPrompts[sectionHash]) {
+      console.log("Using cached prompts for section", sectionIdx, cachedPrompts[sectionHash]);
       setSectionPrompts(prev => ({
         ...prev,
         [sectionIdx]: {
@@ -104,15 +107,27 @@ export function useDiscussionPrompts(workshopId: string | null) {
     }));
     setApiCallsInProgress(prev => ({ ...prev, [sectionHash]: true }));
     
+    console.log("Generating prompts for section", sectionIdx, "with hash", sectionHash);
+    
     try {
       // Call the edge function to generate prompts
       const { data, error } = await supabase.functions.invoke('generate-discussion-prompts', {
         body: { sectionText }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase function error:", error);
+        throw error;
+      }
+      
+      console.log("Received prompt data:", data);
       
       const promptQuestions = data.questions;
+      
+      if (!Array.isArray(promptQuestions)) {
+        console.error("Invalid response format, expected array of questions:", promptQuestions);
+        throw new Error("Invalid response format");
+      }
       
       // Cache the prompts
       setCachedPrompts(prev => ({
@@ -189,13 +204,18 @@ export function useDiscussionPrompts(workshopId: string | null) {
   }, [apiCallsInProgress, cachedPrompts, errorSections]);
   
   const togglePromptsVisibility = useCallback((sectionIdx: number) => {
-    setSectionPrompts(prev => ({
-      ...prev,
-      [sectionIdx]: {
-        ...prev[sectionIdx],
-        isVisible: !prev[sectionIdx]?.isVisible
-      }
-    }));
+    setSectionPrompts(prev => {
+      // If we don't have any prompts for this section yet, don't toggle
+      if (!prev[sectionIdx]) return prev;
+      
+      return {
+        ...prev,
+        [sectionIdx]: {
+          ...prev[sectionIdx],
+          isVisible: !prev[sectionIdx].isVisible
+        }
+      };
+    });
   }, []);
   
   const addAnswer = useCallback((sectionIdx: number, promptId: string, answer: string) => {

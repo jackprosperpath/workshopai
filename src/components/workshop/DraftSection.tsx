@@ -81,9 +81,9 @@ const DraftSection: React.FC<DraftSectionProps> = ({
   const sectionRef = useRef<HTMLDivElement>(null);
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Generate discussion prompts when component mounts if they aren't already there
   useEffect(() => {
     if (onGeneratePrompts && para && !editable) {
+      console.log("Triggering prompt generation for section", idx);
       onGeneratePrompts(idx, para);
     }
   }, [idx, para, onGeneratePrompts, editable]);
