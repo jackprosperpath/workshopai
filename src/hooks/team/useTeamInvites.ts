@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface InviteResult {
@@ -27,7 +27,8 @@ export function useTeamInvites() {
   // Get current workshop ID from URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const id = params.get('id');
+    // Check for both id and share parameters for robustness
+    const id = params.get('id') ?? params.get('share');
     if (id) setWorkshopId(id);
     
     // Check if we're in development mode
@@ -82,9 +83,12 @@ export function useTeamInvites() {
       if (data && data.error) {
         // For duplicate invites, show a warning instead of an error
         if (data.error.includes("already been invited")) {
-          toast.warning(data.error);
+          toast({
+            description: data.error,
+            variant: "warning"
+          });
           setInviteEmail("");
-          return;
+          return; // Early return to prevent throwing error
         } else {
           throw new Error(data.error);
         }
@@ -105,14 +109,26 @@ export function useTeamInvites() {
         
         if (data.emailSent === false) {
           if (devMode) {
-            toast.warning("Invitation created but email could not be sent due to development restrictions.");
+            toast({
+              description: "Invitation created but email could not be sent due to development restrictions.",
+              variant: "warning"
+            });
           } else {
-            toast.warning(`Invitation created but email could not be sent. ${data.emailError || ''}`);
+            toast({
+              description: `Invitation created but email could not be sent. ${data.emailError || ''}`,
+              variant: "warning"
+            });
           }
         } else if (data.isDevelopment && data.emailSentTo !== data.invitation.email) {
-          toast.success(`Invitation created and development email sent to ${data.emailSentTo}`);
+          toast({
+            description: `Invitation created and development email sent to ${data.emailSentTo}`,
+            variant: "success"
+          });
         } else {
-          toast.success(`Invitation sent to ${inviteEmail}`);
+          toast({
+            description: `Invitation sent to ${inviteEmail}`,
+            variant: "success"
+          });
         }
         
         setInviteEmail("");
@@ -122,7 +138,10 @@ export function useTeamInvites() {
     } catch (error) {
       console.error("Error inviting team member:", error);
       setError("Failed to send invitation: " + (error.message || "Unknown error"));
-      toast.error("Failed to send invitation: " + (error.message || "Unknown error"));
+      toast({
+        description: "Failed to send invitation: " + (error.message || "Unknown error"),
+        variant: "destructive"
+      });
     } finally {
       setIsInviting(false);
     }
