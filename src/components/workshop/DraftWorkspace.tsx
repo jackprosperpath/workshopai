@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -201,6 +202,24 @@ export function DraftWorkspace({
     }
   }
 
+  // Function to handle updating a section with AI-generated content
+  const handleUpdateSection = async (sectionIdx: number, content: string) => {
+    if (!currentDraft) return false;
+    
+    try {
+      const success = await updateDraftSection(currentDraft.id, sectionIdx, content);
+      if (success) {
+        toast.success("AI improvements applied");
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error updating section:", error);
+      toast.error("Failed to apply AI improvements");
+      return false;
+    }
+  };
+
   if (!currentDraft) {
     return (
       <section className="border rounded p-8 flex flex-col items-center justify-center text-center space-y-4">
@@ -284,6 +303,7 @@ export function DraftWorkspace({
           setActiveThread={setActiveThread}
           sectionFeedback={currentDraft.sectionFeedback[idx] || []}
           improveSection={improveSection}
+          updateDraftSection={handleUpdateSection}
         />
       ))}
 

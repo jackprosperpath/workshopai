@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +48,7 @@ type DraftSectionProps = {
     idx: number,
     para: string
   ) => Promise<{ newText?: string; reasoning?: string }>;
+  updateDraftSection?: (sectionIdx: number, content: string) => Promise<boolean>;
 };
 
 export default function DraftSection({
@@ -72,10 +74,12 @@ export default function DraftSection({
   setActiveThread,
   sectionFeedback,
   improveSection,
+  updateDraftSection,
 }: DraftSectionProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [improving, setImproving] = useState<null | "redraft" | "add_detail" | "simplify">(null);
   const [improveResult, setImproveResult] = useState<{ newText: string, reasoning?: string } | null>(null);
+  const [applyingChanges, setApplyingChanges] = useState(false);
 
   const contentRef = React.useRef(editableContent);
 
@@ -123,15 +127,33 @@ export default function DraftSection({
       const { newText, reasoning } = await improveSection(type, idx, para);
       if (newText) {
         setImproveResult({ newText, reasoning });
-        setTimeout(() => {
-          setImproveResult(null);
-          setImproving(null);
-        }, 3000);
       }
     } catch (e) {
       setImproving(null);
       setImproveResult(null);
+    } finally {
+      setImproving(null);
     }
+  };
+
+  const handleApplyChanges = async () => {
+    if (!improveResult || !updateDraftSection) return;
+    
+    setApplyingChanges(true);
+    try {
+      const success = await updateDraftSection(idx, improveResult.newText);
+      if (success) {
+        setImproveResult(null);
+      }
+    } catch (error) {
+      console.error("Error applying changes:", error);
+    } finally {
+      setApplyingChanges(false);
+    }
+  };
+
+  const handleDiscardChanges = () => {
+    setImproveResult(null);
   };
 
   return (
@@ -237,6 +259,22 @@ export default function DraftSection({
                   <em>Reasoning: {improveResult.reasoning}</em>
                 </div>
               )}
+              <div className="flex justify-end gap-2 mt-3">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleDiscardChanges}
+                >
+                  Discard
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={handleApplyChanges}
+                  disabled={applyingChanges}
+                >
+                  {applyingChanges ? "Applying..." : "Apply Changes"}
+                </Button>
+              </div>
             </div>
           )}
           <div className="flex items-center mt-2 gap-2">
