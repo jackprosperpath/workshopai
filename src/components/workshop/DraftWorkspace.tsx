@@ -10,6 +10,7 @@ import ActiveUsersAvatars from "./ActiveUsersAvatars";
 import DraftVersionSelector from "./DraftVersionSelector";
 import { DiffViewer } from "./DiffViewer";
 import { Comment, CommentsPanel } from "./CommentsPanel";
+import { useDiscussionPrompts } from "@/hooks/useDiscussionPrompts";
 import { v4 as uuidv4 } from "uuid";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
@@ -52,6 +53,14 @@ export function DraftWorkspace({
   const [comments, setComments] = useState<Comment[]>([]);
   const [activeComment, setActiveComment] = useState<string | null>(null);
   const [editingDraft, setEditingDraft] = useState(false);
+
+  const { 
+    sectionPrompts,
+    generatePrompts,
+    togglePromptsVisibility,
+    addAnswer,
+    getPromptAnswers
+  } = useDiscussionPrompts(workshopId);
 
   useEffect(() => {
     if (editingSection !== null && editTextareaRef.current) {
@@ -298,6 +307,20 @@ export function DraftWorkspace({
     updateEditingSection(null);
   };
 
+  const handleSubmitPromptFeedback = async (sectionIdx: number) => {
+    if (!currentDraft) return;
+    
+    const promptAnswers = getPromptAnswers(sectionIdx);
+    if (promptAnswers.length === 0) return;
+    
+    const feedbackText = promptAnswers.map(pa => 
+      `Q: ${pa.question}\n${pa.answers.map(a => `A: ${a}`).join('\n')}`
+    ).join('\n\n');
+    
+    addFeedback(sectionIdx, feedbackText);
+    toast.success("Discussion points added as feedback");
+  };
+
   if (!currentDraft) {
     return (
       <section className="border rounded p-8 flex flex-col items-center justify-center text-center space-y-4">
@@ -389,7 +412,7 @@ export function DraftWorkspace({
 
       <div className="flex">
         <Card className={`flex-1 p-6 m-4 bg-card rounded-xl shadow-sm min-h-[300px] transition-all duration-200`}>
-          {currentDraft.output.map((para, idx) => (
+          {currentDraft?.output.map((para, idx) => (
             <DraftSection
               key={`section-${idx}`}
               idx={idx}
@@ -402,7 +425,7 @@ export function DraftWorkspace({
               editableContent={editableContent}
               editTextareaRef={editTextareaRef}
               onEditStart={handleEditStart}
-              onEditCancel={() => setEditingSection(null)}
+              onEditCancel={handleEditCancel}
               onEditSave={handleEditSave}
               onContentChange={handleContentChange}
               isSaving={isSaving}
@@ -415,8 +438,47 @@ export function DraftWorkspace({
               addComment={addComment}
               improveSection={improveSection}
               updateDraftSection={handleUpdateSection}
+              discussionPrompts={sectionPrompts[idx]}
+              onGeneratePrompts={generatePrompts}
+              onTogglePrompts={togglePromptsVisibility}
+              onAddPromptAnswer={addAnswer}
             />
           ))}
+          
+          {Object.entries(sectionPrompts).some(([_, prompts]) => 
+            prompts.questions.some(q => q.isAnswered)
+          ) && (
+            <div className="mt-4 p-3 border rounded-md bg-muted/20">
+              <h4 className="font-medium text-sm mb-2">Discussion answers</h4>
+              <p className="text-sm text-muted-foreground mb-3">
+                Submit discussion answers as feedback to improve the next draft generation.
+              </p>
+              <div className="space-y-2">
+                {Object.entries(sectionPrompts).map(([sectionIdxStr, prompts]) => {
+                  const sectionIdx = parseInt(sectionIdxStr);
+                  const answeredCount = prompts.questions.filter(q => q.isAnswered).length;
+                  
+                  if (answeredCount === 0) return null;
+                  
+                  return (
+                    <div key={sectionIdxStr} className="flex justify-between items-center">
+                      <span className="text-sm">
+                        Section {sectionIdx + 1}: {answeredCount} answered
+                      </span>
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleSubmitPromptFeedback(sectionIdx)}
+                      >
+                        Submit as feedback
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          
           <div className="flex gap-2 mt-4">
             <Button
               className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
@@ -447,6 +509,7 @@ export function DraftWorkspace({
             </Button>
           </div>
         </Card>
+        
         {showCommentsSidebar && (
           <div className="w-1/4 border-l h-[calc(100vh-15rem)] overflow-hidden">
             <div className="flex justify-between items-center p-3 border-b">
