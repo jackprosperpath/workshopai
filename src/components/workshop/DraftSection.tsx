@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import SectionImproveActions from "./SectionImproveActions";
@@ -6,6 +5,7 @@ import { SectionAIActions } from "./SectionAIActions";
 import { InlineCommentInput } from "./InlineCommentInput";
 import { DraftSectionContent } from "./DraftSectionContent";
 import { Comment } from "./CommentsPanel";
+import { Edit, MessageSquare } from "lucide-react";
 
 interface DraftSectionProps {
   idx: number;
@@ -64,8 +64,25 @@ const DraftSection: React.FC<DraftSectionProps> = ({
   const [improving, setImproving] = useState<null | "redraft" | "add_detail" | "simplify">(null);
   const [improveResult, setImproveResult] = useState<{ newText: string; reasoning?: string } | null>(null);
   const [applyingChanges, setApplyingChanges] = useState(false);
+  const [showVisualDiff, setShowVisualDiff] = useState(false);
+  const [diffIndices, setDiffIndices] = useState<number[]>([]);
   const sectionRef = useRef<HTMLDivElement>(null);
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleStartEdit = () => {
+    setShowVisualDiff(false);
+    onEditStart(idx, para);
+  };
+
+  const handleShowCommentInput = () => {
+    setSelection(null);
+    setShowCommentInput(true);
+    setTimeout(() => {
+      if (commentInputRef.current) {
+        commentInputRef.current.focus();
+      }
+    }, 0);
+  };
 
   const handleSectionClick = () => {
     if (editingSection === null) {
@@ -86,23 +103,15 @@ const DraftSection: React.FC<DraftSectionProps> = ({
     const sectionNode = sectionRef.current;
 
     if (sectionNode && sectionNode.contains(range.commonAncestorContainer)) {
-      // Get text content of the section
       const sectionText = sectionNode.textContent || "";
 
-      // Calculate offsets
       let startOffset = 0;
       let endOffset = 0;
-
-      // This is a simplified approach - in a real app you'd need more sophisticated
-      // handling for HTML content with nested elements
       try {
         startOffset = range.startOffset;
         endOffset = range.endOffset;
 
-        // Adjust for parent node positioning if needed
         if (range.startContainer !== sectionNode) {
-          // This is a simplification - real implementation would be more complex
-          // to handle nested DOM elements
           const nodeContent = range.startContainer.textContent || "";
           const nodeIndex = sectionText.indexOf(nodeContent);
           if (nodeIndex >= 0) {
@@ -145,21 +154,25 @@ const DraftSection: React.FC<DraftSectionProps> = ({
       setCommentText("");
       setShowCommentInput(false);
       setSelection(null);
+    } else if (!selection && commentText.trim()) {
+      addComment(idx, commentText.trim(), 0, para.length, para);
+      setCommentText("");
+      setShowCommentInput(false);
+      setSelection(null);
     }
   };
 
   const handleCancelComment = () => {
     setCommentText("");
     setShowCommentInput(false);
+    setSelection(null);
   };
 
   const handleImproveSection = async (type: "redraft" | "add_detail" | "simplify") => {
     setImproving(type);
     setImproveResult(null);
-    
     try {
       const result = await improveSection(type, idx, para);
-      
       if (result.newText) {
         setImproveResult({
           newText: result.newText,
@@ -175,7 +188,7 @@ const DraftSection: React.FC<DraftSectionProps> = ({
 
   const handleApplyChanges = async () => {
     if (!improveResult) return;
-    
+
     setApplyingChanges(true);
     try {
       const success = await updateDraftSection(idx, improveResult.newText);
@@ -193,13 +206,57 @@ const DraftSection: React.FC<DraftSectionProps> = ({
     setImproveResult(null);
   };
 
+  const handleEditSave = async (idx: number) => {
+    const oldLines = para.split("\n");
+    const newLines = editableContent.split("\n");
+    let changedIndices: number[] = [];
+    for (let i = 0; i < Math.max(oldLines.length, newLines.length); i++) {
+      if (oldLines[i] !== newLines[i]) {
+        changedIndices.push(i);
+      }
+    }
+    setDiffIndices(changedIndices);
+    setShowVisualDiff(true);
+    await onEditSave(idx);
+
+    setTimeout(() => {
+      setShowVisualDiff(false);
+      setDiffIndices([]);
+    }, 3000);
+  };
+
   const showHoverActions = !editable && editingSection === null && !isUserEditingSection(idx);
-  
+
   return (
-    <div 
+    <div
       className="relative group mb-4"
       onMouseUp={handleTextSelection}
     >
+      {!editable && editingSection === null && !isUserEditingSection(idx) && (
+        <div className="flex gap-2 absolute top-2 right-2 z-20">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-1 px-2 py-1 text-xs text-[#9b87f5] font-medium hover:bg-[#D6BCFA] border border-slate-200 shadow-sm rounded"
+            onClick={handleStartEdit}
+            title="Edit this section"
+          >
+            <Edit className="w-4 h-4 mr-1" />
+            Edit
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-1 px-2 py-1 text-xs text-[#6E59A5] font-medium hover:bg-[#D6BCFA] border border-slate-200 shadow-sm rounded"
+            onClick={handleShowCommentInput}
+            title="Comment on this section"
+          >
+            <MessageSquare className="w-4 h-4 mr-1" />
+            Comment
+          </Button>
+        </div>
+      )}
+
       {editable ? (
         <div className="border rounded p-2">
           <textarea
@@ -208,17 +265,17 @@ const DraftSection: React.FC<DraftSectionProps> = ({
             onChange={onContentChange}
             className="w-full min-h-[100px] p-2 rounded focus:outline-none"
             onKeyDown={(e) => {
-              if (e.key === 'Escape') onEditCancel();
-              if (e.key === 'Enter' && e.ctrlKey) onEditSave(idx);
+              if (e.key === "Escape") onEditCancel();
+              if (e.key === "Enter" && e.ctrlKey) handleEditSave(idx);
             }}
           />
           <div className="flex justify-end gap-2 mt-2">
             <Button variant="outline" size="sm" onClick={onEditCancel}>
               Cancel
             </Button>
-            <Button 
-              size="sm" 
-              onClick={() => onEditSave(idx)}
+            <Button
+              size="sm"
+              onClick={() => handleEditSave(idx)}
               disabled={isSaving}
             >
               {isSaving ? "Saving..." : "Save"}
@@ -231,14 +288,14 @@ const DraftSection: React.FC<DraftSectionProps> = ({
       ) : (
         <div className="border rounded p-2 hover:border-primary transition-colors">
           {showHoverActions && (
-            <SectionImproveActions 
+            <SectionImproveActions
               onRedraft={() => handleImproveSection("redraft")}
               onAddDetail={() => handleImproveSection("add_detail")}
               onSimplify={() => handleImproveSection("simplify")}
               disabled={!!improving || !!improveResult}
             />
           )}
-          
+
           <SectionAIActions
             improveResult={improveResult}
             improving={improving}
@@ -252,16 +309,37 @@ const DraftSection: React.FC<DraftSectionProps> = ({
             idx={idx}
             editingSection={editingSection}
             isUserEditingSection={isUserEditingSection}
-            highlightChanges={highlightChanges}
+            highlightChanges={(text, idxRender) => {
+              if (showVisualDiff && diffIndices.length > 0) {
+                const lines = text.split("\n");
+                return (
+                  <div className="space-y-1">
+                    {lines.map((ln, i) => (
+                      <div
+                        key={i}
+                        className={
+                          diffIndices.includes(i)
+                            ? "bg-[#D6BCFA] transition-colors duration-500 rounded px-1"
+                            : ""
+                        }
+                      >
+                        {ln}
+                      </div>
+                    ))}
+                  </div>
+                );
+              }
+              return highlightChanges(text, idxRender);
+            }}
             comments={comments}
             activeComment={activeComment}
             setActiveComment={setActiveComment}
             sectionRef={sectionRef}
             onEditStart={onEditStart}
           />
-          
+
           {selection && selection.text && !showCommentInput && (
-            <div className="absolute top-0 right-0 p-2">
+            <div className="absolute top-0 right-0 p-2 z-20">
               <Button
                 variant="secondary"
                 size="sm"
@@ -272,9 +350,9 @@ const DraftSection: React.FC<DraftSectionProps> = ({
               </Button>
             </div>
           )}
-          
+
           {showCommentInput && (
-            <div className="absolute top-0 right-0 mt-2 mr-2 z-10">
+            <div className="absolute top-0 right-0 mt-2 mr-2 z-30">
               <InlineCommentInput
                 commentText={commentText}
                 onCommentTextChange={setCommentText}
@@ -285,7 +363,7 @@ const DraftSection: React.FC<DraftSectionProps> = ({
               />
             </div>
           )}
-          
+
           {isUserEditingSection(idx) && editingSection !== idx && (
             <div className="absolute inset-0 bg-yellow-50/50 pointer-events-none flex items-center justify-center">
               <div className="bg-white p-2 rounded shadow border border-yellow-200 text-sm">
@@ -296,11 +374,15 @@ const DraftSection: React.FC<DraftSectionProps> = ({
               </div>
             </div>
           )}
-          
+
           {editingSessions[idx] && editingSection !== idx && (
             <div className="border-t mt-2 pt-2 text-sm text-muted-foreground">
-              <div className="font-medium text-xs">Unsaved changes by {getEditingUserForSection(idx)?.name}:</div>
-              <div className="mt-1 text-xs bg-muted/30 p-1 rounded">{editingSessions[idx]}</div>
+              <div className="font-medium text-xs">
+                Unsaved changes by {getEditingUserForSection(idx)?.name}:
+              </div>
+              <div className="mt-1 text-xs bg-muted/30 p-1 rounded">
+                {editingSessions[idx]}
+              </div>
             </div>
           )}
         </div>
