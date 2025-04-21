@@ -1,5 +1,6 @@
 
 import { useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import ConsensusWorkshop from "@/components/ConsensusWorkshop";
 import { useWorkshop } from "@/hooks/useWorkshop";
