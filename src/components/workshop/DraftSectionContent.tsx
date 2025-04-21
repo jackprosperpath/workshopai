@@ -3,13 +3,15 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare } from "lucide-react";
 import { Comment } from "./CommentsPanel";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface DraftSectionContentProps {
   para: string;
   idx: number;
   editingSection: number | null;
   isUserEditingSection: (sectionIdx: number) => boolean;
-  highlightChanges: (text: string, idx: number) => React.ReactNode;
+  highlightChanges: (text: string, idx: number) => React.ReactNode; // will not be used now
   comments: Comment[];
   activeComment: string | null;
   setActiveComment: (id: string | null) => void;
@@ -22,7 +24,7 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
   idx,
   editingSection,
   isUserEditingSection,
-  highlightChanges,
+  // highlightChanges,
   comments,
   activeComment,
   setActiveComment,
@@ -31,47 +33,90 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
 }) => {
   const sectionComments = comments.filter(comment => comment.selection.sectionIndex === idx);
 
-  const renderContentWithCommentHighlights = () => {
-    if (sectionComments.length === 0 || editingSection === idx) {
-      return highlightChanges(para, idx);
-    }
+  // We will render para as markdown rich text with highlights for comment selections as before (but now inside ReactMarkdown).
+  // Because ReactMarkdown does not support direct partial text highlighting, we use a trick:
+  // We split para into parts according to comments and wrap highlighted spans similarly to the previous approach.
+  // Then we render each part as its own ReactMarkdown.
 
-    let content = para;
-    const parts: React.ReactNode[] = [];
+  if (editingSection === idx || sectionComments.length === 0) {
+    // Render entire para as markdown with no comment highlights.
+    return (
+      <div
+        ref={sectionRef}
+        className={`p-2 rounded relative transition ${
+          isUserEditingSection(idx) && editingSection !== idx
+            ? "bg-yellow-50 border border-yellow-200"
+            : ""
+        } group/section`}
+        onClick={() => {
+          if (editingSection === null) {
+            onEditStart(idx, para);
+          }
+        }}
+      >
+        <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose max-w-none">
+          {para}
+        </ReactMarkdown>
 
-    const sortedComments = [...sectionComments].sort((a, b) => a.selection.startOffset - b.selection.startOffset);
+        {sectionComments.length > 0 && (
+          <div className="flex items-center mt-2 gap-2">
+            <Badge variant="outline" className="flex items-center gap-1 h-7 px-2">
+              <MessageSquare className="h-3 w-3" />
+              {sectionComments.length}
+            </Badge>
+          </div>
+        )}
+      </div>
+    );
+  }
 
-    let lastIndex = 0;
+  // Else render with highlights inside
 
-    sortedComments.forEach((comment) => {
-      const { startOffset, endOffset } = comment.selection;
+  // Sort comments by startOffset ascending
+  const sortedComments = [...sectionComments].sort((a, b) => a.selection.startOffset - b.selection.startOffset);
 
-      if (startOffset > lastIndex) {
-        parts.push(content.substring(lastIndex, startOffset));
-      }
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
 
-      const highlightedText = content.substring(startOffset, endOffset);
-      const isActive = activeComment === comment.id;
+  sortedComments.forEach((comment, i) => {
+    const { startOffset, endOffset } = comment.selection;
 
+    if (startOffset > lastIndex) {
+      // Non-highlighted text
+      const nonHighlightText = para.substring(lastIndex, startOffset);
       parts.push(
-        <span
-          key={`highlight-${comment.id}`}
-          className={`relative cursor-pointer ${isActive ? 'bg-yellow-200' : 'bg-yellow-100'}`}
-          onClick={() => setActiveComment(comment.id)}
-        >
-          {highlightedText}
-        </span>
+        <ReactMarkdown key={`nonhighlight-${i}-${lastIndex}`} remarkPlugins={[remarkGfm]} className="prose max-w-none">
+          {nonHighlightText}
+        </ReactMarkdown>
       );
-
-      lastIndex = endOffset;
-    });
-
-    if (lastIndex < content.length) {
-      parts.push(content.substring(lastIndex));
     }
 
-    return parts;
-  };
+    const highlightedText = para.substring(startOffset, endOffset);
+    const isActive = activeComment === comment.id;
+
+    parts.push(
+      <span
+        key={`highlight-${comment.id}`}
+        className={`relative cursor-pointer ${isActive ? 'bg-yellow-200' : 'bg-yellow-100'}`}
+        onClick={() => setActiveComment(comment.id)}
+      >
+        <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose max-w-none">
+          {highlightedText}
+        </ReactMarkdown>
+      </span>
+    );
+
+    lastIndex = endOffset;
+  });
+
+  if (lastIndex < para.length) {
+    const remainingText = para.substring(lastIndex);
+    parts.push(
+      <ReactMarkdown key={`nonhighlight-end`} remarkPlugins={[remarkGfm]} className="prose max-w-none">
+        {remainingText}
+      </ReactMarkdown>
+    );
+  }
 
   return (
     <div
@@ -87,8 +132,8 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
         }
       }}
     >
-      {renderContentWithCommentHighlights()}
-      
+      {parts}
+
       {sectionComments.length > 0 && (
         <div className="flex items-center mt-2 gap-2">
           <Badge variant="outline" className="flex items-center gap-1 h-7 px-2">
@@ -100,3 +145,4 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
     </div>
   );
 };
+
