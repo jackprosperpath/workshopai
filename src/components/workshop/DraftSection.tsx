@@ -225,38 +225,11 @@ const DraftSection: React.FC<DraftSectionProps> = ({
     }, 3000);
   };
 
-  const showHoverActions = !editable && editingSection === null && !isUserEditingSection(idx);
-
   return (
     <div
       className="relative group mb-4"
       onMouseUp={handleTextSelection}
     >
-      {!editable && editingSection === null && !isUserEditingSection(idx) && (
-        <div className="flex gap-2 absolute top-2 right-2 z-20">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex items-center gap-1 px-2 py-1 text-xs text-[#9b87f5] font-medium hover:bg-[#D6BCFA] border border-slate-200 shadow-sm rounded"
-            onClick={handleStartEdit}
-            title="Edit this section"
-          >
-            <Edit className="w-4 h-4 mr-1" />
-            Edit
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex items-center gap-1 px-2 py-1 text-xs text-[#6E59A5] font-medium hover:bg-[#D6BCFA] border border-slate-200 shadow-sm rounded"
-            onClick={handleShowCommentInput}
-            title="Comment on this section"
-          >
-            <MessageSquare className="w-4 h-4 mr-1" />
-            Comment
-          </Button>
-        </div>
-      )}
-
       {editable ? (
         <div className="border rounded p-2">
           <textarea
@@ -287,15 +260,6 @@ const DraftSection: React.FC<DraftSectionProps> = ({
         </div>
       ) : (
         <div className="border rounded p-2 hover:border-primary transition-colors">
-          {showHoverActions && (
-            <SectionImproveActions
-              onRedraft={() => handleImproveSection("redraft")}
-              onAddDetail={() => handleImproveSection("add_detail")}
-              onSimplify={() => handleImproveSection("simplify")}
-              disabled={!!improving || !!improveResult}
-            />
-          )}
-
           <SectionAIActions
             improveResult={improveResult}
             improving={improving}

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -51,6 +50,7 @@ export function DraftWorkspace({
   const [showCommentsSidebar, setShowCommentsSidebar] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [activeComment, setActiveComment] = useState<string | null>(null);
+  const [editingDraft, setEditingDraft] = useState(false);
 
   useEffect(() => {
     if (editingSection !== null && editTextareaRef.current) {
@@ -61,7 +61,6 @@ export function DraftWorkspace({
   useEffect(() => {
     if (!currentDraft) return;
     
-    // Load existing comments from localStorage or server
     const loadComments = () => {
       const storedComments = localStorage.getItem(`draft-comments-${currentDraft.id}`);
       if (storedComments) {
@@ -130,7 +129,6 @@ export function DraftWorkspace({
     };
   }, [currentDraft]);
 
-  // Save comments to localStorage whenever they change
   useEffect(() => {
     if (comments.length > 0 && currentDraft) {
       localStorage.setItem(`draft-comments-${currentDraft.id}`, JSON.stringify(comments));
@@ -138,6 +136,7 @@ export function DraftWorkspace({
   }, [comments, currentDraft]);
 
   const handleEditStart = (idx: number, content: string) => {
+    if (!editingDraft) return;
     setEditingSection(idx);
     setEditableContent(content);
     updateEditingSection(idx);
@@ -170,7 +169,6 @@ export function DraftWorkspace({
     try {
       if (currentIdx !== null) {
         const success = await updateDraftSection(currentDraft.id, idx, editableContent);
-        
         if (success) {
           setEditingSection(null);
           updateEditingSection(null);
@@ -271,7 +269,6 @@ export function DraftWorkspace({
     }
   }
 
-  // Function to handle updating a section with AI-generated content
   const handleUpdateSection = async (sectionIdx: number, content: string) => {
     if (!currentDraft) return false;
     
@@ -287,6 +284,17 @@ export function DraftWorkspace({
       toast.error("Failed to apply AI improvements");
       return false;
     }
+  };
+
+  const handleStartEditingDraft = () => {
+    setEditingDraft(true);
+  };
+
+  const handleCancelEditingDraft = () => {
+    setEditingDraft(false);
+    setEditingSection(null);
+    setEditableContent("");
+    updateEditingSection(null);
   };
 
   if (!currentDraft) {
@@ -361,6 +369,32 @@ export function DraftWorkspace({
         </div>
       </div>
 
+      <div className="flex flex-col p-4 gap-2 border-b bg-muted/50">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
+          <span className="text-muted-foreground text-xs">
+            Tip: Select text in any section and click <b>Add Comment</b> to leave feedback. You can <b>edit</b> the draft by clicking the button below.
+          </span>
+          {!editingDraft && (
+            <Button
+              className="mt-2 sm:mt-0 w-full sm:w-auto"
+              variant="outline"
+              onClick={handleStartEditingDraft}
+            >
+              Edit Draft
+            </Button>
+          )}
+          {editingDraft && (
+            <Button
+              className="mt-2 sm:mt-0 w-full sm:w-auto"
+              variant="outline"
+              onClick={handleCancelEditingDraft}
+            >
+              Exit Edit Mode
+            </Button>
+          )}
+        </div>
+      </div>
+
       <div className="flex">
         <div className={`flex-1 p-4 ${showCommentsSidebar ? 'w-3/4' : 'w-full'}`}>
           {currentDraft.output.map((para, idx) => (
@@ -369,14 +403,14 @@ export function DraftWorkspace({
               idx={idx}
               para={para}
               currentDraftId={currentDraft.id}
-              editable={editingSection === idx}
+              editable={editingDraft && editingSection === idx}
               editingSection={editingSection}
               editingSessions={editingSessions}
               setEditableContent={setEditableContent}
               editableContent={editableContent}
               editTextareaRef={editTextareaRef}
               onEditStart={handleEditStart}
-              onEditCancel={handleEditCancel}
+              onEditCancel={() => setEditingSection(null)}
               onEditSave={handleEditSave}
               onContentChange={handleContentChange}
               isSaving={isSaving}
