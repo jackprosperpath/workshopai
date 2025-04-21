@@ -63,13 +63,21 @@ export default function DraftSection({
   setActiveThread,
   sectionFeedback
 }: DraftSectionProps) {
+  // Create a ref to store the latest content
+  const contentRef = React.useRef(editableContent);
+  
+  // Update the ref whenever editableContent changes
+  React.useEffect(() => {
+    contentRef.current = editableContent;
+  }, [editableContent]);
+
   // Initialize TipTap editor with default options even when not editing
-  // This prevents the null object error in the TipTap library
   const editor = useEditor({
     extensions: [StarterKit, Underline],
     content: editableContent,
     onUpdate: ({ editor }) => {
-      setEditableContent(editor.getHTML());
+      const newContent = editor.getHTML();
+      setEditableContent(newContent);
     },
     editable: !!editable,
     // Only enable editor when in editing mode
@@ -80,15 +88,19 @@ export default function DraftSection({
     }
   });
 
+  // Synchronize editor with content when entering edit mode or when content changes
   React.useEffect(() => {
-    if (editable && editor) {
-      editor.commands.setContent(editableContent);
-      editor.commands.focus();
+    if (editor && editable) {
+      // Only update content if it's different to avoid cursor jumping
+      if (editor.getHTML() !== contentRef.current) {
+        editor.commands.setContent(contentRef.current);
+      }
       editor.setEditable(true);
+      editor.commands.focus('end');
     } else if (editor) {
       editor.setEditable(false);
     }
-  }, [editable, editableContent, editor]);
+  }, [editable, editor]);
 
   return (
     <div className="mb-6 relative">
