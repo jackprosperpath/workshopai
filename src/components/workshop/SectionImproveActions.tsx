@@ -20,7 +20,7 @@ export function SectionImproveActions({
   onSimplify,
 }: SectionImproveActionsProps) {
   return (
-    <div className="flex gap-2 absolute top-2 right-2 z-10">
+    <div className="flex gap-2 absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
       <Button
         variant="ghost"
         className={actionClass}
