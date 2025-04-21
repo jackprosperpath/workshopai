@@ -38,12 +38,14 @@ export function DiffViewer({
             modified={combinedNewContent}
             options={{
               readOnly: true,
-              renderSideBySide: true,
+              diffEditor: {
+                renderSideBySide: true
+              },
               minimap: { enabled: false },
               lineNumbers: 'on',
               scrollBeyondLastLine: false,
               automaticLayout: true,
-              diffWordWrap: 'on'
+              wordWrap: 'on'
             }}
             theme="vs-light"
           />
