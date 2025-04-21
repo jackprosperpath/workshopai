@@ -1,57 +1,26 @@
 
-import ZoomLogo from "@/assets/logos/zoom.svg";
-import NotionLogo from "@/assets/logos/notion.svg";
-import SlackLogo from "@/assets/logos/slack.svg";
-import TeamsLogo from "@/assets/logos/teams.svg";
+import { Slack, Users, Notion, Zoom } from "lucide-react";
 
 export const LogoStrip = () => {
   const logos = [
     {
       name: "Zoom",
-      icon: (
-        <img
-          src={ZoomLogo}
-          alt="Zoom logo"
-          className="h-10 w-auto opacity-80"
-          aria-label="Zoom logo"
-        />
-      ),
+      icon: <Zoom className="h-10 w-auto opacity-70" aria-label="Zoom logo" />,
       url: "https://zoom.us/",
     },
     {
       name: "Slack",
-      icon: (
-        <img
-          src={SlackLogo}
-          alt="Slack logo"
-          className="h-10 w-auto opacity-80"
-          aria-label="Slack logo"
-        />
-      ),
+      icon: <Slack className="h-10 w-auto opacity-70" aria-label="Slack logo" />,
       url: "https://slack.com/",
     },
     {
       name: "Teams",
-      icon: (
-        <img
-          src={TeamsLogo}
-          alt="Microsoft Teams logo"
-          className="h-10 w-auto opacity-80"
-          aria-label="Teams logo"
-        />
-      ),
+      icon: <Users className="h-10 w-auto opacity-70" aria-label="Teams logo" />,
       url: "https://www.microsoft.com/en/microsoft-teams/group-chat-software",
     },
     {
       name: "Notion",
-      icon: (
-        <img
-          src={NotionLogo}
-          alt="Notion logo"
-          className="h-10 w-auto opacity-80"
-          aria-label="Notion logo"
-        />
-      ),
+      icon: <Notion className="h-10 w-auto opacity-70" aria-label="Notion logo" />,
       url: "https://www.notion.so/",
     },
   ];

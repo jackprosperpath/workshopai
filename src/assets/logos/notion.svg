@@ -1,8 +1,0 @@
-
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Notion Official Logo: https://brandpalettes.com/notion-logo-colors/ -->
-<svg width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54 54">
-  <rect width="54" height="54" rx="12" fill="#fff"/>
-  <rect x="7" y="7" width="40" height="40" rx="9" fill="#fff" stroke="#000" stroke-width="2"/>
-  <path d="M19.661 18.746h2.49l4.285 9.94h.04l4.225-9.94h2.43v14.352h-1.965V21.44h-.04l-4.067 9.658h-1.221l-4.048-9.658h-.041v11.658h-1.984z" fill="#000"/>
-</svg>
