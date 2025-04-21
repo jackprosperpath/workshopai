@@ -26,7 +26,7 @@ const tiers = [
   {
     name: "Enterprise",
     price: "Custom",
-    description: "For large organizations",
+    description: "Great for large organisations",
     features: [
       "Unlimited team members",
       "Custom AI model integration",
