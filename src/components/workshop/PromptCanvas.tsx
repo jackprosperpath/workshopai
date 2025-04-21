@@ -62,7 +62,7 @@ export function PromptCanvas({
     >
       <div className="p-4 flex items-center justify-between border-b">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">Prompt Canvas</h2>
+          <h2 className="text-lg font-semibold">Workshop Context</h2>
           <Tooltip>
             <TooltipTrigger>
               <Info className="h-4 w-4 text-muted-foreground" />
@@ -82,7 +82,7 @@ export function PromptCanvas({
       <CollapsibleContent>
         <div className="p-4 space-y-6">
           <div className="space-y-2">
-            <Label>Output Format</Label>
+            <Label>Deliverable</Label>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Label className="text-sm text-muted-foreground block">
@@ -103,11 +103,11 @@ export function PromptCanvas({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="problem">Problem Statement</Label>
+            <Label htmlFor="problem">Scope Statement</Label>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Label className="text-sm text-muted-foreground block">
-                  Clearly describe the challenge or issue that needs to be addressed
+                  Clearly describe the problem or opportunity that needs to be explored
                 </Label>
               </TooltipTrigger>
               <TooltipContent>
