@@ -15,12 +15,12 @@ export const HeroBackgroundAnimation = () => (
     >
       {/* Morphing Post-its (with color/scale/rotation) */}
       <g>
-        <rect x="200" y="90" width="70" height="70" rx="10">
+        <rect x="200" y="90" width="70" height="70" rx="10" fill="#FEF7CD">
           <animateTransform attributeName="transform" type="rotate"
             from="0 235 125" to="6 235 125"
             dur="10s" repeatCount="indefinite" />
           <animate attributeName="fill"
-            values="#FDE1D3;#FFDEE2;#D6BCFA;#FDE1D3"
+            values="#FEF7CD;#FFF9D6;#FFF1A8;#FEF7CD"
             dur="14s" repeatCount="indefinite" />
           <animate attributeName="opacity"
             values="0.58;0.63;0.56;0.58"
@@ -36,23 +36,23 @@ export const HeroBackgroundAnimation = () => (
             repeatCount="indefinite"
           />
         </rect>
-        <rect x="1240" y="120" width="60" height="60" rx="9">
+        <rect x="1240" y="120" width="60" height="60" rx="9" fill="#FEF7CD">
           <animateTransform attributeName="transform" type="rotate"
             from="0 1270 150" to="-7 1270 150"
             dur="13s" repeatCount="indefinite" />
           <animate attributeName="fill"
-            values="#E5DEFF;#D3E4FD;#FFDEE2;#E5DEFF"
+            values="#FEF7CD;#FFF9D6;#FFF1A8;#FEF7CD"
             dur="12s" repeatCount="indefinite" />
           <animate attributeName="opacity"
             values="0.51;0.59;0.54;0.51"
             dur="10s" repeatCount="indefinite" />
         </rect>
-        <rect x="400" y="400" width="80" height="60" rx="10">
+        <rect x="400" y="400" width="80" height="60" rx="10" fill="#FEF7CD">
           <animateTransform attributeName="transform" type="rotate"
             from="0 440 430" to="12 440 430"
             dur="8s" repeatCount="indefinite" />
           <animate attributeName="fill"
-            values="#FEC6A1;#FEF7CD;#F2FCE2;#FEC6A1"
+            values="#FEF7CD;#FFF9D6;#FFF1A8;#FEF7CD"
             dur="13s" repeatCount="indefinite" />
           <animate attributeName="opacity"
             values="0.60;0.64;0.55;0.60"
