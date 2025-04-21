@@ -9,8 +9,8 @@ const steps = [
   },
   {
     number: "02",
-    title: "Collaborate on Prompts",
-    description: "Work together to create and refine AI prompts in real-time."
+    title: "Set Your Brief",
+    description: "Define your problem or opportunity and establish context to get everyone on the same page."
   },
   {
     number: "03",
