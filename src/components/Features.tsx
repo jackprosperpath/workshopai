@@ -31,7 +31,7 @@ export const Features = () => {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-display text-3xl font-bold tracking-tight text-primary sm:text-4xl">
-            Everything you need to excel in prompt engineering
+            Why Teams Love WorkshopAI
           </h2>
           <p className="mt-6 text-lg leading-8 text-gray-600">
             Built for teams who want to harness the full potential of AI through collaborative prompt engineering.
@@ -58,3 +58,4 @@ export const Features = () => {
     </div>
   );
 };
+
