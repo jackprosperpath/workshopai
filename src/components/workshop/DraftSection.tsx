@@ -1,25 +1,22 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import SectionFeedbackButton from "./SectionFeedbackButton";
 import SectionImproveActions from "./SectionImproveActions";
-import { Loader2 } from "lucide-react";
+import { Loader2, MessageSquare } from "lucide-react";
+import { v4 as uuidv4 } from "uuid";
+import { Comment } from "./CommentsPanel";
+import { format } from "date-fns";
 
 type User = {
   id: string;
   name: string;
   section: number | null;
   content?: string;
-};
-
-type SectionFeedback = {
-  text: string;
-  threadId: number;
 };
 
 type DraftSectionProps = {
@@ -40,10 +37,10 @@ type DraftSectionProps = {
   isUserEditingSection: (sectionIdx: number) => boolean;
   getEditingUserForSection: (sectionIdx: number) => User | undefined;
   highlightChanges: (text: string, idx: number) => React.ReactNode;
-  addFeedback: (idx: number, text: string) => void;
-  activeThread: number | null;
-  setActiveThread: (section: number | null) => void;
-  sectionFeedback: SectionFeedback[];
+  activeComment: string | null;
+  setActiveComment: (id: string | null) => void;
+  comments: Comment[];
+  addComment: (sectionIdx: number, text: string, startOffset: number, endOffset: number, selectedText: string) => void;
   improveSection?: (
     type: "redraft" | "add_detail" | "simplify",
     idx: number,
@@ -70,10 +67,10 @@ export default function DraftSection({
   isUserEditingSection,
   getEditingUserForSection,
   highlightChanges,
-  addFeedback,
-  activeThread,
-  setActiveThread,
-  sectionFeedback,
+  activeComment,
+  setActiveComment,
+  comments,
+  addComment,
   improveSection,
   updateDraftSection,
 }: DraftSectionProps) {
@@ -81,6 +78,12 @@ export default function DraftSection({
   const [improving, setImproving] = useState<null | "redraft" | "add_detail" | "simplify">(null);
   const [improveResult, setImproveResult] = useState<{ newText: string, reasoning?: string } | null>(null);
   const [applyingChanges, setApplyingChanges] = useState(false);
+  const [selectedText, setSelectedText] = useState("");
+  const [selectionRange, setSelectionRange] = useState<{ start: number, end: number } | null>(null);
+  const [showCommentInput, setShowCommentInput] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const commentInputRef = useRef<HTMLTextAreaElement>(null);
 
   const contentRef = React.useRef(editableContent);
 
@@ -115,10 +118,96 @@ export default function DraftSection({
     }
   }, [editable, editor]);
 
-  const firstFeedbackLine =
-    sectionFeedback && sectionFeedback.length > 0
-      ? sectionFeedback[0].text.split('\n')[0].slice(0, 60)
-      : "";
+  // Handle text selection
+  useEffect(() => {
+    if (editingSection === idx) return; // Don't track selection when editing
+
+    const handleSelection = () => {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed || !sectionRef.current) {
+        setSelectedText("");
+        setSelectionRange(null);
+        return;
+      }
+      
+      const range = selection.getRangeAt(0);
+      const sectionNode = sectionRef.current;
+      
+      // Only process selection if it's within this section
+      if (!sectionNode.contains(range.commonAncestorContainer)) {
+        setSelectedText("");
+        setSelectionRange(null);
+        return;
+      }
+      
+      const selectedContent = range.toString().trim();
+      if (selectedContent) {
+        // Get the offsets relative to the section
+        const sectionContent = sectionNode.textContent || "";
+        const startOffset = findTextPosition(sectionNode, range.startContainer, range.startOffset);
+        const endOffset = findTextPosition(sectionNode, range.endContainer, range.endOffset);
+        
+        setSelectedText(selectedContent);
+        setSelectionRange({ start: startOffset, end: endOffset });
+      } else {
+        setSelectedText("");
+        setSelectionRange(null);
+      }
+    };
+    
+    // Helper function to find position within the text content
+    const findTextPosition = (
+      rootNode: Node, 
+      targetNode: Node, 
+      targetOffset: number
+    ): number => {
+      let position = 0;
+      
+      function traverse(node: Node) {
+        if (node === targetNode) {
+          position += targetOffset;
+          return true;
+        }
+        
+        if (node.nodeType === Node.TEXT_NODE) {
+          position += node.textContent?.length || 0;
+        } else {
+          for (let i = 0; i < node.childNodes.length; i++) {
+            if (traverse(node.childNodes[i])) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+      
+      traverse(rootNode);
+      return position;
+    };
+
+    document.addEventListener("selectionchange", handleSelection);
+    return () => {
+      document.removeEventListener("selectionchange", handleSelection);
+    };
+  }, [idx, editingSection]);
+
+  // Focus the comment input when it appears
+  useEffect(() => {
+    if (showCommentInput && commentInputRef.current) {
+      commentInputRef.current.focus();
+    }
+  }, [showCommentInput]);
+
+  const handleAddComment = () => {
+    if (selectionRange && commentText.trim()) {
+      addComment(idx, commentText.trim(), selectionRange.start, selectionRange.end, selectedText);
+      setCommentText("");
+      setShowCommentInput(false);
+      setSelectedText("");
+      setSelectionRange(null);
+      window.getSelection()?.removeAllRanges();
+    }
+  };
 
   const handleImprove = async (type: "redraft" | "add_detail" | "simplify") => {
     if (!improveSection) return;
@@ -155,6 +244,56 @@ export default function DraftSection({
 
   const handleDiscardChanges = () => {
     setImproveResult(null);
+  };
+
+  // Filter comments for this section
+  const sectionComments = comments.filter(comment => comment.selection.sectionIndex === idx);
+
+  // Highlight text with comments
+  const renderContentWithCommentHighlights = () => {
+    if (sectionComments.length === 0 || editingSection === idx) {
+      return highlightChanges(para, idx);
+    }
+
+    let content = para;
+    const parts: React.ReactNode[] = [];
+    
+    // Sort comments by their position to handle overlapping highlights
+    const sortedComments = [...sectionComments].sort((a, b) => a.selection.startOffset - b.selection.startOffset);
+    
+    let lastIndex = 0;
+    
+    sortedComments.forEach((comment, i) => {
+      const { startOffset, endOffset } = comment.selection;
+      
+      // Add text before the highlighted part
+      if (startOffset > lastIndex) {
+        parts.push(content.substring(lastIndex, startOffset));
+      }
+      
+      // Add the highlighted part
+      const highlightedText = content.substring(startOffset, endOffset);
+      const isActive = activeComment === comment.id;
+      
+      parts.push(
+        <span 
+          key={`highlight-${comment.id}`}
+          className={`relative cursor-pointer ${isActive ? 'bg-yellow-200' : 'bg-yellow-100'}`}
+          onClick={() => setActiveComment(comment.id)}
+        >
+          {highlightedText}
+        </span>
+      );
+      
+      lastIndex = endOffset;
+    });
+    
+    // Add remaining text
+    if (lastIndex < content.length) {
+      parts.push(content.substring(lastIndex));
+    }
+    
+    return parts;
   };
 
   return (
@@ -220,20 +359,79 @@ export default function DraftSection({
       ) : (
         <>
           <div
+            ref={sectionRef}
             className={`p-2 rounded relative transition ${
               isUserEditingSection(idx) && editingSection !== idx 
                 ? "bg-yellow-50 border border-yellow-200" 
                 : ""
             } group/section`}
-            onClick={() => editingSection === null && onEditStart(idx, para)}
-            dangerouslySetInnerHTML={{
-              __html: editingSessions[idx]
-                ? editingSessions[idx]
-                : highlightChanges(para, idx) as string
+            onClick={() => {
+              if (editingSection === null && !selectedText) {
+                onEditStart(idx, para);
+              }
             }}
-            style={{ cursor: editingSection !== idx ? "pointer" : undefined }}
-          />
-          {isHovered && !editingSection && (
+          >
+            {renderContentWithCommentHighlights()}
+          </div>
+          
+          {selectedText && selectionRange && (
+            <div className="absolute right-0 mt-1 z-10">
+              {showCommentInput ? (
+                <div className="bg-white shadow-lg rounded-lg border p-2 w-64">
+                  <textarea
+                    ref={commentInputRef}
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    className="w-full border rounded-md p-2 text-sm mb-2 min-h-[80px]"
+                    placeholder="Add your comment..."
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        setShowCommentInput(false);
+                      } else if (e.key === 'Enter' && e.ctrlKey) {
+                        handleAddComment();
+                      }
+                    }}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setShowCommentInput(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      onClick={handleAddComment}
+                      disabled={!commentText.trim()}
+                    >
+                      Comment
+                    </Button>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Tip: Press Ctrl+Enter to submit
+                  </div>
+                </div>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      size="sm" 
+                      variant="secondary"
+                      className="rounded-full h-8 w-8 p-0"
+                      onClick={() => setShowCommentInput(true)}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      <span className="sr-only">Add Comment</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Add comment</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          )}
+          
+          {isHovered && !editingSection && !showCommentInput && (
             <SectionImproveActions
               disabled={!!improving}
               onRedraft={() => handleImprove("redraft")}
@@ -241,6 +439,7 @@ export default function DraftSection({
               onSimplify={() => handleImprove("simplify")}
             />
           )}
+          
           {improving && (
             <div className="absolute left-0 top-0 right-0 flex flex-col z-20 pointer-events-none">
               <div className="flex items-center gap-2 bg-[#1A1F2C] p-3 rounded-md text-xs text-white shadow border border-slate-700 mb-2 select-none pointer-events-auto">
@@ -249,6 +448,7 @@ export default function DraftSection({
               </div>
             </div>
           )}
+          
           {improveResult && (
             <div className="bg-slate-50 border border-slate-200 p-2 rounded mt-2 text-xs">
               <div className="mb-2 font-medium">AI Suggestion:</div>
@@ -279,13 +479,14 @@ export default function DraftSection({
               </div>
             </div>
           )}
+          
           <div className="flex items-center mt-2 gap-2">
-            <SectionFeedbackButton
-              idx={idx}
-              sectionFeedback={sectionFeedback}
-              activeThread={activeThread}
-              onClick={() => setActiveThread(activeThread === idx ? null : idx)}
-            />
+            {sectionComments.length > 0 && (
+              <Badge variant="outline" className="flex items-center gap-1 h-7 px-2">
+                <MessageSquare className="h-3 w-3" />
+                {sectionComments.length}
+              </Badge>
+            )}
             <Button
               size="sm"
               variant="ghost"
@@ -295,34 +496,8 @@ export default function DraftSection({
               Edit
             </Button>
           </div>
-          {activeThread === idx && (
-            <div className="mt-2">
-              <textarea
-                className="border w-full p-2 mb-2 text-xs rounded-md"
-                placeholder="Leave feedback…"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    const val = (e.target as HTMLTextAreaElement).value;
-                    if (val.trim()) addFeedback(idx, val.trim());
-                    (e.target as HTMLTextAreaElement).value = "";
-                    setActiveThread(null);
-                  }
-                }}
-              />
-            </div>
-          )}
-          {(sectionFeedback || []).map((fb) => (
-            <div
-              key={`feedback-${idx}-${fb.threadId}`}
-              className="text-xs bg-gray-100 p-2 rounded mb-1 mt-1"
-            >
-              {fb.text}
-            </div>
-          ))}
         </>
       )}
     </div>
   );
 }
-

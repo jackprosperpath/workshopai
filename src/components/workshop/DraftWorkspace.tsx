@@ -2,7 +2,7 @@
 import React from "react";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, MessageSquare } from "lucide-react";
 import type { DraftVersion } from "@/hooks/useDraftWorkspace";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
@@ -10,6 +10,10 @@ import DraftSection from "./DraftSection";
 import ActiveUsersAvatars from "./ActiveUsersAvatars";
 import DraftVersionSelector from "./DraftVersionSelector";
 import { DiffViewer } from "./DiffViewer";
+import { Comment, CommentsPanel } from "./CommentsPanel";
+import { v4 as uuidv4 } from "uuid";
+import { format } from "date-fns";
+import { Separator } from "@/components/ui/separator";
 
 export function DraftWorkspace({
   currentDraft,
@@ -44,6 +48,9 @@ export function DraftWorkspace({
   const [showDiffView, setShowDiffView] = useState(false);
   const [diffVersions, setDiffVersions] = useState<{ old: number; new: number }>({ old: 0, new: 0 });
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const [showCommentsSidebar, setShowCommentsSidebar] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [activeComment, setActiveComment] = useState<string | null>(null);
 
   useEffect(() => {
     if (editingSection !== null && editTextareaRef.current) {
@@ -53,10 +60,22 @@ export function DraftWorkspace({
 
   useEffect(() => {
     if (!currentDraft) return;
+    
+    // Load existing comments from localStorage or server
+    const loadComments = () => {
+      const storedComments = localStorage.getItem(`draft-comments-${currentDraft.id}`);
+      if (storedComments) {
+        setComments(JSON.parse(storedComments));
+      }
+    };
+    
+    loadComments();
+    
     const getUserInfo = async () => {
       const { data } = await supabase.auth.getUser();
       return data.user;
     };
+    
     const setupPresence = async () => {
       const user = await getUserInfo();
       if (!user) return;
@@ -110,6 +129,13 @@ export function DraftWorkspace({
       cleanup.then((fn) => fn && fn());
     };
   }, [currentDraft]);
+
+  // Save comments to localStorage whenever they change
+  useEffect(() => {
+    if (comments.length > 0 && currentDraft) {
+      localStorage.setItem(`draft-comments-${currentDraft.id}`, JSON.stringify(comments));
+    }
+  }, [comments, currentDraft]);
 
   const handleEditStart = (idx: number, content: string) => {
     setEditingSection(idx);
@@ -176,6 +202,49 @@ export function DraftWorkspace({
       });
       setShowDiffView(true);
     }
+  };
+
+  const addComment = async (
+    sectionIdx: number, 
+    text: string, 
+    startOffset: number, 
+    endOffset: number, 
+    selectedText: string
+  ) => {
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) return;
+    
+    const newComment: Comment = {
+      id: uuidv4(),
+      text,
+      authorId: data.user.id,
+      authorName: data.user.email?.split('@')[0] || "Anonymous",
+      timestamp: format(new Date(), "MMM d, yyyy 'at' h:mm a"),
+      selection: {
+        sectionIndex: sectionIdx,
+        startOffset,
+        endOffset,
+        content: selectedText
+      }
+    };
+    
+    setComments(prev => [...prev, newComment]);
+    setActiveComment(newComment.id);
+    setShowCommentsSidebar(true);
+    toast.success("Comment added");
+  };
+
+  const handleDeleteComment = (id: string) => {
+    setComments(prev => prev.filter(comment => comment.id !== id));
+    if (activeComment === id) {
+      setActiveComment(null);
+    }
+    toast.success("Comment deleted");
+  };
+
+  const handleJumpToComment = (comment: Comment) => {
+    setActiveComment(comment.id);
+    // If needed, we could add scrolling to the specific section/comment here
   };
 
   async function improveSection(
@@ -264,8 +333,8 @@ export function DraftWorkspace({
   };
 
   return (
-    <section className="border rounded p-4">
-      <div className="flex justify-between items-center mb-4">
+    <section className="border rounded">
+      <div className="flex justify-between items-center p-4 border-b">
         <h2 className="font-semibold">Draft v{currentDraft.id}</h2>
         <div className="flex items-center gap-2">
           <ActiveUsersAvatars activeUsers={activeUsers} />
@@ -275,66 +344,108 @@ export function DraftWorkspace({
             onSelect={setCurrentIdx}
             onCompare={handleCompareDrafts}
           />
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="flex items-center gap-1"
+            onClick={() => setShowCommentsSidebar(!showCommentsSidebar)}
+          >
+            <MessageSquare className="h-4 w-4" />
+            Comments
+            {comments.length > 0 && (
+              <span className="bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                {comments.length}
+              </span>
+            )}
+          </Button>
         </div>
       </div>
 
-      {currentDraft.output.map((para, idx) => (
-        <DraftSection
-          key={`section-${idx}`}
-          idx={idx}
-          para={para}
-          currentDraftId={currentDraft.id}
-          editable={editingSection === idx}
-          editingSection={editingSection}
-          editingSessions={editingSessions}
-          setEditableContent={setEditableContent}
-          editableContent={editableContent}
-          editTextareaRef={editTextareaRef}
-          onEditStart={handleEditStart}
-          onEditCancel={handleEditCancel}
-          onEditSave={handleEditSave}
-          onContentChange={handleContentChange}
-          isSaving={isSaving}
-          isUserEditingSection={isUserEditingSection}
-          getEditingUserForSection={getEditingUserForSection}
-          highlightChanges={highlightChanges}
-          addFeedback={addFeedback}
-          activeThread={activeThread}
-          setActiveThread={setActiveThread}
-          sectionFeedback={currentDraft.sectionFeedback[idx] || []}
-          improveSection={improveSection}
-          updateDraftSection={handleUpdateSection}
-        />
-      ))}
+      <div className="flex">
+        <div className={`flex-1 p-4 ${showCommentsSidebar ? 'w-3/4' : 'w-full'}`}>
+          {currentDraft.output.map((para, idx) => (
+            <DraftSection
+              key={`section-${idx}`}
+              idx={idx}
+              para={para}
+              currentDraftId={currentDraft.id}
+              editable={editingSection === idx}
+              editingSection={editingSection}
+              editingSessions={editingSessions}
+              setEditableContent={setEditableContent}
+              editableContent={editableContent}
+              editTextareaRef={editTextareaRef}
+              onEditStart={handleEditStart}
+              onEditCancel={handleEditCancel}
+              onEditSave={handleEditSave}
+              onContentChange={handleContentChange}
+              isSaving={isSaving}
+              isUserEditingSection={isUserEditingSection}
+              getEditingUserForSection={getEditingUserForSection}
+              highlightChanges={highlightChanges}
+              activeComment={activeComment}
+              setActiveComment={setActiveComment}
+              comments={comments}
+              addComment={addComment}
+              improveSection={improveSection}
+              updateDraftSection={handleUpdateSection}
+            />
+          ))}
 
-      <div className="flex gap-2 mt-4">
-        <Button
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          onClick={onRePrompt}
-          disabled={loading}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-          {loading ? "Generating…" : "Re‑prompt"}
-        </Button>
+          <div className="flex gap-2 mt-4">
+            <Button
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              onClick={onRePrompt}
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+              {loading ? "Generating…" : "Re‑prompt"}
+            </Button>
 
-        <Button
-          variant="outline"
-          onClick={() => {
-            if (currentDraft) {
-              const finalVersion = {
-                ...currentDraft,
-                isFinal: true,
-              };
-              const updatedVersions = versions.map((v, i) =>
-                i === currentIdx ? finalVersion : v
-              );
-              setCurrentIdx(currentIdx || 0);
-              window.location.hash = "endorsement";
-            }
-          }}
-        >
-          Finalise
-        </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (currentDraft) {
+                  const finalVersion = {
+                    ...currentDraft,
+                    isFinal: true,
+                  };
+                  const updatedVersions = versions.map((v, i) =>
+                    i === currentIdx ? finalVersion : v
+                  );
+                  setCurrentIdx(currentIdx || 0);
+                  window.location.hash = "endorsement";
+                }
+              }}
+            >
+              Finalise
+            </Button>
+          </div>
+        </div>
+
+        {showCommentsSidebar && (
+          <div className="w-1/4 border-l h-[calc(100vh-15rem)] overflow-hidden">
+            <div className="flex justify-between items-center p-3 border-b">
+              <h3 className="font-medium">Comments</h3>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 w-7 p-0" 
+                onClick={() => setShowCommentsSidebar(false)}
+              >
+                <span className="sr-only">Close</span>
+                <span>×</span>
+              </Button>
+            </div>
+            <CommentsPanel
+              comments={comments}
+              activeComment={activeComment}
+              setActiveComment={setActiveComment}
+              onDeleteComment={handleDeleteComment}
+              onJumpToComment={handleJumpToComment}
+            />
+          </div>
+        )}
       </div>
 
       <DiffViewer
