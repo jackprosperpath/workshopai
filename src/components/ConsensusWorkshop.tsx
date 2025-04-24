@@ -14,6 +14,7 @@ import { useStakeholders } from "@/hooks/useStakeholders";
 import { useWorkshopActions } from "@/hooks/useWorkshopActions";
 import { LivePresenceLayer } from "./workshop/LivePresenceLayer";
 import { useRef } from "react";
+import { BlueprintGenerator } from "./workshop/BlueprintGenerator";
 
 export default function ConsensusWorkshop() {
   const [activeTab, setActiveTab] = useState("draft");
@@ -73,7 +74,7 @@ export default function ConsensusWorkshop() {
   
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
-    if (hash && ['draft', 'prompt', 'stakeholders', 'team'].includes(hash)) {
+    if (hash && ['draft', 'prompt', 'stakeholders', 'team', 'blueprint'].includes(hash)) {
       setActiveTab(hash === 'stakeholders' ? 'endorsement' : hash);
     }
   }, []);
@@ -115,14 +116,18 @@ export default function ConsensusWorkshop() {
       {/* --- Main Workshop Tabs/Content --- */}
       <div className="flex-1">
         <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="team">Team</TabsTrigger>
+            <TabsTrigger value="blueprint">Blueprint</TabsTrigger>
             <TabsTrigger value="prompt">Context</TabsTrigger>
             <TabsTrigger value="draft">Solution Canvas</TabsTrigger>
             <TabsTrigger value="endorsement">Endorsement</TabsTrigger>
           </TabsList>
           <TabsContent value="team">
             <TeamManagement />
+          </TabsContent>
+          <TabsContent value="blueprint">
+            <BlueprintGenerator />
           </TabsContent>
           <TabsContent value="prompt">
             <PromptCanvas 
