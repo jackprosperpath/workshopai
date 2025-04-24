@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
@@ -33,6 +32,8 @@ export function BlueprintGenerator() {
     updateFormat,
     customFormat,
     setCustomFormat,
+    workshopType,
+    setWorkshopType,
   } = usePromptCanvas();
 
   const { syncData } = usePromptCanvasSync(
@@ -71,7 +72,8 @@ export function BlueprintGenerator() {
       selectedModel,
       selectedFormat,
       customFormat,
-      duration
+      duration,
+      workshopType,
     });
     
     syncData({ problem, metrics, constraints, selectedModel, selectedFormat, customFormat });
@@ -83,7 +85,8 @@ export function BlueprintGenerator() {
           context: problem,
           objective: problem,
           duration,
-          constraints: constraints.join(", ")
+          constraints: constraints.join(", "),
+          workshopType,
         }
       });
 
@@ -143,6 +146,8 @@ export function BlueprintGenerator() {
                 setDuration={setDuration}
                 onGenerate={generateBlueprint}
                 loading={loading}
+                workshopType={workshopType}
+                setWorkshopType={setWorkshopType}
               />
             </CardContent>
           </Card>

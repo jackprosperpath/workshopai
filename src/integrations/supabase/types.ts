@@ -107,6 +107,7 @@ export type Database = {
           selected_model: string | null
           share_id: string
           updated_at: string | null
+          workshop_type: string | null
         }
         Insert: {
           constraints?: Json | null
@@ -123,6 +124,7 @@ export type Database = {
           selected_model?: string | null
           share_id: string
           updated_at?: string | null
+          workshop_type?: string | null
         }
         Update: {
           constraints?: Json | null
@@ -139,6 +141,7 @@ export type Database = {
           selected_model?: string | null
           share_id?: string
           updated_at?: string | null
+          workshop_type?: string | null
         }
         Relationships: []
       }

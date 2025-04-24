@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import type { OutputFormat, PredefinedFormat } from "@/types/OutputFormat";
 import { OUTPUT_FORMATS } from "@/types/OutputFormat";
@@ -11,10 +10,10 @@ export function usePromptCanvas() {
   const [metricInput, setMetricInput] = useState("");
   const [constraints, setConstraints] = useState<string[]>([]);
   const [constraintInput, setConstraintInput] = useState("");
-  // Ensure selectedFormat is properly initialized with a valid object from OUTPUT_FORMATS
   const [selectedFormat, setSelectedFormat] = useState<OutputFormat>(OUTPUT_FORMATS['detailed-report']);
   const [customFormat, setCustomFormat] = useState("");
   const [selectedModel, setSelectedModel] = useState<AiModel>("gpt-4o-mini");
+  const [workshopType, setWorkshopType] = useState<'online' | 'in-person'>('online');
 
   const addMetric = () => {
     if (metricInput.trim()) {
@@ -62,5 +61,7 @@ export function usePromptCanvas() {
     setSelectedModel,
     addMetric,
     addConstraint,
+    workshopType,
+    setWorkshopType,
   };
 }

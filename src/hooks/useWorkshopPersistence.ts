@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +17,8 @@ export function useWorkshopPersistence() {
     selectedModel,
     selectedFormat,
     customFormat,
-    duration
+    duration,
+    workshopType
   }: {
     problem: string;
     metrics: string[];
@@ -30,6 +30,7 @@ export function useWorkshopPersistence() {
     };
     customFormat?: string;
     duration: number;
+    workshopType: 'online' | 'in-person';
   }) => {
     if (!workshopId) return;
     
@@ -45,6 +46,7 @@ export function useWorkshopPersistence() {
           selected_format: selectedFormat,
           custom_format: customFormat,
           duration,
+          workshop_type: workshopType,
           updated_at: new Date().toISOString()
         })
         .eq('id', workshopId);

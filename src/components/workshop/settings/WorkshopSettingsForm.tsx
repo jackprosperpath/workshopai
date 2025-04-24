@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Clock, Users, Minus, PlusCircle, Wand, Loader2, UserPlus, Info } from "lucide-react";
+import { Clock, Users, Minus, PlusCircle, Wand, Loader2, UserPlus, Info, Globe, Computer } from "lucide-react";
 import { ItemList } from "../ItemList";
 import { DocumentUpload } from "../DocumentUpload";
 import { useTeamMembers } from "@/hooks/team/useTeamMembers";
@@ -42,6 +42,8 @@ interface WorkshopSettingsFormProps {
   loading: boolean;
   duration: number;
   setDuration: (value: number) => void;
+  workshopType: 'online' | 'in-person';
+  setWorkshopType: (type: 'online' | 'in-person') => void;
 }
 
 export function WorkshopSettingsForm({
@@ -65,7 +67,9 @@ export function WorkshopSettingsForm({
   onGenerate,
   loading,
   duration,
-  setDuration
+  setDuration,
+  workshopType,
+  setWorkshopType
 }: WorkshopSettingsFormProps) {
   const [attendees, setAttendees] = useState<Attendee[]>([{
     role: "",
@@ -229,6 +233,37 @@ export function WorkshopSettingsForm({
       <div className="space-y-2">
         <Label>Workshop Documents</Label>
         <DocumentUpload onDocumentsUpdate={setDocuments} />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Workshop Type</Label>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Label className="text-sm text-muted-foreground block">
+              Select whether the workshop will be conducted online or in-person
+            </Label>
+          </TooltipTrigger>
+          <TooltipContent>
+            This helps in generating a more tailored workshop blueprint
+          </TooltipContent>
+        </Tooltip>
+        <Select value={workshopType} onValueChange={(value: 'online' | 'in-person') => setWorkshopType(value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select workshop type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="online">
+              <div className="flex items-center gap-2">
+                <Globe className="h-4 w-4" /> Online
+              </div>
+            </SelectItem>
+            <SelectItem value="in-person">
+              <div className="flex items-center gap-2">
+                <Computer className="h-4 w-4" /> In-Person
+              </div>
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <Button onClick={onGenerate} disabled={loading || !problem} className="w-full">
