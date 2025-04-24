@@ -134,7 +134,7 @@ export function WorkshopSettingsForm({
   };
 
   return <div className="space-y-6">
-      {selectedFormat && updateFormat && customFormat !== undefined && setCustomFormat && <div className="space-y-2">
+    {selectedFormat && updateFormat && customFormat !== undefined && setCustomFormat && <div className="space-y-2">
           <Label>Deliverable</Label>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -149,131 +149,139 @@ export function WorkshopSettingsForm({
           <FormatSelector selectedFormat={selectedFormat} updateFormat={updateFormat} customFormat={customFormat} setCustomFormat={setCustomFormat} />
         </div>}
 
-      <div className="space-y-2">
-        <Label htmlFor="problem">Workshop Objective</Label>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Label className="text-sm text-muted-foreground block">
-              Clearly describe the problem or opportunity that needs to be explored
-            </Label>
-          </TooltipTrigger>
-          <TooltipContent>
-            Be specific and concise in describing your problem
-          </TooltipContent>
-        </Tooltip>
-        <Textarea id="problem" placeholder="Describe the problem you want to solve..." className="min-h-[100px]" value={problem} onChange={e => setProblem(e.target.value)} />
+    <div className="space-y-2">
+      <Label htmlFor="problem">Workshop Objective</Label>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Label className="text-sm text-muted-foreground block">
+            Clearly describe the problem or opportunity that needs to be explored
+          </Label>
+        </TooltipTrigger>
+        <TooltipContent>
+          Be specific and concise in describing your problem
+        </TooltipContent>
+      </Tooltip>
+      <Textarea id="problem" placeholder="Describe the problem you want to solve..." className="min-h-[100px]" value={problem} onChange={e => setProblem(e.target.value)} />
+    </div>
+
+    <ItemList label="Success Metrics" tooltipText="Define how success will be measured" items={metrics} inputValue={metricInput} setInputValue={setMetricInput} onAdd={addMetric} placeholder="Add success metric..." />
+
+    <ItemList label="Constraints" tooltipText="List any limitations or requirements" items={constraints} inputValue={constraintInput} setInputValue={setConstraintInput} onAdd={addConstraint} placeholder="Add constraint..." />
+
+    <div className="space-y-2">
+      <Label>Duration</Label>
+      <div className="flex items-center gap-2">
+        <Clock className="h-4 w-4 text-muted-foreground" />
+        <Select value={duration.toString()} onValueChange={(value) => setDuration(parseInt(value))}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select duration" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="30">30 minutes</SelectItem>
+            <SelectItem value="60">1 hour</SelectItem>
+            <SelectItem value="90">1.5 hours</SelectItem>
+            <SelectItem value="120">2 hours</SelectItem>
+            <SelectItem value="180">3 hours</SelectItem>
+            <SelectItem value="240">4 hours</SelectItem>
+            <SelectItem value="360">Half day (6 hours)</SelectItem>
+            <SelectItem value="480">Full day (8 hours)</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
+    </div>
 
-      <ItemList label="Success Metrics" tooltipText="Define how success will be measured" items={metrics} inputValue={metricInput} setInputValue={setMetricInput} onAdd={addMetric} placeholder="Add success metric..." />
+    <div className="space-y-2">
+      <Label>Workshop Type</Label>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Label className="text-sm text-muted-foreground block">
+            Select whether the workshop will be conducted online or in-person
+          </Label>
+        </TooltipTrigger>
+        <TooltipContent>
+          This helps in generating a more tailored workshop blueprint
+        </TooltipContent>
+      </Tooltip>
+      <Select value={workshopType} onValueChange={(value: 'online' | 'in-person') => setWorkshopType(value)}>
+        <SelectTrigger>
+          <SelectValue placeholder="Select workshop type" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="online">
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4" /> Online
+            </div>
+          </SelectItem>
+          <SelectItem value="in-person">
+            <div className="flex items-center gap-2">
+              <Computer className="h-4 w-4" /> In-Person
+            </div>
+          </SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
 
-      <ItemList label="Constraints" tooltipText="List any limitations or requirements" items={constraints} inputValue={constraintInput} setInputValue={setConstraintInput} onAdd={addConstraint} placeholder="Add constraint..." />
-
-      <div className="space-y-2">
-        <Label>Duration</Label>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Clock className="h-4 w-4 text-muted-foreground" />
-          <Select value={duration.toString()} onValueChange={(value) => setDuration(parseInt(value))}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select duration" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="30">30 minutes</SelectItem>
-              <SelectItem value="60">1 hour</SelectItem>
-              <SelectItem value="90">1.5 hours</SelectItem>
-              <SelectItem value="120">2 hours</SelectItem>
-              <SelectItem value="180">3 hours</SelectItem>
-              <SelectItem value="240">4 hours</SelectItem>
-              <SelectItem value="360">Half day (6 hours)</SelectItem>
-              <SelectItem value="480">Full day (8 hours)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Label>Attendees</Label>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </div>
-          
-          {teamMembers.length > 0 && <Badge variant="outline" className="ml-2">
-              {teamMembers.length} team member{teamMembers.length !== 1 ? 's' : ''} available
-            </Badge>}
+          <Label>Attendees</Label>
+          <Users className="h-4 w-4 text-muted-foreground" />
         </div>
         
-        {attendees.map((attendee, index) => <div key={index} className="flex gap-2 items-center">
+        {teamMembers.length > 0 && <Badge variant="outline" className="ml-2">
+            {teamMembers.length} team member{teamMembers.length !== 1 ? 's' : ''} available
+          </Badge>}
+      </div>
+      
+      {attendees.map((attendee, index) => <div key={index} className="flex gap-2 items-center">
             <Input placeholder="Role (e.g., Developer, Manager)" value={attendee.role} onChange={e => updateAttendee(index, "role", e.target.value)} className="flex-1" />
             <Input type="number" min="1" placeholder="Count" value={attendee.count} onChange={e => updateAttendee(index, "count", parseInt(e.target.value) || 1)} className="w-20" />
             <Button variant="ghost" size="sm" onClick={() => removeAttendeeRole(index)} disabled={attendees.length <= 1}>
               <Minus className="h-4 w-4" />
             </Button>
           </div>)}
+      
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" onClick={addAttendeeRole} className="flex items-center gap-1">
+          <PlusCircle className="h-4 w-4" /> Add Role
+        </Button>
         
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={addAttendeeRole} className="flex items-center gap-1">
-            <PlusCircle className="h-4 w-4" /> Add Role
-          </Button>
-          
-          {teamMembers.length > 0 && <Button variant="outline" size="sm" onClick={() => {
+        {teamMembers.length > 0 && <Button variant="outline" size="sm" onClick={() => {
           const tab = document.querySelector('button[value="team"]') as HTMLButtonElement;
           if (tab) tab.click();
         }} className="flex items-center gap-1">
-              <UserPlus className="h-4 w-4" /> Manage Team
-            </Button>}
-        </div>
-        
-        {teamMembers.length === 0 && <Card className="border-dashed bg-muted/50">
-            <CardContent className="p-4 text-sm text-muted-foreground">
-              <p>Add team members on the Team tab to automatically include them as attendees.</p>
-            </CardContent>
-          </Card>}
+            <UserPlus className="h-4 w-4" /> Manage Team
+          </Button>}
       </div>
+      
+      {teamMembers.length === 0 && <Card className="border-dashed bg-muted/50">
+          <CardContent className="p-4 text-sm text-muted-foreground">
+            <p>Add team members on the Team tab to automatically include them as attendees.</p>
+          </CardContent>
+        </Card>}
+    </div>
 
-      <div className="space-y-2">
-        <Label>Workshop Documents</Label>
-        <DocumentUpload onDocumentsUpdate={setDocuments} />
-      </div>
+    <div className="space-y-2">
+      <Label>Workshop Documents</Label>
+      <DocumentUpload onDocumentsUpdate={setDocuments} />
+    </div>
 
-      <div className="space-y-2">
-        <Label>Workshop Type</Label>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Label className="text-sm text-muted-foreground block">
-              Select whether the workshop will be conducted online or in-person
-            </Label>
-          </TooltipTrigger>
-          <TooltipContent>
-            This helps in generating a more tailored workshop blueprint
-          </TooltipContent>
-        </Tooltip>
-        <Select value={workshopType} onValueChange={(value: 'online' | 'in-person') => setWorkshopType(value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select workshop type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="online">
-              <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4" /> Online
-              </div>
-            </SelectItem>
-            <SelectItem value="in-person">
-              <div className="flex items-center gap-2">
-                <Computer className="h-4 w-4" /> In-Person
-              </div>
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <Button onClick={onGenerate} disabled={loading || !problem} className="w-full">
-        {loading ? <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Generating Blueprint...
-          </> : <>
-            <Wand className="mr-2 h-4 w-4" />
-            Generate Workshop Blueprint
-          </>}
-      </Button>
-    </div>;
+    <Button
+      onClick={onGenerate}
+      disabled={loading || !problem}
+      className="w-full"
+    >
+      {loading ? (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Generating Blueprint...
+        </>
+      ) : (
+        <>
+          <Wand className="mr-2 h-4 w-4" />
+          Generate Workshop Blueprint
+        </>
+      )}
+    </Button>
+  </div>;
 }

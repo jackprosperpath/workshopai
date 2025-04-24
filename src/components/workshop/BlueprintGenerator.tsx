@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
@@ -112,15 +113,15 @@ export function BlueprintGenerator() {
     <div className="space-y-8 pb-10">
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="settings">Workshop Design</TabsTrigger>
+          <TabsTrigger value="settings">Workshop Setup</TabsTrigger>
           <TabsTrigger value="blueprint">Generated Blueprint</TabsTrigger>
         </TabsList>
 
         <TabsContent value="settings" className="space-y-4 mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Workshop Design</CardTitle>
-              <CardDescription>Configure the context and settings for your workshop</CardDescription>
+              <CardTitle>Workshop Setup</CardTitle>
+              <CardDescription>Configure your workshop participants and settings</CardDescription>
             </CardHeader>
 
             <CardContent>
@@ -162,14 +163,14 @@ export function BlueprintGenerator() {
                 <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium text-center">No Blueprint Generated Yet</h3>
                 <p className="text-muted-foreground text-center mt-2 max-w-md">
-                  Fill in the workshop design settings, then click "Generate Workshop Blueprint" to create your workshop agenda.
+                  Configure your workshop setup, then click "Generate Workshop Blueprint" to create your workshop agenda.
                 </p>
                 <Button 
                   variant="outline" 
                   onClick={() => setActiveTab("settings")} 
                   className="mt-4"
                 >
-                  Go to Workshop Design
+                  Go to Workshop Setup
                 </Button>
               </CardContent>
             </Card>
