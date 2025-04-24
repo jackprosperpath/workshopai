@@ -28,15 +28,25 @@ export function BlueprintGenerator() {
     addConstraint,
     selectedModel,
     setSelectedModel,
+    selectedFormat,
+    updateFormat,
+    customFormat,
+    setCustomFormat,
   } = usePromptCanvas();
 
   const { syncData } = usePromptCanvasSync(
-    { problem, metrics, constraints, selectedModel },
+    { problem, metrics, constraints, selectedModel, selectedFormat, customFormat },
     (data) => {
       if (data.problem !== undefined) setProblem(data.problem);
       if (data.metrics !== undefined) setMetrics(data.metrics);
       if (data.constraints !== undefined) setConstraints(data.constraints);
       if (data.selectedModel !== undefined) setSelectedModel(data.selectedModel);
+      if (data.selectedFormat !== undefined && updateFormat) {
+        updateFormat(data.selectedFormat.type);
+      }
+      if (data.customFormat !== undefined && setCustomFormat) {
+        setCustomFormat(data.customFormat);
+      }
     }
   );
 
@@ -45,7 +55,7 @@ export function BlueprintGenerator() {
   const [activeTab, setActiveTab] = useState<string>("settings");
 
   const saveWorkshopContext = () => {
-    syncData({ problem, metrics, constraints, selectedModel });
+    syncData({ problem, metrics, constraints, selectedModel, selectedFormat, customFormat });
   };
 
   const generateBlueprint = async () => {
@@ -113,6 +123,10 @@ export function BlueprintGenerator() {
                 addConstraint={addConstraint}
                 selectedModel={selectedModel}
                 setSelectedModel={setSelectedModel}
+                selectedFormat={selectedFormat}
+                updateFormat={updateFormat}
+                customFormat={customFormat}
+                setCustomFormat={setCustomFormat}
                 onGenerate={generateBlueprint}
                 loading={loading}
               />

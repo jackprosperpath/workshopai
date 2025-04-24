@@ -1,14 +1,19 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Clock, Users, Minus, PlusCircle, Wand, Loader2, UserPlus } from "lucide-react";
+import { Clock, Users, Minus, PlusCircle, Wand, Loader2, UserPlus, Info } from "lucide-react";
 import { ItemList } from "../ItemList";
 import { DocumentUpload } from "../DocumentUpload";
 import { useTeamMembers } from "@/hooks/team/useTeamMembers";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { FormatSelector } from "../FormatSelector";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import type { PredefinedFormat } from "@/types/OutputFormat";
 import type { AiModel } from "@/hooks/usePromptCanvas";
 import type { Attendee, TeamMemberRole } from "../types/workshop";
 
@@ -26,6 +31,10 @@ interface WorkshopSettingsFormProps {
   addConstraint: () => void;
   selectedModel: AiModel;
   setSelectedModel: (model: AiModel) => void;
+  selectedFormat?: { type: PredefinedFormat; customFormat?: string; description: string };
+  updateFormat?: (format: PredefinedFormat) => void;
+  customFormat?: string;
+  setCustomFormat?: (value: string) => void;
   onGenerate: () => void;
   loading: boolean;
 }
@@ -34,6 +43,7 @@ export function WorkshopSettingsForm({
   problem,
   setProblem,
   metrics,
+  setMetrics,
   metricInput,
   setMetricInput,
   addMetric,
@@ -43,6 +53,10 @@ export function WorkshopSettingsForm({
   addConstraint,
   selectedModel,
   setSelectedModel,
+  selectedFormat,
+  updateFormat,
+  customFormat,
+  setCustomFormat,
   onGenerate,
   loading,
 }: WorkshopSettingsFormProps) {
@@ -102,6 +116,69 @@ export function WorkshopSettingsForm({
 
   return (
     <div className="space-y-6">
+      {selectedFormat && updateFormat && customFormat !== undefined && setCustomFormat && (
+        <div className="space-y-2">
+          <Label>Deliverable</Label>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Label className="text-sm text-muted-foreground block">
+                Select the desired format for the generated solution
+              </Label>
+            </TooltipTrigger>
+            <TooltipContent>
+              Choose a predefined format or create your own
+            </TooltipContent>
+          </Tooltip>
+          <FormatSelector
+            selectedFormat={selectedFormat}
+            updateFormat={updateFormat}
+            customFormat={customFormat}
+            setCustomFormat={setCustomFormat}
+          />
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <Label htmlFor="problem">Scope Statement</Label>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Label className="text-sm text-muted-foreground block">
+              Clearly describe the problem or opportunity that needs to be explored
+            </Label>
+          </TooltipTrigger>
+          <TooltipContent>
+            Be specific and concise in describing your problem
+          </TooltipContent>
+        </Tooltip>
+        <Textarea
+          id="problem"
+          placeholder="Describe the problem you want to solve..."
+          className="min-h-[100px]"
+          value={problem}
+          onChange={(e) => setProblem(e.target.value)}
+        />
+      </div>
+
+      <ItemList
+        label="Success Metrics"
+        tooltipText="Define how success will be measured"
+        items={metrics}
+        inputValue={metricInput}
+        setInputValue={setMetricInput}
+        onAdd={addMetric}
+        placeholder="Add success metric..."
+      />
+
+      <ItemList
+        label="Constraints"
+        tooltipText="List any limitations or requirements"
+        items={constraints}
+        inputValue={constraintInput}
+        setInputValue={setConstraintInput}
+        onAdd={addConstraint}
+        placeholder="Add constraint..."
+      />
+
       <div className="space-y-2">
         <Label>Duration</Label>
         <div className="flex items-center gap-2">
