@@ -2,6 +2,7 @@
 export type Attendee = {
   role: string;
   count: number;
+  email?: string;
 };
 
 export type BlueprintAgendaItem = {
@@ -21,4 +22,11 @@ export type Blueprint = {
   agenda: BlueprintAgendaItem[];
   materialsList: string[];
   followupActions: string[];
+};
+
+export type TeamMemberRole = {
+  id: string;
+  email: string;
+  role: string;
+  status: "pending" | "accepted" | "declined";
 };

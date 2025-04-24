@@ -10,7 +10,7 @@ import { ShareableLink } from "./team/ShareableLink";
 import { TeamMemberList } from "./team/TeamMemberList";
 
 export function TeamManagement() {
-  const { teamMembers, removeTeamMember } = useTeamMembers(
+  const { teamMembers, removeTeamMember, updateTeamMemberRole } = useTeamMembers(
     new URLSearchParams(window.location.search).get('id')
   );
   const getCurrentUserCount = () => Math.floor(Math.random() * 3) + 1;
@@ -48,14 +48,23 @@ export function TeamManagement() {
             </TabsContent>
           </Tabs>
 
-          <TeamMemberList members={teamMembers} onRemove={removeTeamMember} />
+          <TeamMemberList 
+            members={teamMembers} 
+            onRemove={removeTeamMember} 
+            onUpdateRole={updateTeamMemberRole}
+          />
           
           <div className="mt-6 p-3 bg-muted/50 rounded-md flex items-start gap-2">
             <AlertCircle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-            <p className="text-xs text-muted-foreground">
-              All invited team members will be able to view and edit this workshop in real-time. 
-              They will need a WorkshopAI account to join. Changes are synchronised automatically.
-            </p>
+            <div className="text-xs text-muted-foreground">
+              <p>
+                All invited team members will be able to view and edit this workshop in real-time. 
+                They will need a WorkshopAI account to join. Changes are synchronised automatically.
+              </p>
+              <p className="mt-2">
+                <strong>Adding roles</strong> to team members will automatically include them in your workshop design as attendees.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>

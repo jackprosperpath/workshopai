@@ -1,14 +1,16 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Clock, Users, Minus, PlusCircle, Wand, Loader2 } from "lucide-react";
+import { Clock, Users, Minus, PlusCircle, Wand, Loader2, UserPlus } from "lucide-react";
 import { ItemList } from "../ItemList";
 import { DocumentUpload } from "../DocumentUpload";
+import { useTeamMembers } from "@/hooks/team/useTeamMembers";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import type { AiModel } from "@/hooks/usePromptCanvas";
-import type { Attendee } from "../types/workshop";
+import type { Attendee, TeamMemberRole } from "../types/workshop";
 
 interface WorkshopSettingsFormProps {
   problem: string;
@@ -47,6 +49,38 @@ export function WorkshopSettingsForm({
   const [duration, setDuration] = useState("120");
   const [attendees, setAttendees] = useState<Attendee[]>([{ role: "", count: 1 }]);
   const [documents, setDocuments] = useState<{ name: string; path: string; size: number; }[]>([]);
+  const { teamMembers } = useTeamMembers(
+    new URLSearchParams(window.location.search).get('id')
+  );
+  
+  useEffect(() => {
+    if (teamMembers.length > 0) {
+      const roleMap = new Map<string, Attendee>();
+      
+      attendees.forEach(attendee => {
+        if (attendee.role) {
+          roleMap.set(attendee.role, attendee);
+        }
+      });
+      
+      teamMembers.forEach(member => {
+        if (!member.role) return;
+        
+        if (roleMap.has(member.role)) {
+          const existingRole = roleMap.get(member.role)!;
+          existingRole.count += 1;
+        } else {
+          roleMap.set(member.role, {
+            role: member.role,
+            count: 1,
+            email: member.email
+          });
+        }
+      });
+      
+      setAttendees([...roleMap.values()]);
+    }
+  }, [teamMembers]);
 
   const addAttendeeRole = () => {
     setAttendees([...attendees, { role: "", count: 1 }]);
@@ -91,9 +125,17 @@ export function WorkshopSettingsForm({
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Label>Attendees</Label>
-          <Users className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Label>Attendees</Label>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </div>
+          
+          {teamMembers.length > 0 && (
+            <Badge variant="outline" className="ml-2">
+              {teamMembers.length} team member{teamMembers.length !== 1 ? 's' : ''} available
+            </Badge>
+          )}
         </div>
         
         {attendees.map((attendee, index) => (
@@ -123,14 +165,38 @@ export function WorkshopSettingsForm({
           </div>
         ))}
         
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={addAttendeeRole}
-          className="flex items-center gap-1"
-        >
-          <PlusCircle className="h-4 w-4" /> Add Role
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={addAttendeeRole}
+            className="flex items-center gap-1"
+          >
+            <PlusCircle className="h-4 w-4" /> Add Role
+          </Button>
+          
+          {teamMembers.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const tab = document.querySelector('button[value="team"]') as HTMLButtonElement;
+                if (tab) tab.click();
+              }}
+              className="flex items-center gap-1"
+            >
+              <UserPlus className="h-4 w-4" /> Manage Team
+            </Button>
+          )}
+        </div>
+        
+        {teamMembers.length === 0 && (
+          <Card className="border-dashed bg-muted/50">
+            <CardContent className="p-4 text-sm text-muted-foreground">
+              <p>Add team members on the Team tab to automatically include them as attendees.</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <div className="space-y-2">
