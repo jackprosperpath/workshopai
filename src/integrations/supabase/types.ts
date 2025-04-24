@@ -95,11 +95,15 @@ export type Database = {
         Row: {
           constraints: Json | null
           created_at: string | null
+          custom_format: string | null
+          duration: number | null
+          generated_blueprint: Json | null
           id: string
           metrics: Json | null
           name: string
           owner_id: string
           problem: string | null
+          selected_format: Json | null
           selected_model: string | null
           share_id: string
           updated_at: string | null
@@ -107,11 +111,15 @@ export type Database = {
         Insert: {
           constraints?: Json | null
           created_at?: string | null
+          custom_format?: string | null
+          duration?: number | null
+          generated_blueprint?: Json | null
           id?: string
           metrics?: Json | null
           name?: string
           owner_id: string
           problem?: string | null
+          selected_format?: Json | null
           selected_model?: string | null
           share_id: string
           updated_at?: string | null
@@ -119,11 +127,15 @@ export type Database = {
         Update: {
           constraints?: Json | null
           created_at?: string | null
+          custom_format?: string | null
+          duration?: number | null
+          generated_blueprint?: Json | null
           id?: string
           metrics?: Json | null
           name?: string
           owner_id?: string
           problem?: string | null
+          selected_format?: Json | null
           selected_model?: string | null
           share_id?: string
           updated_at?: string | null

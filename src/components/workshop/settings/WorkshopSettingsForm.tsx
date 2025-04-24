@@ -15,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import type { PredefinedFormat } from "@/types/OutputFormat";
 import type { AiModel } from "@/hooks/usePromptCanvas";
 import type { Attendee, TeamMemberRole } from "../types/workshop";
+
 interface WorkshopSettingsFormProps {
   problem: string;
   setProblem: (value: string) => void;
@@ -39,7 +40,10 @@ interface WorkshopSettingsFormProps {
   setCustomFormat?: (value: string) => void;
   onGenerate: () => void;
   loading: boolean;
+  duration: number;
+  setDuration: (value: number) => void;
 }
+
 export function WorkshopSettingsForm({
   problem,
   setProblem,
@@ -59,9 +63,10 @@ export function WorkshopSettingsForm({
   customFormat,
   setCustomFormat,
   onGenerate,
-  loading
+  loading,
+  duration,
+  setDuration
 }: WorkshopSettingsFormProps) {
-  const [duration, setDuration] = useState("120");
   const [attendees, setAttendees] = useState<Attendee[]>([{
     role: "",
     count: 1
@@ -74,6 +79,7 @@ export function WorkshopSettingsForm({
   const {
     teamMembers
   } = useTeamMembers(new URLSearchParams(window.location.search).get('id'));
+
   useEffect(() => {
     if (teamMembers.length > 0) {
       const roleMap = new Map<string, Attendee>();
@@ -98,12 +104,14 @@ export function WorkshopSettingsForm({
       setAttendees([...roleMap.values()]);
     }
   }, [teamMembers]);
+
   const addAttendeeRole = () => {
     setAttendees([...attendees, {
       role: "",
       count: 1
     }]);
   };
+
   const updateAttendee = (index: number, field: keyof Attendee, value: string | number) => {
     const newAttendees = [...attendees];
     newAttendees[index] = {
@@ -112,6 +120,7 @@ export function WorkshopSettingsForm({
     };
     setAttendees(newAttendees);
   };
+
   const removeAttendeeRole = (index: number) => {
     if (attendees.length > 1) {
       const newAttendees = [...attendees];
@@ -119,6 +128,7 @@ export function WorkshopSettingsForm({
       setAttendees(newAttendees);
     }
   };
+
   return <div className="space-y-6">
       {selectedFormat && updateFormat && customFormat !== undefined && setCustomFormat && <div className="space-y-2">
           <Label>Deliverable</Label>
@@ -158,7 +168,7 @@ export function WorkshopSettingsForm({
         <Label>Duration</Label>
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-muted-foreground" />
-          <Select value={duration} onValueChange={setDuration}>
+          <Select value={duration.toString()} onValueChange={(value) => setDuration(parseInt(value))}>
             <SelectTrigger>
               <SelectValue placeholder="Select duration" />
             </SelectTrigger>

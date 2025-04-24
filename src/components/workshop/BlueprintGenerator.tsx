@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import { usePromptCanvas } from "@/hooks/usePromptCanvas";
 import { usePromptCanvasSync } from "@/hooks/usePromptCanvasSync";
+import { useWorkshopPersistence } from "@/hooks/useWorkshopPersistence";
 import { WorkshopSettingsForm } from "./settings/WorkshopSettingsForm";
 import { GeneratedBlueprint } from "./blueprint/GeneratedBlueprint";
 import type { Blueprint } from "./types/workshop";
@@ -53,10 +54,9 @@ export function BlueprintGenerator() {
   const [loading, setLoading] = useState(false);
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
   const [activeTab, setActiveTab] = useState<string>("settings");
-
-  const saveWorkshopContext = () => {
-    syncData({ problem, metrics, constraints, selectedModel, selectedFormat, customFormat });
-  };
+  const [duration, setDuration] = useState(120);
+  
+  const { saveWorkshopData, saveGeneratedBlueprint } = useWorkshopPersistence();
 
   const generateBlueprint = async () => {
     if (!problem) {
@@ -64,7 +64,17 @@ export function BlueprintGenerator() {
       return;
     }
 
-    saveWorkshopContext();
+    await saveWorkshopData({
+      problem,
+      metrics,
+      constraints,
+      selectedModel,
+      selectedFormat,
+      customFormat,
+      duration
+    });
+    
+    syncData({ problem, metrics, constraints, selectedModel, selectedFormat, customFormat });
     setLoading(true);
 
     try {
@@ -72,6 +82,7 @@ export function BlueprintGenerator() {
         body: {
           context: problem,
           objective: problem,
+          duration,
           constraints: constraints.join(", ")
         }
       });
@@ -80,6 +91,7 @@ export function BlueprintGenerator() {
 
       if (data.blueprint) {
         setBlueprint(data.blueprint);
+        await saveGeneratedBlueprint(data.blueprint);
         toast.success("Workshop blueprint generated successfully");
         setActiveTab("blueprint");
       } else {
@@ -127,6 +139,8 @@ export function BlueprintGenerator() {
                 updateFormat={updateFormat}
                 customFormat={customFormat}
                 setCustomFormat={setCustomFormat}
+                duration={duration}
+                setDuration={setDuration}
                 onGenerate={generateBlueprint}
                 loading={loading}
               />
