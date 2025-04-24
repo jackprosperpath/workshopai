@@ -1,9 +1,9 @@
+
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DraftWorkspace } from "@/components/workshop/DraftWorkspace";
 import { StakeholderSupport } from "@/components/workshop/StakeholderSupport";
-import { TeamManagement } from "@/components/workshop/TeamManagement";
 import { WorkshopActions } from "@/components/workshop/WorkshopActions";
 import { DraftLimitWrapper } from "@/components/workshop/DraftLimitWrapper";
 import { usePromptCanvas } from "@/hooks/usePromptCanvas";
@@ -14,7 +14,7 @@ import { LivePresenceLayer } from "./workshop/LivePresenceLayer";
 import { BlueprintGenerator } from "./workshop/BlueprintGenerator";
 
 export default function ConsensusWorkshop() {
-  const [activeTab, setActiveTab] = useState("draft");
+  const [activeTab, setActiveTab] = useState("blueprint");
   const [loading, setLoading] = useState(false);
   const [searchParams] = useSearchParams();
   const workshopId = searchParams.get('id');
@@ -57,7 +57,7 @@ export default function ConsensusWorkshop() {
   
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
-    if (hash && ['draft', 'blueprint', 'stakeholders', 'team'].includes(hash)) {
+    if (hash && ['blueprint', 'draft', 'stakeholders'].includes(hash)) {
       setActiveTab(hash === 'stakeholders' ? 'endorsement' : hash);
     }
   }, []);
@@ -93,15 +93,11 @@ export default function ConsensusWorkshop() {
 
       <div className="flex-1">
         <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="team">Team</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="blueprint">Workshop Design</TabsTrigger>
             <TabsTrigger value="draft">Solution Canvas</TabsTrigger>
             <TabsTrigger value="endorsement">Endorsement</TabsTrigger>
           </TabsList>
-          <TabsContent value="team">
-            <TeamManagement />
-          </TabsContent>
           <TabsContent value="blueprint">
             <BlueprintGenerator />
           </TabsContent>

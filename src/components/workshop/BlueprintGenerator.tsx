@@ -11,6 +11,7 @@ import { usePromptCanvasSync } from "@/hooks/usePromptCanvasSync";
 import { useWorkshopPersistence } from "@/hooks/useWorkshopPersistence";
 import { WorkshopSettingsForm } from "./settings/WorkshopSettingsForm";
 import { GeneratedBlueprint } from "./blueprint/GeneratedBlueprint";
+import { TeamManagement } from "./TeamManagement";
 import type { Blueprint } from "./types/workshop";
 
 export function BlueprintGenerator() {
@@ -112,8 +113,9 @@ export function BlueprintGenerator() {
   return (
     <div className="space-y-8 pb-10">
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="settings">Workshop Setup</TabsTrigger>
+          <TabsTrigger value="team">Team Management</TabsTrigger>
           <TabsTrigger value="blueprint">Generated Blueprint</TabsTrigger>
         </TabsList>
 
@@ -152,6 +154,10 @@ export function BlueprintGenerator() {
               />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="team" className="mt-4">
+          <TeamManagement />
         </TabsContent>
 
         <TabsContent value="blueprint" className="mt-4">
