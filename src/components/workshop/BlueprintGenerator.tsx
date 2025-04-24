@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +7,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -22,7 +20,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
-import { Loader2, Clock, Users, FileText, AlertTriangle, Wand, Calendar, PlusCircle, Minus, Settings } from "lucide-react";
+import { Loader2, Clock, Users, FileText, Calendar, PlusCircle, Minus, Wand } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ItemList } from "./ItemList";
 import { FormatSelector } from "./FormatSelector";
@@ -31,6 +29,7 @@ import { useWorkshopActions } from "@/hooks/useWorkshopActions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DocumentUpload } from "./DocumentUpload";
 import { AiModel } from "@/hooks/usePromptCanvas";
+import { usePromptCanvasSync } from "@/hooks/usePromptCanvasSync";
 
 type Attendee = {
   role: string;
@@ -79,25 +78,34 @@ export function BlueprintGenerator() {
     setSelectedModel,
   } = usePromptCanvas();
 
+  // Sync changes to other collaborators
+  const { syncData } = usePromptCanvasSync(
+    { problem, metrics, constraints, selectedModel },
+    (data) => {
+      if (data.problem !== undefined) setProblem(data.problem);
+      if (data.metrics !== undefined) setMetrics(data.metrics);
+      if (data.constraints !== undefined) setConstraints(data.constraints);
+      if (data.selectedModel !== undefined) setSelectedModel(data.selectedModel);
+    }
+  );
+
   const { handleSaveWorkshop } = useWorkshopActions();
 
-  // Blueprint-specific state
-  const [objective, setObjective] = useState("");
+  // Workshop settings state
   const [duration, setDuration] = useState("120");
   const [attendees, setAttendees] = useState<Attendee[]>([{ role: "", count: 1 }]);
   const [prereads, setPrereads] = useState("");
   const [loading, setLoading] = useState(false);
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
   const [documents, setDocuments] = useState<{ name: string; path: string; size: number; }[]>([]);
-  const [activeTab, setActiveTab] = useState<string>("context");
-  const [updatedContextFields, setUpdatedContextFields] = useState(false);
-
-  // When problem is set from the context tab, update objective if it's empty
-  useEffect(() => {
-    if (problem && !objective && !updatedContextFields) {
-      setObjective(problem);
-    }
-  }, [problem, objective, updatedContextFields]);
+  const [activeTab, setActiveTab] = useState<string>("settings");
+  
+  // Unified workshop settings
+  const saveWorkshopContext = () => {
+    handleSaveWorkshop(problem, metrics, constraints, selectedModel);
+    // Sync data to collaborators
+    syncData({ problem, metrics, constraints, selectedModel });
+  };
 
   // Add attendee role
   const addAttendeeRole = () => {
@@ -122,20 +130,20 @@ export function BlueprintGenerator() {
 
   // Generate blueprint
   const generateBlueprint = async () => {
-    if (!objective) {
-      toast.error("Please specify an objective for your workshop");
+    if (!problem) {
+      toast.error("Please specify a workshop scope statement");
       return;
     }
 
     // Save context data to workshop first
-    handleSaveWorkshop(problem, metrics, constraints, selectedModel);
+    saveWorkshopContext();
 
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-workshop-blueprint", {
         body: {
           context: problem,
-          objective,
+          objective: problem,
           duration,
           attendees: attendees.filter(a => a.role.trim() !== ""),
           prereads,
@@ -162,32 +170,24 @@ export function BlueprintGenerator() {
     }
   };
 
-  // Calculate total duration
-  const getTotalDuration = (agenda: BlueprintAgendaItem[]) => {
-    if (!agenda) return 0;
-    return agenda.reduce((total, item) => {
-      const duration = parseInt(item.duration) || 0;
-      return total + duration;
-    }, 0);
-  };
-
   return (
     <div className="space-y-8 pb-10">
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="context">Workshop Context</TabsTrigger>
-          <TabsTrigger value="settings">Blueprint Settings</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="settings">Workshop Design</TabsTrigger>
           <TabsTrigger value="blueprint">Generated Blueprint</TabsTrigger>
         </TabsList>
 
-        {/* Context Tab */}
-        <TabsContent value="context" className="space-y-4 mt-4">
+        {/* Workshop Settings Tab */}
+        <TabsContent value="settings" className="space-y-4 mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Workshop Context</CardTitle>
-              <CardDescription>Define your problem, success metrics, and constraints</CardDescription>
+              <CardTitle>Workshop Design</CardTitle>
+              <CardDescription>Configure the context and settings for your workshop</CardDescription>
             </CardHeader>
+
             <CardContent className="space-y-6">
+              {/* Workshop Context */}
               <div className="space-y-2">
                 <Label htmlFor="problem">Scope Statement</Label>
                 <Textarea
@@ -195,12 +195,7 @@ export function BlueprintGenerator() {
                   placeholder="Describe the problem you want to solve..."
                   className="min-h-[100px]"
                   value={problem}
-                  onChange={(e) => {
-                    setProblem(e.target.value);
-                    if (!updatedContextFields) {
-                      setObjective(e.target.value);
-                    }
-                  }}
+                  onChange={(e) => setProblem(e.target.value)}
                 />
               </div>
 
@@ -244,7 +239,7 @@ export function BlueprintGenerator() {
               </div>
 
               <div className="space-y-2">
-                <Label>Deliverable</Label>
+                <Label>Deliverable Format</Label>
                 <FormatSelector
                   selectedFormat={selectedFormat}
                   updateFormat={updateFormat}
@@ -253,53 +248,12 @@ export function BlueprintGenerator() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Context Documents</Label>
-                <DocumentUpload onDocumentsUpdate={setDocuments} />
-              </div>
+              <Separator className="my-4" />
 
-              <Button
-                onClick={() => {
-                  setActiveTab("settings");
-                  handleSaveWorkshop(problem, metrics, constraints, selectedModel);
-                  setUpdatedContextFields(true);
-                }}
-                className="w-full"
-              >
-                Continue to Blueprint Settings
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Settings Tab */}
-        <TabsContent value="settings" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Workshop Blueprint Settings</CardTitle>
-              <CardDescription>
-                Configure the details for your workshop blueprint
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="objective">Workshop Objective</Label>
-                <Textarea
-                  id="objective"
-                  placeholder="What specific outcome do you want from this workshop?"
-                  value={objective}
-                  onChange={(e) => {
-                    setObjective(e.target.value);
-                    setUpdatedContextFields(true);
-                  }}
-                  className="min-h-[80px]"
-                />
-              </div>
-
+              {/* Blueprint Settings */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="duration">Duration</Label>
+                  <Label htmlFor="duration">Workshop Duration</Label>
                   <Clock className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <Select value={duration} onValueChange={setDuration}>
@@ -375,9 +329,14 @@ export function BlueprintGenerator() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label>Context Documents</Label>
+                <DocumentUpload onDocumentsUpdate={setDocuments} />
+              </div>
+
               <Button 
                 onClick={generateBlueprint} 
-                disabled={loading || !objective}
+                disabled={loading || !problem}
                 className="w-full"
               >
                 {loading ? (
@@ -391,6 +350,14 @@ export function BlueprintGenerator() {
                     Generate Workshop Blueprint
                   </>
                 )}
+              </Button>
+
+              <Button 
+                onClick={saveWorkshopContext} 
+                variant="outline" 
+                className="w-full"
+              >
+                Save Workshop Context
               </Button>
             </CardContent>
           </Card>
@@ -504,14 +471,14 @@ export function BlueprintGenerator() {
                 <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium text-center">No Blueprint Generated Yet</h3>
                 <p className="text-muted-foreground text-center mt-2 max-w-md">
-                  Fill in the workshop context and blueprint settings, then click "Generate Workshop Blueprint" to create your workshop agenda.
+                  Fill in the workshop design settings, then click "Generate Workshop Blueprint" to create your workshop agenda.
                 </p>
                 <Button 
                   variant="outline" 
-                  onClick={() => setActiveTab("context")} 
+                  onClick={() => setActiveTab("settings")} 
                   className="mt-4"
                 >
-                  Start with Workshop Context
+                  Go to Workshop Design
                 </Button>
               </CardContent>
             </Card>

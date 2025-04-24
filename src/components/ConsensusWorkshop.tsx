@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DraftWorkspace } from "@/components/workshop/DraftWorkspace";
@@ -12,7 +12,6 @@ import { useDraftWorkspace } from "@/hooks/useDraftWorkspace";
 import { useStakeholders } from "@/hooks/useStakeholders";
 import { useWorkshopActions } from "@/hooks/useWorkshopActions";
 import { LivePresenceLayer } from "./workshop/LivePresenceLayer";
-import { useRef } from "react";
 import { BlueprintGenerator } from "./workshop/BlueprintGenerator";
 
 export default function ConsensusWorkshop() {
@@ -39,7 +38,6 @@ export default function ConsensusWorkshop() {
     addFeedback,
     generateDraft,
     updateDraftSection,
-    loadDrafts,
   } = useDraftWorkspace();
   
   const {
@@ -90,7 +88,6 @@ export default function ConsensusWorkshop() {
 
   return (
     <div className="w-full h-full space-y-4 relative">
-      <WorkshopActions />
       {workshopId && (
         <LivePresenceLayer workshopId={workshopId} workspaceRef={workspaceRef} />
       )}
