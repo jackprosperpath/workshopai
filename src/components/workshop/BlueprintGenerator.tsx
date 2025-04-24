@@ -18,10 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
-import { Loader2, Clock, Users, FileText, Calendar, PlusCircle, Minus, Wand } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Clock, Users, Calendar, PlusCircle, Minus, Wand, Loader2 } from "lucide-react";
 import { ItemList } from "./ItemList";
 import { FormatSelector } from "./FormatSelector";
 import { usePromptCanvas } from "@/hooks/usePromptCanvas";
@@ -56,7 +54,6 @@ type Blueprint = {
 };
 
 export function BlueprintGenerator() {
-  // Get existing context from usePromptCanvas hook
   const {
     problem,
     setProblem,
@@ -78,7 +75,6 @@ export function BlueprintGenerator() {
     setSelectedModel,
   } = usePromptCanvas();
 
-  // Sync changes to other collaborators
   const { syncData } = usePromptCanvasSync(
     { problem, metrics, constraints, selectedModel },
     (data) => {
@@ -91,7 +87,6 @@ export function BlueprintGenerator() {
 
   const { handleSaveWorkshop } = useWorkshopActions();
 
-  // Workshop settings state
   const [duration, setDuration] = useState("120");
   const [attendees, setAttendees] = useState<Attendee[]>([{ role: "", count: 1 }]);
   const [prereads, setPrereads] = useState("");
@@ -99,27 +94,22 @@ export function BlueprintGenerator() {
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
   const [documents, setDocuments] = useState<{ name: string; path: string; size: number; }[]>([]);
   const [activeTab, setActiveTab] = useState<string>("settings");
-  
-  // Unified workshop settings
+
   const saveWorkshopContext = () => {
     handleSaveWorkshop(problem, metrics, constraints, selectedModel);
-    // Sync data to collaborators
     syncData({ problem, metrics, constraints, selectedModel });
   };
 
-  // Add attendee role
   const addAttendeeRole = () => {
     setAttendees([...attendees, { role: "", count: 1 }]);
   };
 
-  // Update attendee
   const updateAttendee = (index: number, field: keyof Attendee, value: string | number) => {
     const newAttendees = [...attendees];
     newAttendees[index] = { ...newAttendees[index], [field]: value };
     setAttendees(newAttendees);
   };
 
-  // Remove attendee role
   const removeAttendeeRole = (index: number) => {
     if (attendees.length > 1) {
       const newAttendees = [...attendees];
@@ -128,14 +118,12 @@ export function BlueprintGenerator() {
     }
   };
 
-  // Generate blueprint
   const generateBlueprint = async () => {
     if (!problem) {
       toast.error("Please specify a workshop scope statement");
       return;
     }
 
-    // Save context data to workshop first
     saveWorkshopContext();
 
     setLoading(true);
@@ -178,7 +166,6 @@ export function BlueprintGenerator() {
           <TabsTrigger value="blueprint">Generated Blueprint</TabsTrigger>
         </TabsList>
 
-        {/* Workshop Settings Tab */}
         <TabsContent value="settings" className="space-y-4 mt-4">
           <Card>
             <CardHeader>
@@ -187,7 +174,6 @@ export function BlueprintGenerator() {
             </CardHeader>
 
             <CardContent className="space-y-6">
-              {/* Workshop Context */}
               <div className="space-y-2">
                 <Label htmlFor="problem">Scope Statement</Label>
                 <Textarea
@@ -233,9 +219,6 @@ export function BlueprintGenerator() {
                     <SelectItem value="gpt-4o">GPT-4o (Powerful)</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Select which AI model to use for generating solutions. GPT-4o-mini is faster but less powerful, while GPT-4o is more powerful but slower.
-                </p>
               </div>
 
               <div className="space-y-2">
@@ -250,7 +233,6 @@ export function BlueprintGenerator() {
 
               <Separator className="my-4" />
 
-              {/* Blueprint Settings */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Label htmlFor="duration">Workshop Duration</Label>
@@ -317,21 +299,11 @@ export function BlueprintGenerator() {
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="prereads">Pre-reads or Prerequisites</Label>
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <Textarea
-                  id="prereads"
-                  placeholder="Any material participants should review before the workshop"
-                  value={prereads}
-                  onChange={(e) => setPrereads(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Context Documents</Label>
+                <Label>Workshop Documents</Label>
                 <DocumentUpload onDocumentsUpdate={setDocuments} />
+                <p className="text-sm text-muted-foreground mt-1">
+                  Upload any context documents or pre-reads for the workshop
+                </p>
               </div>
 
               <Button 
@@ -363,7 +335,6 @@ export function BlueprintGenerator() {
           </Card>
         </TabsContent>
 
-        {/* Blueprint Tab */}
         <TabsContent value="blueprint" className="mt-4">
           {blueprint ? (
             <Card className="mt-4">
@@ -376,7 +347,6 @@ export function BlueprintGenerator() {
                     </CardDescription>
                   </div>
                   <Button variant="outline" onClick={() => {
-                    // Here you would implement saving this blueprint to the workspace
                     toast.success("Blueprint saved to workspace!");
                   }}>
                     Save Blueprint

@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -92,7 +91,6 @@ export default function ConsensusWorkshop() {
         <LivePresenceLayer workshopId={workshopId} workspaceRef={workspaceRef} />
       )}
 
-      {/* --- Main Workshop Tabs/Content --- */}
       <div className="flex-1">
         <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
