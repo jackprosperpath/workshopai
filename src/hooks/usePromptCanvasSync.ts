@@ -4,12 +4,19 @@ import { useSharedWorkshop } from "./useSharedWorkshop";
 import { supabase } from "@/integrations/supabase/client";
 import type { AiModel } from "./usePromptCanvas";
 import { toast } from "@/components/ui/sonner";
+import type { PredefinedFormat } from "@/types/OutputFormat";
 
 type PromptCanvasData = {
   problem: string;
   metrics: string[];
   constraints: string[];
   selectedModel: AiModel;
+  selectedFormat?: {
+    type: PredefinedFormat;
+    customFormat?: string;
+    description: string;
+  };
+  customFormat?: string;
 };
 
 export function usePromptCanvasSync(
@@ -49,7 +56,9 @@ export function usePromptCanvasSync(
               problem: data.workshop.problem,
               metrics: data.workshop.metrics,
               constraints: data.workshop.constraints,
-              selectedModel: data.workshop.selected_model
+              selectedModel: data.workshop.selected_model,
+              selectedFormat: data.workshop.selected_format,
+              customFormat: data.workshop.custom_format
             });
             setLastSynced(new Date());
           }
