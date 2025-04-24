@@ -60,7 +60,7 @@ export function usePromptCanvasSync(
       
       loadSharedData();
     }
-  }, [shareId]);
+  }, [shareId, setExternalData]);
 
   // Set up real-time updates for workshop data
   useEffect(() => {
@@ -88,7 +88,7 @@ export function usePromptCanvasSync(
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [workshopId, lastSynced]);
+  }, [workshopId, lastSynced, setExternalData]);
 
   // Sync data to other users
   const syncData = async (data: PromptCanvasData) => {

@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DraftWorkspace } from "@/components/workshop/DraftWorkspace";
-import { PromptCanvas } from "@/components/workshop/PromptCanvas";
 import { StakeholderSupport } from "@/components/workshop/StakeholderSupport";
 import { TeamManagement } from "@/components/workshop/TeamManagement";
 import { WorkshopActions } from "@/components/workshop/WorkshopActions";
@@ -24,23 +23,10 @@ export default function ConsensusWorkshop() {
   
   const {
     problem,
-    setProblem,
     metrics,
-    setMetrics,
-    metricInput,
-    setMetricInput,
     constraints,
-    setConstraints,
-    constraintInput,
-    setConstraintInput,
     selectedFormat,
-    updateFormat,
-    customFormat,
-    setCustomFormat,
     selectedModel,
-    setSelectedModel,
-    addMetric,
-    addConstraint,
   } = usePromptCanvas();
   
   const {
@@ -74,7 +60,7 @@ export default function ConsensusWorkshop() {
   
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
-    if (hash && ['draft', 'prompt', 'stakeholders', 'team', 'blueprint'].includes(hash)) {
+    if (hash && ['draft', 'blueprint', 'stakeholders', 'team'].includes(hash)) {
       setActiveTab(hash === 'stakeholders' ? 'endorsement' : hash);
     }
   }, []);
@@ -102,10 +88,6 @@ export default function ConsensusWorkshop() {
     }
   };
 
-  const navigateToTeamTab = () => {
-    handleTabChange("team");
-  };
-
   return (
     <div className="w-full h-full space-y-4 relative">
       <WorkshopActions />
@@ -116,10 +98,9 @@ export default function ConsensusWorkshop() {
       {/* --- Main Workshop Tabs/Content --- */}
       <div className="flex-1">
         <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="team">Team</TabsTrigger>
-            <TabsTrigger value="blueprint">Blueprint</TabsTrigger>
-            <TabsTrigger value="prompt">Context</TabsTrigger>
+            <TabsTrigger value="blueprint">Workshop Design</TabsTrigger>
             <TabsTrigger value="draft">Solution Canvas</TabsTrigger>
             <TabsTrigger value="endorsement">Endorsement</TabsTrigger>
           </TabsList>
@@ -128,26 +109,6 @@ export default function ConsensusWorkshop() {
           </TabsContent>
           <TabsContent value="blueprint">
             <BlueprintGenerator />
-          </TabsContent>
-          <TabsContent value="prompt">
-            <PromptCanvas 
-              problem={problem}
-              setProblem={setProblem}
-              metrics={metrics}
-              metricInput={metricInput}
-              setMetricInput={setMetricInput}
-              addMetric={addMetric}
-              constraints={constraints}
-              constraintInput={constraintInput}
-              setConstraintInput={setConstraintInput}
-              addConstraint={addConstraint}
-              selectedFormat={selectedFormat}
-              updateFormat={updateFormat}
-              customFormat={customFormat}
-              setCustomFormat={setCustomFormat}
-              onGenerate={handleGenerateSolution}
-              loading={loading}
-            />
           </TabsContent>
           <TabsContent value="draft" className="overflow-hidden">
             <DraftLimitWrapper>
