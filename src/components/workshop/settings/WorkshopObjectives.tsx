@@ -5,7 +5,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ItemList } from "../ItemList";
 import { TemplateSelector } from "./TemplateSelector";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 import type { WorkshopTemplate } from "@/types/WorkshopTemplates";
+import { useState } from "react";
 
 interface WorkshopObjectivesProps {
   problem: string;
@@ -24,16 +27,33 @@ export function WorkshopObjectives({
   setMetricInput,
   addMetric,
 }: WorkshopObjectivesProps) {
+  const [isTemplatesOpen, setIsTemplatesOpen] = useState(true);
+
   const handleTemplateSelect = (template: WorkshopTemplate) => {
     setProblem(template.purpose);
+    setIsTemplatesOpen(false);
   };
 
   return (
     <div className="space-y-6">
-      <div className="space-y-4">
-        <Label className="text-lg font-semibold">Workshop Templates</Label>
-        <TemplateSelector onSelectTemplate={handleTemplateSelect} />
-      </div>
+      <Collapsible 
+        open={isTemplatesOpen} 
+        onOpenChange={setIsTemplatesOpen}
+        className="space-y-4"
+      >
+        <div className="flex items-center justify-between">
+          <Label className="text-lg font-semibold">Workshop Templates</Label>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <ChevronDown className={`h-4 w-4 transform transition-transform ${isTemplatesOpen ? '' : '-rotate-90'}`} />
+              <span className="sr-only">Toggle templates</span>
+            </Button>
+          </CollapsibleTrigger>
+        </div>
+        <CollapsibleContent>
+          <TemplateSelector onSelectTemplate={handleTemplateSelect} />
+        </CollapsibleContent>
+      </Collapsible>
 
       <div className="space-y-2">
         <Label htmlFor="problem" className="text-base font-medium">What do you need to achieve?</Label>

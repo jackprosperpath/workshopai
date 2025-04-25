@@ -18,54 +18,15 @@ serve(async (req) => {
       context, 
       objective, 
       duration, 
-      attendees, 
-      prereads, 
+      workshopType,
       constraints 
     } = await req.json();
 
-    // Base prompt construction
-    const prompt = `
-You are a professional workshop facilitator with extensive experience designing effective collaborative sessions. 
-Design a workshop blueprint based on these inputs:
-
-CONTEXT: ${context || 'Not specified'}
-OBJECTIVE: ${objective || 'Not specified'}
-DURATION: ${duration || '2 hours'} 
-ATTENDEES: ${attendees ? JSON.stringify(attendees) : 'Mixed group'}
-PRE-READS: ${prereads || 'None'}
-CONSTRAINTS: ${constraints || 'None'}
-
-Create a detailed workshop plan with:
-1. A compelling title for the workshop
-2. A time-boxed agenda with specific blocks (e.g., Warm-up, Diverge, Converge, Decision)
-3. Specific activity formats for each block (e.g., brainwriting, lightning talks, silent voting)
-4. Facilitation prompts for each activity
-5. Required materials or digital tools
-6. Timeboxes for each section in minutes
-7. Expected outcomes from each section
-8. Tips for facilitating each section effectively
-
-Format your response as a JSON object with this structure:
-{
-  "title": "Workshop Title",
-  "duration": "Total duration in minutes",
-  "agenda": [
-    {
-      "name": "Block name",
-      "duration": "Duration in minutes",
-      "activity": "Activity format",
-      "description": "Brief explanation of the activity",
-      "prompts": ["Facilitation prompt 1", "Facilitation prompt 2"],
-      "materials": ["Material 1", "Material 2"],
-      "expectedOutcomes": ["Outcome 1", "Outcome 2"],
-      "facilitationTips": ["Tip 1", "Tip 2"]
-    }
-  ],
-  "materialsList": ["All required materials consolidated"],
-  "followupActions": ["Suggested follow-up 1", "Suggested follow-up 2"]
-}
-
-Ensure the activities are engaging, appropriate for the context, and will help achieve the objective within the time constraints.`;
+    // Adjust system prompt based on workshop type and constraints
+    const systemPrompt = `You are a professional workshop facilitator specializing in ${workshopType || 'collaborative'} sessions. 
+Design a workshop blueprint optimized for: ${objective}
+Keep in mind these constraints: ${constraints || 'None specified'}
+Total duration should be: ${duration || '120'} minutes`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -76,8 +37,8 @@ Ensure the activities are engaging, appropriate for the context, and will help a
       body: JSON.stringify({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: 'You are an expert workshop facilitator designing effective collaborative sessions.' },
-          { role: 'user', content: prompt }
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Create a detailed workshop blueprint for: ${objective}` }
         ],
         response_format: { type: "json_object" },
         temperature: 0.7,
