@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import { usePromptCanvas } from "@/hooks/usePromptCanvas";
@@ -11,7 +10,6 @@ import { usePromptCanvasSync } from "@/hooks/usePromptCanvasSync";
 import { useWorkshopPersistence } from "@/hooks/useWorkshopPersistence";
 import { WorkshopSettingsForm } from "./settings/WorkshopSettingsForm";
 import { GeneratedBlueprint } from "./blueprint/GeneratedBlueprint";
-import { TeamManagement } from "./TeamManagement";
 import type { Blueprint } from "./types/workshop";
 
 export function BlueprintGenerator() {
@@ -63,7 +61,7 @@ export function BlueprintGenerator() {
 
   const generateBlueprint = async () => {
     if (!problem) {
-      toast.error("Please specify a workshop scope statement");
+      toast.error("Please specify a workshop objective");
       return;
     }
 
@@ -112,18 +110,12 @@ export function BlueprintGenerator() {
 
   return (
     <div className="space-y-8 pb-10">
-      <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="settings">Workshop Setup</TabsTrigger>
-          <TabsTrigger value="team">Team Management</TabsTrigger>
-          <TabsTrigger value="blueprint">Generated Blueprint</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="settings" className="space-y-4 mt-4">
+      <div className="w-full">
+        <div className={activeTab === "settings" ? "block" : "hidden"}>
           <Card>
             <CardHeader>
-              <CardTitle>Workshop Setup</CardTitle>
-              <CardDescription>Configure your workshop participants and settings</CardDescription>
+              <CardTitle>Workshop Design</CardTitle>
+              <CardDescription>Configure your workshop objectives, attendees and settings</CardDescription>
             </CardHeader>
 
             <CardContent>
@@ -154,13 +146,9 @@ export function BlueprintGenerator() {
               />
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="team" className="mt-4">
-          <TeamManagement />
-        </TabsContent>
-
-        <TabsContent value="blueprint" className="mt-4">
+        <div className={activeTab === "blueprint" ? "block" : "hidden"}>
           {blueprint ? (
             <GeneratedBlueprint blueprint={blueprint} />
           ) : (
@@ -181,8 +169,24 @@ export function BlueprintGenerator() {
               </CardContent>
             </Card>
           )}
-        </TabsContent>
-      </Tabs>
+        </div>
+
+        <div className="flex justify-center gap-4 mt-6">
+          <Button 
+            variant={activeTab === "settings" ? "default" : "outline"}
+            onClick={() => setActiveTab("settings")}
+          >
+            Workshop Setup
+          </Button>
+          <Button 
+            variant={activeTab === "blueprint" ? "default" : "outline"}
+            onClick={() => setActiveTab("blueprint")}
+            disabled={!blueprint}
+          >
+            Generated Blueprint
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
