@@ -1,18 +1,17 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, ArrowRight, CheckCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import { usePromptCanvas } from "@/hooks/usePromptCanvas";
 import { usePromptCanvasSync } from "@/hooks/usePromptCanvasSync";
 import { useWorkshopPersistence } from "@/hooks/useWorkshopPersistence";
 import { GeneratedBlueprint } from "./blueprint/GeneratedBlueprint";
+import { BlueprintSteps } from "./blueprint/BlueprintSteps";
+import { BlueprintHeader } from "./blueprint/BlueprintHeader";
+import { BlueprintTabs } from "./blueprint/BlueprintTabs";
 import type { Blueprint } from "./types/workshop";
-import { WorkshopObjectives } from "./settings/WorkshopObjectives";
-import { WorkshopPeopleTime } from "./settings/WorkshopPeopleTime";
-import { WorkshopContext } from "./settings/WorkshopContext";
 
 export function BlueprintGenerator() {
   const {
@@ -129,89 +128,30 @@ export function BlueprintGenerator() {
         <div className={activeTab === "settings" ? "block" : "hidden"}>
           <Card>
             <CardHeader>
-              <CardTitle>Create Workshop Blueprint</CardTitle>
-              <CardDescription>
-                Follow these 3 steps to create your AI-facilitated workshop
-              </CardDescription>
-              <div className="flex justify-between items-center mt-4">
-                <div className="flex items-center space-x-2">
-                  <div className={`rounded-full w-8 h-8 flex items-center justify-center ${currentStep === 1 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>1</div>
-                  <div className="h-0.5 w-12 bg-muted"></div>
-                  <div className={`rounded-full w-8 h-8 flex items-center justify-center ${currentStep === 2 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>2</div>
-                  <div className="h-0.5 w-12 bg-muted"></div>
-                  <div className={`rounded-full w-8 h-8 flex items-center justify-center ${currentStep === 3 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>3</div>
-                </div>
-                <div className="text-muted-foreground text-sm">
-                  {currentStep === 1 && "Objectives"}
-                  {currentStep === 2 && "People & Time"}
-                  {currentStep === 3 && "Context"}
-                </div>
-              </div>
+              <BlueprintHeader currentStep={currentStep} />
             </CardHeader>
-
             <CardContent>
-              {currentStep === 1 && (
-                <WorkshopObjectives 
-                  problem={problem}
-                  setProblem={setProblem}
-                  metrics={metrics}
-                  metricInput={metricInput}
-                  setMetricInput={setMetricInput}
-                  addMetric={addMetric}
-                />
-              )}
-              
-              {currentStep === 2 && (
-                <WorkshopPeopleTime
-                  duration={duration}
-                  setDuration={setDuration}
-                  workshopType={workshopType}
-                  setWorkshopType={setWorkshopType}
-                />
-              )}
-              
-              {currentStep === 3 && (
-                <WorkshopContext
-                  constraints={constraints}
-                  constraintInput={constraintInput}
-                  setConstraintInput={setConstraintInput}
-                  addConstraint={addConstraint}
-                  loading={loading}
-                  onGenerate={generateBlueprint}
-                />
-              )}
-              
-              <div className="flex justify-between mt-6">
-                {currentStep > 1 ? (
-                  <Button onClick={prevStep} variant="outline">
-                    Back
-                  </Button>
-                ) : (
-                  <div></div>
-                )}
-                {currentStep < 3 ? (
-                  <Button onClick={nextStep}>
-                    Next <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button 
-                    onClick={generateBlueprint} 
-                    disabled={loading || !problem}
-                    className="flex items-center"
-                  >
-                    {loading ? (
-                      <>
-                        <span className="animate-spin mr-2">⟳</span>
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        Generate Blueprint <CheckCircle className="ml-2 h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
+              <BlueprintSteps 
+                currentStep={currentStep}
+                problem={problem}
+                setProblem={setProblem}
+                metrics={metrics}
+                metricInput={metricInput}
+                setMetricInput={setMetricInput}
+                addMetric={addMetric}
+                duration={duration}
+                setDuration={setDuration}
+                workshopType={workshopType}
+                setWorkshopType={setWorkshopType}
+                constraints={constraints}
+                constraintInput={constraintInput}
+                setConstraintInput={setConstraintInput}
+                addConstraint={addConstraint}
+                loading={loading}
+                onGenerate={generateBlueprint}
+                nextStep={nextStep}
+                prevStep={prevStep}
+              />
             </CardContent>
           </Card>
         </div>
@@ -239,21 +179,11 @@ export function BlueprintGenerator() {
           )}
         </div>
 
-        <div className="flex justify-center gap-4 mt-6">
-          <Button 
-            variant={activeTab === "settings" ? "default" : "outline"}
-            onClick={() => setActiveTab("settings")}
-          >
-            Workshop Setup
-          </Button>
-          <Button 
-            variant={activeTab === "blueprint" ? "default" : "outline"}
-            onClick={() => setActiveTab("blueprint")}
-            disabled={!blueprint}
-          >
-            Generated Blueprint
-          </Button>
-        </div>
+        <BlueprintTabs 
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          blueprint={blueprint}
+        />
       </div>
     </div>
   );
