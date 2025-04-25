@@ -4,6 +4,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ItemList } from "../ItemList";
+import { TemplateSelector } from "./TemplateSelector";
+import type { WorkshopTemplate } from "@/types/WorkshopTemplates";
 
 interface WorkshopObjectivesProps {
   problem: string;
@@ -22,8 +24,17 @@ export function WorkshopObjectives({
   setMetricInput,
   addMetric,
 }: WorkshopObjectivesProps) {
+  const handleTemplateSelect = (template: WorkshopTemplate) => {
+    setProblem(template.purpose);
+  };
+
   return (
     <div className="space-y-6">
+      <div className="space-y-4">
+        <Label className="text-lg font-semibold">Workshop Templates</Label>
+        <TemplateSelector onSelectTemplate={handleTemplateSelect} />
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="problem" className="text-base font-medium">What do you need to achieve?</Label>
         <Textarea
