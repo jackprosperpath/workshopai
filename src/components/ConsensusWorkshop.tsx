@@ -57,14 +57,14 @@ export default function ConsensusWorkshop() {
   
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
-    if (hash && ['blueprint', 'draft', 'stakeholders'].includes(hash)) {
-      setActiveTab(hash === 'stakeholders' ? 'endorsement' : hash);
+    if (hash && ['blueprint', 'canvas', 'endorse'].includes(hash)) {
+      setActiveTab(hash);
     }
   }, []);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    window.location.hash = value === 'endorsement' ? 'stakeholders' : value;
+    window.location.hash = value;
   };
 
   const handleGenerateSolution = async () => {
@@ -77,7 +77,7 @@ export default function ConsensusWorkshop() {
         selectedFormat,
         selectedModel
       );
-      handleTabChange("draft");
+      handleTabChange("canvas");
     } catch (error) {
       console.error("Error generating solution:", error);
     } finally {
@@ -95,13 +95,13 @@ export default function ConsensusWorkshop() {
         <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="blueprint">Workshop Design</TabsTrigger>
-            <TabsTrigger value="draft">Solution Canvas</TabsTrigger>
-            <TabsTrigger value="endorsement">Endorsement</TabsTrigger>
+            <TabsTrigger value="canvas">Solution Canvas</TabsTrigger>
+            <TabsTrigger value="endorse">Endorsement</TabsTrigger>
           </TabsList>
           <TabsContent value="blueprint">
             <BlueprintGenerator />
           </TabsContent>
-          <TabsContent value="draft" className="overflow-hidden">
+          <TabsContent value="canvas" className="overflow-hidden">
             <DraftLimitWrapper>
               <div className="relative min-h-[500px]" ref={workspaceRef}>
                 <DraftWorkspace 
@@ -120,7 +120,7 @@ export default function ConsensusWorkshop() {
               </div>
             </DraftLimitWrapper>
           </TabsContent>
-          <TabsContent value="endorsement">
+          <TabsContent value="endorse">
             <StakeholderSupport 
               stakeholders={stakeholders}
               newRole={newRole}

@@ -1,16 +1,18 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "lucide-react";
+import { Calendar, ArrowRight, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import { usePromptCanvas } from "@/hooks/usePromptCanvas";
 import { usePromptCanvasSync } from "@/hooks/usePromptCanvasSync";
 import { useWorkshopPersistence } from "@/hooks/useWorkshopPersistence";
-import { WorkshopSettingsForm } from "./settings/WorkshopSettingsForm";
 import { GeneratedBlueprint } from "./blueprint/GeneratedBlueprint";
 import type { Blueprint } from "./types/workshop";
+import { WorkshopObjectives } from "./settings/WorkshopObjectives";
+import { WorkshopPeopleTime } from "./settings/WorkshopPeopleTime";
+import { WorkshopContext } from "./settings/WorkshopContext";
 
 export function BlueprintGenerator() {
   const {
@@ -55,6 +57,7 @@ export function BlueprintGenerator() {
   const [loading, setLoading] = useState(false);
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
   const [activeTab, setActiveTab] = useState<string>("settings");
+  const [currentStep, setCurrentStep] = useState<number>(1);
   const [duration, setDuration] = useState(120);
   
   const { saveWorkshopData, saveGeneratedBlueprint } = useWorkshopPersistence();
@@ -108,42 +111,107 @@ export function BlueprintGenerator() {
     }
   };
 
+  const nextStep = () => {
+    if (currentStep === 1 && !problem) {
+      toast.error("Please specify a workshop objective");
+      return;
+    }
+    setCurrentStep(currentStep + 1);
+  };
+
+  const prevStep = () => {
+    setCurrentStep(currentStep - 1);
+  };
+
   return (
     <div className="space-y-8 pb-10">
       <div className="w-full">
         <div className={activeTab === "settings" ? "block" : "hidden"}>
           <Card>
             <CardHeader>
-              <CardTitle>Workshop Design</CardTitle>
-              <CardDescription>Configure your workshop objectives, attendees and settings</CardDescription>
+              <CardTitle>Create Workshop Blueprint</CardTitle>
+              <CardDescription>
+                Follow these 3 steps to create your AI-facilitated workshop
+              </CardDescription>
+              <div className="flex justify-between items-center mt-4">
+                <div className="flex items-center space-x-2">
+                  <div className={`rounded-full w-8 h-8 flex items-center justify-center ${currentStep === 1 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>1</div>
+                  <div className="h-0.5 w-12 bg-muted"></div>
+                  <div className={`rounded-full w-8 h-8 flex items-center justify-center ${currentStep === 2 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>2</div>
+                  <div className="h-0.5 w-12 bg-muted"></div>
+                  <div className={`rounded-full w-8 h-8 flex items-center justify-center ${currentStep === 3 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>3</div>
+                </div>
+                <div className="text-muted-foreground text-sm">
+                  {currentStep === 1 && "Objectives"}
+                  {currentStep === 2 && "People & Time"}
+                  {currentStep === 3 && "Context"}
+                </div>
+              </div>
             </CardHeader>
 
             <CardContent>
-              <WorkshopSettingsForm
-                problem={problem}
-                setProblem={setProblem}
-                metrics={metrics}
-                setMetrics={setMetrics}
-                metricInput={metricInput}
-                setMetricInput={setMetricInput}
-                addMetric={addMetric}
-                constraints={constraints}
-                constraintInput={constraintInput}
-                setConstraintInput={setConstraintInput}
-                addConstraint={addConstraint}
-                selectedModel={selectedModel}
-                setSelectedModel={setSelectedModel}
-                selectedFormat={selectedFormat}
-                updateFormat={updateFormat}
-                customFormat={customFormat}
-                setCustomFormat={setCustomFormat}
-                duration={duration}
-                setDuration={setDuration}
-                onGenerate={generateBlueprint}
-                loading={loading}
-                workshopType={workshopType}
-                setWorkshopType={setWorkshopType}
-              />
+              {currentStep === 1 && (
+                <WorkshopObjectives 
+                  problem={problem}
+                  setProblem={setProblem}
+                  metrics={metrics}
+                  metricInput={metricInput}
+                  setMetricInput={setMetricInput}
+                  addMetric={addMetric}
+                />
+              )}
+              
+              {currentStep === 2 && (
+                <WorkshopPeopleTime
+                  duration={duration}
+                  setDuration={setDuration}
+                  workshopType={workshopType}
+                  setWorkshopType={setWorkshopType}
+                />
+              )}
+              
+              {currentStep === 3 && (
+                <WorkshopContext
+                  constraints={constraints}
+                  constraintInput={constraintInput}
+                  setConstraintInput={setConstraintInput}
+                  addConstraint={addConstraint}
+                  loading={loading}
+                  onGenerate={generateBlueprint}
+                />
+              )}
+              
+              <div className="flex justify-between mt-6">
+                {currentStep > 1 ? (
+                  <Button onClick={prevStep} variant="outline">
+                    Back
+                  </Button>
+                ) : (
+                  <div></div>
+                )}
+                {currentStep < 3 ? (
+                  <Button onClick={nextStep}>
+                    Next <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={generateBlueprint} 
+                    disabled={loading || !problem}
+                    className="flex items-center"
+                  >
+                    {loading ? (
+                      <>
+                        <span className="animate-spin mr-2">⟳</span>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        Generate Blueprint <CheckCircle className="ml-2 h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
