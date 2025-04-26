@@ -1,10 +1,10 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail, Loader2, AlertTriangle } from "lucide-react";
+import { Mail, Loader2, AlertTriangle, Award } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
 import { useTeamInvites } from "@/hooks/team/useTeamInvites";
 
 export function InviteForm() {
@@ -26,6 +26,12 @@ export function InviteForm() {
 
   return (
     <div className="space-y-5">
+      <Alert className="bg-primary/10 border-primary/20">
+        <Award className="h-4 w-4 text-primary" />
+        <AlertDescription className="text-foreground">
+          You've unlocked unlimited drafts! Enjoy creating as many solutions as you need.
+        </AlertDescription>
+      </Alert>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex flex-col space-y-1.5">
           <Label htmlFor="email-invite">Email address</Label>
@@ -86,4 +92,3 @@ export function InviteForm() {
     </div>
   );
 }
-

@@ -54,11 +54,9 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
           }
         }}
       >
-        <div className="prose max-w-none">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {para}
-          </ReactMarkdown>
-        </div>
+        <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose max-w-none">
+          {para}
+        </ReactMarkdown>
 
         {sectionComments.length > 0 && (
           <div className="flex items-center mt-2 gap-2">
@@ -87,11 +85,9 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
       // Non-highlighted text
       const nonHighlightText = para.substring(lastIndex, startOffset);
       parts.push(
-        <div key={`nonhighlight-${i}-${lastIndex}`} className="prose max-w-none">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {nonHighlightText}
-          </ReactMarkdown>
-        </div>
+        <ReactMarkdown key={`nonhighlight-${i}-${lastIndex}`} remarkPlugins={[remarkGfm]} className="prose max-w-none">
+          {nonHighlightText}
+        </ReactMarkdown>
       );
     }
 
@@ -104,11 +100,9 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
         className={`relative cursor-pointer ${isActive ? 'bg-yellow-200' : 'bg-yellow-100'}`}
         onClick={() => setActiveComment(comment.id)}
       >
-        <div className="prose max-w-none">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {highlightedText}
-          </ReactMarkdown>
-        </div>
+        <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose max-w-none">
+          {highlightedText}
+        </ReactMarkdown>
       </span>
     );
 
@@ -118,11 +112,9 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
   if (lastIndex < para.length) {
     const remainingText = para.substring(lastIndex);
     parts.push(
-      <div key="nonhighlight-end" className="prose max-w-none">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-          {remainingText}
-        </ReactMarkdown>
-      </div>
+      <ReactMarkdown key={`nonhighlight-end`} remarkPlugins={[remarkGfm]} className="prose max-w-none">
+        {remainingText}
+      </ReactMarkdown>
     );
   }
 
@@ -153,3 +145,4 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
     </div>
   );
 };
+
