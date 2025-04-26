@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import { useSearchParams } from "react-router-dom";
 import { CalendarIntegrationInfo } from "@/components/workshop/CalendarIntegrationInfo";
+import { Button } from "@/components/ui/button";
 
 export function WorkshopActions() {
   const [searchParams] = useSearchParams();
