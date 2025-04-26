@@ -117,7 +117,9 @@ export function BlueprintGenerator() {
         if (error) throw error;
         
         if (data && data.generated_blueprint) {
-          setBlueprint(data.generated_blueprint);
+          // Ensure the blueprint data is of the correct type
+          const blueprintData = data.generated_blueprint as Blueprint;
+          setBlueprint(blueprintData);
           setActiveTab("blueprint");
         }
       } catch (error) {
@@ -162,8 +164,10 @@ export function BlueprintGenerator() {
       if (error) throw error;
 
       if (data.blueprint) {
-        setBlueprint(data.blueprint);
-        await saveGeneratedBlueprint(data.blueprint);
+        // Properly type-cast the blueprint data
+        const blueprintData = data.blueprint as Blueprint;
+        setBlueprint(blueprintData);
+        await saveGeneratedBlueprint(blueprintData);
         toast.success("Workshop blueprint generated successfully");
         setActiveTab("blueprint");
       } else {
