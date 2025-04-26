@@ -1,13 +1,14 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Calendar } from "lucide-react";
+import { Calendar, InfoIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import { usePromptCanvas } from "@/hooks/usePromptCanvas";
 import { usePromptCanvasSync } from "@/hooks/usePromptCanvasSync";
 import { useWorkshopPersistence } from "@/hooks/useWorkshopPersistence";
+import { useSearchParams } from "react-router-dom";
 import { GeneratedBlueprint } from "./blueprint/GeneratedBlueprint";
 import { BlueprintSteps } from "./blueprint/BlueprintSteps";
 import { BlueprintHeader } from "./blueprint/BlueprintHeader";
@@ -15,6 +16,9 @@ import { BlueprintTabs } from "./blueprint/BlueprintTabs";
 import type { Blueprint } from "./types/workshop";
 
 export function BlueprintGenerator() {
+  const [searchParams] = useSearchParams();
+  const workshopId = searchParams.get('id');
+
   const {
     problem,
     setProblem,
@@ -59,8 +63,70 @@ export function BlueprintGenerator() {
   const [activeTab, setActiveTab] = useState<string>("settings");
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [duration, setDuration] = useState(120);
+  const [isFromCalendar, setIsFromCalendar] = useState(false);
   
   const { saveWorkshopData, saveGeneratedBlueprint } = useWorkshopPersistence();
+
+  // Check if this workshop was created from a calendar invite
+  useEffect(() => {
+    async function checkCalendarSource() {
+      if (!workshopId) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('workshops')
+          .select(`
+            invitation_source_id,
+            problem,
+            duration,
+            workshop_type
+          `)
+          .eq('id', workshopId)
+          .single();
+
+        if (error) throw error;
+        
+        if (data && data.invitation_source_id) {
+          setIsFromCalendar(true);
+          
+          // Pre-fill form with data from calendar invite
+          if (data.problem) setProblem(data.problem);
+          if (data.duration) setDuration(data.duration);
+          if (data.workshop_type) setWorkshopType(data.workshop_type as 'online' | 'in-person');
+        }
+      } catch (error) {
+        console.error("Error checking calendar source:", error);
+      }
+    }
+
+    checkCalendarSource();
+  }, [workshopId]);
+
+  // Check for existing blueprint
+  useEffect(() => {
+    async function checkExistingBlueprint() {
+      if (!workshopId) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('workshops')
+          .select('generated_blueprint')
+          .eq('id', workshopId)
+          .single();
+
+        if (error) throw error;
+        
+        if (data && data.generated_blueprint) {
+          setBlueprint(data.generated_blueprint);
+          setActiveTab("blueprint");
+        }
+      } catch (error) {
+        console.error("Error checking existing blueprint:", error);
+      }
+    }
+
+    checkExistingBlueprint();
+  }, [workshopId]);
 
   const generateBlueprint = async () => {
     if (!problem) {
@@ -125,6 +191,17 @@ export function BlueprintGenerator() {
 
   return (
     <div className="space-y-8 pb-10">
+      {isFromCalendar && (
+        <Card className="bg-accent/10 border-accent mb-4">
+          <CardContent className="p-4 flex items-center">
+            <InfoIcon className="h-5 w-5 mr-3 text-accent" />
+            <div className="text-sm">
+              This workshop was created from a calendar invitation. Some fields have been pre-filled based on the meeting details.
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
       <div className="w-full">
         <div className={activeTab === "settings" ? "block" : "hidden"}>
           <Card>

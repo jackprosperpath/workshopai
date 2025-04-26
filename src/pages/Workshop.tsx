@@ -9,6 +9,7 @@ import { WorkshopLoading } from "@/components/workshop/WorkshopLoading";
 import { WorkshopList } from "@/components/workshop/WorkshopList";
 import { WorkshopNameEditor } from "@/components/workshop/WorkshopNameEditor";
 import { WorkshopActions } from "@/components/workshop/WorkshopActions";
+import { CalendarInviteInfo } from "@/components/workshop/CalendarInviteInfo";
 
 const Workshop = () => {
   const [searchParams] = useSearchParams();
@@ -53,12 +54,16 @@ const Workshop = () => {
                 onNameUpdate={updateWorkshopName}
               />
             </div>
+            
+            {/* Display calendar invite info if applicable */}
+            {workshopId && <CalendarInviteInfo workshopId={workshopId} />}
+            
             <ConsensusWorkshop />
           </>
         )}
       </div>
     </div>
   );
-};
+}
 
 export default Workshop;

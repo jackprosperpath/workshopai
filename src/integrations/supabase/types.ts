@@ -9,6 +9,65 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      inbound_invites: {
+        Row: {
+          attendees: Json | null
+          created_at: string | null
+          description: string | null
+          end_time: string
+          error: string | null
+          id: string
+          organizer_email: string
+          parsed_data: Json
+          processed_at: string | null
+          raw_ics: string
+          start_time: string
+          status: string | null
+          summary: string | null
+          workshop_id: string | null
+        }
+        Insert: {
+          attendees?: Json | null
+          created_at?: string | null
+          description?: string | null
+          end_time: string
+          error?: string | null
+          id?: string
+          organizer_email: string
+          parsed_data: Json
+          processed_at?: string | null
+          raw_ics: string
+          start_time: string
+          status?: string | null
+          summary?: string | null
+          workshop_id?: string | null
+        }
+        Update: {
+          attendees?: Json | null
+          created_at?: string | null
+          description?: string | null
+          end_time?: string
+          error?: string | null
+          id?: string
+          organizer_email?: string
+          parsed_data?: Json
+          processed_at?: string | null
+          raw_ics?: string
+          start_time?: string
+          status?: string | null
+          summary?: string | null
+          workshop_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inbound_invites_workshop_id_fkey"
+            columns: ["workshop_id"]
+            isOneToOne: false
+            referencedRelation: "workshops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workshop_collaborators: {
         Row: {
           accepted_at: string | null
@@ -99,6 +158,7 @@ export type Database = {
           duration: number | null
           generated_blueprint: Json | null
           id: string
+          invitation_source_id: string | null
           metrics: Json | null
           name: string
           owner_id: string
@@ -116,6 +176,7 @@ export type Database = {
           duration?: number | null
           generated_blueprint?: Json | null
           id?: string
+          invitation_source_id?: string | null
           metrics?: Json | null
           name?: string
           owner_id: string
@@ -133,6 +194,7 @@ export type Database = {
           duration?: number | null
           generated_blueprint?: Json | null
           id?: string
+          invitation_source_id?: string | null
           metrics?: Json | null
           name?: string
           owner_id?: string
@@ -143,7 +205,15 @@ export type Database = {
           updated_at?: string | null
           workshop_type?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "workshops_invitation_source_id_fkey"
+            columns: ["invitation_source_id"]
+            isOneToOne: false
+            referencedRelation: "inbound_invites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
