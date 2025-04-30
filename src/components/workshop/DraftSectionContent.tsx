@@ -102,7 +102,10 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
       <span
         key={`highlight-${comment.id}`}
         className={`relative cursor-pointer ${isActive ? 'bg-yellow-200' : 'bg-yellow-100'}`}
-        onClick={() => setActiveComment(comment.id)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setActiveComment(comment.id);
+        }}
       >
         <div className="prose max-w-none">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
