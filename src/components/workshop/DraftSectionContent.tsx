@@ -3,7 +3,7 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare } from "lucide-react";
 import { Comment } from "./CommentsPanel";
-import ReactMarkdown from "react-markdown";
+import { ReactMarkdown } from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 interface DraftSectionContentProps {
