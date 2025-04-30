@@ -102,10 +102,7 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
       <span
         key={`highlight-${comment.id}`}
         className={`relative cursor-pointer ${isActive ? 'bg-yellow-200' : 'bg-yellow-100'}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          setActiveComment(comment.id);
-        }}
+        onClick={() => setActiveComment(comment.id)}
       >
         <div className="prose max-w-none">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -121,7 +118,7 @@ export const DraftSectionContent: React.FC<DraftSectionContentProps> = ({
   if (lastIndex < para.length) {
     const remainingText = para.substring(lastIndex);
     parts.push(
-      <div key={`nonhighlight-end`} className="prose max-w-none">
+      <div key="nonhighlight-end" className="prose max-w-none">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {remainingText}
         </ReactMarkdown>

@@ -8,6 +8,7 @@ export type TeamMember = {
   email: string;
   status: "pending" | "accepted" | "declined";
   invitedAt: Date;
+  role?: string;
 };
 
 export function useTeamMembers(workshopId: string | null) {
@@ -30,7 +31,8 @@ export function useTeamMembers(workshopId: string | null) {
             id: collab.id,
             email: collab.email,
             status: collab.status as "pending" | "accepted" | "declined",
-            invitedAt: new Date(collab.invited_at)
+            invitedAt: new Date(collab.invited_at),
+            role: collab.role
           }))
         );
       } catch (error) {
@@ -63,6 +65,30 @@ export function useTeamMembers(workshopId: string | null) {
     };
   }, [workshopId]);
 
+  const updateTeamMemberRole = async (id: string, role: string) => {
+    if (!workshopId) {
+      toast.error("Workshop ID not available");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('workshop_collaborators')
+        .update({ role })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setTeamMembers(prev => prev.map(member => 
+        member.id === id ? { ...member, role } : member
+      ));
+      toast.success("Team member role updated");
+    } catch (error) {
+      console.error("Error updating team member role:", error);
+      toast.error("Failed to update team member role");
+    }
+  };
+
   const removeTeamMember = async (id: string) => {
     if (!workshopId) {
       toast.error("Workshop ID not available");
@@ -85,5 +111,5 @@ export function useTeamMembers(workshopId: string | null) {
     }
   };
 
-  return { teamMembers, removeTeamMember };
+  return { teamMembers, removeTeamMember, updateTeamMemberRole };
 }
