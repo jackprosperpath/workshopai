@@ -194,8 +194,22 @@ export function BlueprintGenerator() {
       }
 
       if (data.blueprint) {
-        // Properly type-cast the blueprint data
-        const blueprintData = data.blueprint as Blueprint;
+        // Transform the blueprint data if needed
+        let blueprintData = data.blueprint as Blueprint;
+        
+        // Handle any field mappings or transformations if needed
+        if (blueprintData.materialsList && !blueprintData.materials) {
+          blueprintData.materials = blueprintData.materialsList;
+        }
+        
+        if (blueprintData.followupActions && !blueprintData.follow_up) {
+          blueprintData.follow_up = blueprintData.followupActions;
+        }
+        
+        if (blueprintData.agenda && !blueprintData.steps) {
+          blueprintData.steps = blueprintData.agenda;
+        }
+        
         setBlueprint(blueprintData);
         await saveGeneratedBlueprint(blueprintData);
         toast.success("Workshop blueprint generated successfully");

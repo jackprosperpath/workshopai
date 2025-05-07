@@ -18,7 +18,7 @@ export function GeneratedBlueprint({ blueprint }: GeneratedBlueprintProps) {
           <div>
             <CardTitle>{blueprint.title}</CardTitle>
             <CardDescription className="mt-2">
-              Total Duration: {blueprint.duration}
+              Total Duration: {blueprint.totalDuration || blueprint.duration}
             </CardDescription>
           </div>
           <Button variant="outline" onClick={() => {
@@ -32,54 +32,21 @@ export function GeneratedBlueprint({ blueprint }: GeneratedBlueprintProps) {
         <div>
           <h3 className="text-lg font-semibold mb-4">Agenda</h3>
           <div className="space-y-6">
-            {blueprint.agenda.map((item, index) => (
+            {blueprint.steps && blueprint.steps.map((item, index) => (
               <Card key={index} className="border-muted">
                 <CardHeader className="py-3 px-4">
                   <div className="flex justify-between items-center">
                     <CardTitle className="text-md">{item.name}</CardTitle>
                     <Badge variant="outline">{item.duration} min</Badge>
                   </div>
-                  <CardDescription>{item.activity}</CardDescription>
+                  <CardDescription>{item.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="py-3 px-4">
-                  <div className="text-sm">{item.description}</div>
-                  
                   <div className="mt-4">
-                    <h4 className="text-sm font-medium mb-2">Facilitation Prompts</h4>
-                    <ul className="list-disc pl-5 text-sm space-y-1">
-                      {item.prompts.map((prompt, i) => (
-                        <li key={i}>{prompt}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {item.materials && item.materials.length > 0 && (
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium mb-2">Materials Needed</h4>
-                      <ul className="list-disc pl-5 text-sm space-y-1">
-                        {item.materials.map((material, i) => (
-                          <li key={i}>{material}</li>
-                        ))}
-                      </ul>
+                    <h4 className="text-sm font-medium mb-2">Facilitation Notes</h4>
+                    <div className="text-sm">
+                      {item.facilitation_notes}
                     </div>
-                  )}
-
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium mb-2">Expected Outcomes</h4>
-                    <ul className="list-disc pl-5 text-sm space-y-1">
-                      {item.expectedOutcomes.map((outcome, i) => (
-                        <li key={i}>{outcome}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium mb-2">Facilitation Tips</h4>
-                    <ul className="list-disc pl-5 text-sm space-y-1">
-                      {item.facilitationTips.map((tip, i) => (
-                        <li key={i}>{tip}</li>
-                      ))}
-                    </ul>
                   </div>
                 </CardContent>
               </Card>
@@ -90,9 +57,9 @@ export function GeneratedBlueprint({ blueprint }: GeneratedBlueprintProps) {
         <Separator />
 
         <div>
-          <h3 className="text-lg font-semibold mb-4">Materials List</h3>
+          <h3 className="text-lg font-semibold mb-4">Materials</h3>
           <ul className="list-disc pl-5 space-y-1">
-            {blueprint.materialsList.map((material, index) => (
+            {blueprint.materials && blueprint.materials.map((material, index) => (
               <li key={index}>{material}</li>
             ))}
           </ul>
@@ -103,7 +70,7 @@ export function GeneratedBlueprint({ blueprint }: GeneratedBlueprintProps) {
         <div>
           <h3 className="text-lg font-semibold mb-4">Follow-up Actions</h3>
           <ul className="list-disc pl-5 space-y-1">
-            {blueprint.followupActions.map((action, index) => (
+            {blueprint.follow_up && blueprint.follow_up.map((action, index) => (
               <li key={index}>{action}</li>
             ))}
           </ul>

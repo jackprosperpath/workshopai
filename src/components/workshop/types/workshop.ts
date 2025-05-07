@@ -5,23 +5,27 @@ export type Attendee = {
   email?: string;
 };
 
-export type BlueprintAgendaItem = {
+export type BlueprintStep = {
   name: string;
   duration: string;
-  activity: string;
   description: string;
-  prompts: string[];
-  materials: string[];
-  expectedOutcomes: string[];
-  facilitationTips: string[];
+  facilitation_notes: string;
 };
 
 export type Blueprint = {
   title: string;
-  duration: string;
-  agenda: BlueprintAgendaItem[];
-  materialsList: string[];
-  followupActions: string[];
+  description?: string;
+  objective?: string;
+  totalDuration?: string;
+  duration?: string; // For backward compatibility
+  steps?: BlueprintStep[];
+  agenda?: any[]; // For backward compatibility
+  materials?: string[];
+  materialsList?: string[]; // For backward compatibility
+  preparation?: string[];
+  expected_outcomes?: string[];
+  follow_up?: string[];
+  followupActions?: string[]; // For backward compatibility
 };
 
 export type TeamMemberRole = {
