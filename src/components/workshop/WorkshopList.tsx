@@ -56,7 +56,7 @@ export function WorkshopList({ onCreateWorkshop }: WorkshopListProps) {
         .map(invite => ({
           ...invite.workshops,
           source: 'calendar',
-          invitation_id: invite.id
+          invitation_id: invite.workshop_id // Use workshop_id from invite instead of id
         }));
 
       // Combine both sets of workshops, removing duplicates
