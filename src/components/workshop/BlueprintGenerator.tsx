@@ -1,23 +1,24 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { InfoIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import { usePromptCanvas } from "@/hooks/usePromptCanvas";
 import { usePromptCanvasSync } from "@/hooks/usePromptCanvasSync";
-import { useWorkshopPersistence } from "@/hooks/useWorkshopPersistence";
-import { useSearchParams } from "react-router-dom";
 import { GeneratedBlueprint } from "./blueprint/GeneratedBlueprint";
 import { BlueprintTabs } from "./blueprint/BlueprintTabs";
-import { SimplifiedWorkshopForm } from "./settings/SimplifiedWorkshopForm";
+import { CalendarSourceInfo } from "./blueprint/CalendarSourceInfo";
+import { WorkshopSetupForm } from "./blueprint/WorkshopSetupForm";
+import { EmptyBlueprintState } from "./blueprint/EmptyBlueprintState";
+import { useBlueprintGenerator } from "@/hooks/useBlueprintGenerator";
+import { useWorkshopSettings } from "@/hooks/useWorkshopSettings";
 import type { Blueprint } from "./types/workshop";
 
 export function BlueprintGenerator() {
   const [searchParams] = useSearchParams();
   const workshopId = searchParams.get('id');
 
+  // Use our hooks for state management
   const {
     problem,
     setProblem,
@@ -41,6 +42,24 @@ export function BlueprintGenerator() {
     setWorkshopType,
   } = usePromptCanvas();
 
+  const {
+    isFromCalendar,
+    workshopName,
+    setWorkshopName,
+    duration,
+    setDuration,
+  } = useWorkshopSettings(workshopId);
+
+  // Blueprint generation hook
+  const {
+    loading,
+    blueprint,
+    setBlueprint,
+    errorMessage,
+    generateBlueprint
+  } = useBlueprintGenerator();
+
+  // Data synchronization
   const { syncData } = usePromptCanvasSync(
     { problem, metrics, constraints, selectedModel, selectedFormat, customFormat },
     (data) => {
@@ -57,54 +76,7 @@ export function BlueprintGenerator() {
     }
   );
 
-  const [loading, setLoading] = useState(false);
-  const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
   const [activeTab, setActiveTab] = useState<string>("settings");
-  const [duration, setDuration] = useState(120);
-  const [isFromCalendar, setIsFromCalendar] = useState(false);
-  const [workshopName, setWorkshopName] = useState("Untitled Workshop");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  
-  const { saveWorkshopData, saveGeneratedBlueprint } = useWorkshopPersistence();
-
-  // Check if this workshop was created from a calendar invite
-  useEffect(() => {
-    async function checkCalendarSource() {
-      if (!workshopId) return;
-
-      try {
-        const { data, error } = await supabase
-          .from('workshops')
-          .select(`
-            invitation_source_id,
-            problem,
-            duration,
-            workshop_type,
-            name
-          `)
-          .eq('id', workshopId)
-          .single();
-
-        if (error) throw error;
-        
-        if (data) {
-          if (data.invitation_source_id) {
-            setIsFromCalendar(true);
-          }
-          
-          // Pre-fill form with data from workshop
-          if (data.problem) setProblem(data.problem);
-          if (data.duration) setDuration(data.duration);
-          if (data.workshop_type) setWorkshopType(data.workshop_type as 'online' | 'in-person');
-          if (data.name) setWorkshopName(data.name);
-        }
-      } catch (error) {
-        console.error("Error checking calendar source:", error);
-      }
-    }
-
-    checkCalendarSource();
-  }, [workshopId]);
 
   // Check for existing blueprint
   useEffect(() => {
@@ -132,18 +104,10 @@ export function BlueprintGenerator() {
     }
 
     checkExistingBlueprint();
-  }, [workshopId]);
+  }, [workshopId, setBlueprint]);
 
-  const generateBlueprint = async () => {
-    if (!problem) {
-      toast.error("Please specify a workshop objective");
-      return;
-    }
-
-    // Clear any previous errors
-    setErrorMessage(null);
-
-    await saveWorkshopData({
+  const handleGenerateBlueprint = async () => {
+    const result = await generateBlueprint({
       problem,
       metrics,
       constraints,
@@ -152,146 +116,47 @@ export function BlueprintGenerator() {
       customFormat,
       duration,
       workshopType,
+      workshopName,
+      workshopId
     });
     
-    // Also update name if it was changed
-    if (workshopId) {
-      try {
-        await supabase
-          .from('workshops')
-          .update({ name: workshopName })
-          .eq('id', workshopId);
-      } catch (error) {
-        console.error("Error updating workshop name:", error);
-      }
-    }
-    
-    syncData({ problem, metrics, constraints, selectedModel, selectedFormat, customFormat });
-    setLoading(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-workshop-blueprint", {
-        body: {
-          context: problem,
-          objective: problem,
-          duration,
-          constraints: constraints.join(", "),
-          workshopType,
-        }
-      });
-
-      if (error) {
-        console.error("Function invoke error:", error);
-        throw new Error(`Function error: ${error.message}`);
-      }
-
-      if (!data) {
-        throw new Error("No data returned from function");
-      }
-
-      if (data.error) {
-        throw new Error(`API error: ${data.error}`);
-      }
-
-      if (data.blueprint) {
-        // Transform the blueprint data if needed
-        let blueprintData = data.blueprint as Blueprint;
-        
-        // Handle any field mappings or transformations if needed
-        if (blueprintData.materialsList && !blueprintData.materials) {
-          blueprintData.materials = blueprintData.materialsList;
-        }
-        
-        if (blueprintData.followupActions && !blueprintData.follow_up) {
-          blueprintData.follow_up = blueprintData.followupActions;
-        }
-        
-        if (blueprintData.agenda && !blueprintData.steps) {
-          blueprintData.steps = blueprintData.agenda;
-        }
-        
-        setBlueprint(blueprintData);
-        await saveGeneratedBlueprint(blueprintData);
-        toast.success("Workshop blueprint generated successfully");
-        setActiveTab("blueprint");
-      } else {
-        throw new Error("No blueprint data received");
-      }
-    } catch (error) {
-      console.error("Error generating blueprint:", error);
-      setErrorMessage(error instanceof Error ? error.message : "Failed to generate workshop blueprint");
-      toast.error("Failed to generate workshop blueprint");
-    } finally {
-      setLoading(false);
+    if (result) {
+      syncData({ problem, metrics, constraints, selectedModel, selectedFormat, customFormat });
+      setActiveTab("blueprint");
     }
   };
 
   return (
     <div className="space-y-8 pb-10">
-      {isFromCalendar && (
-        <Card className="bg-accent/10 border-accent mb-4">
-          <CardContent className="p-4 flex items-center">
-            <InfoIcon className="h-5 w-5 mr-3 text-accent" />
-            <div className="text-sm">
-              This workshop was created from a calendar invitation. Some fields have been pre-filled based on the meeting details.
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <CalendarSourceInfo isFromCalendar={isFromCalendar} />
       
       <div className="w-full">
         <div className={activeTab === "settings" ? "block" : "hidden"}>
-          <Card>
-            <CardHeader>
-              <h3 className="text-lg font-medium">Workshop Design</h3>
-            </CardHeader>
-            <CardContent>
-              {errorMessage && (
-                <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-md text-sm text-destructive">
-                  <p className="font-medium">Error generating blueprint:</p>
-                  <p>{errorMessage}</p>
-                </div>
-              )}
-              <SimplifiedWorkshopForm 
-                workshopId={workshopId}
-                workshopName={workshopName}
-                setWorkshopName={setWorkshopName}
-                problem={problem}
-                setProblem={setProblem}
-                metrics={metrics}
-                metricInput={metricInput}
-                setMetricInput={setMetricInput}
-                addMetric={addMetric}
-                duration={duration}
-                setDuration={setDuration}
-                workshopType={workshopType}
-                setWorkshopType={setWorkshopType}
-                loading={loading}
-                onGenerate={generateBlueprint}
-              />
-            </CardContent>
-          </Card>
+          <WorkshopSetupForm 
+            errorMessage={errorMessage}
+            workshopId={workshopId}
+            workshopName={workshopName}
+            setWorkshopName={setWorkshopName}
+            problem={problem}
+            setProblem={setProblem}
+            metrics={metrics}
+            metricInput={metricInput}
+            setMetricInput={setMetricInput}
+            addMetric={addMetric}
+            duration={duration}
+            setDuration={setDuration}
+            workshopType={workshopType}
+            setWorkshopType={setWorkshopType}
+            loading={loading}
+            onGenerate={handleGenerateBlueprint}
+          />
         </div>
 
         <div className={activeTab === "blueprint" ? "block" : "hidden"}>
           {blueprint ? (
             <GeneratedBlueprint blueprint={blueprint} />
           ) : (
-            <Card>
-              <CardContent className="p-8 flex flex-col items-center justify-center">
-                <h3 className="text-lg font-medium text-center">No Blueprint Generated Yet</h3>
-                <p className="text-muted-foreground text-center mt-2 max-w-md">
-                  Configure your workshop setup, then click "Generate Workshop Blueprint" to create your workshop agenda.
-                </p>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setActiveTab("settings")} 
-                  className="mt-4"
-                >
-                  Go to Workshop Setup
-                </Button>
-              </CardContent>
-            </Card>
+            <EmptyBlueprintState onNavigateToSettings={() => setActiveTab("settings")} />
           )}
         </div>
 
