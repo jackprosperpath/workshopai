@@ -3,13 +3,14 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Blueprint } from "@/components/workshop/types/workshop";
 import type { PredefinedFormat } from "@/types/OutputFormat";
+import type { AiModel } from "@/hooks/usePromptCanvas";
 
 export function useBlueprintData(
   workshopId: string | null,
   setProblem: (value: string) => void,
   setMetrics: (value: string[]) => void,
   setConstraints: (value: string[]) => void,
-  setSelectedModel: (value: string) => void,
+  setSelectedModel: (value: AiModel) => void,
   updateFormat: (value: PredefinedFormat) => void,
   setCustomFormat: (value: string) => void,
   setWorkshopType: (type: 'online' | 'in-person') => void,
@@ -58,7 +59,11 @@ export function useBlueprintData(
             setConstraints(data.constraints as string[]);
           }
           
-          if (data.selected_model) setSelectedModel(data.selected_model as any);
+          if (data.selected_model) {
+            // Ensure we're passing a valid AiModel type
+            const modelValue = data.selected_model as AiModel;
+            setSelectedModel(modelValue);
+          }
           
           if (data.selected_format && typeof data.selected_format === 'object' && 'type' in data.selected_format) {
             // Ensure we're casting to the correct PredefinedFormat type
