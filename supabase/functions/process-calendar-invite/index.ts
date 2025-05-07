@@ -42,6 +42,7 @@ serve(async (req) => {
     
     // Handle direct ICS upload (original format)
     if (body.rawIcs && body.email) {
+      console.log("Processing direct ICS upload")
       rawIcs = body.rawIcs
       email = body.email
     } 
@@ -83,19 +84,25 @@ serve(async (req) => {
       throw new Error('Missing required parameters: ICS content or sender email')
     }
     
-    // Parse the ICS file - FIXED LINE
+    // Parse the ICS file
     console.log('Attempting to parse ICS file...')
     const parsedIcs = ical.parseICS(rawIcs)
     console.log('Parsed ICS data:', JSON.stringify(parsedIcs))
     
     // Get the first event from the ICS file
-    const events = Object.values(parsedIcs)
+    const events = Object.values(parsedIcs).filter(item => item.type === 'VEVENT')
+    
+    console.log('Filtered events:', JSON.stringify(events))
     
     if (events.length === 0) {
       throw new Error('No events found in the ICS file')
     }
     
     const event = events[0] as ical.CalendarComponent
+    
+    console.log('Selected event:', JSON.stringify(event))
+    console.log('Event start:', event.start)
+    console.log('Event end:', event.end)
     
     if (!event.start || !event.end) {
       throw new Error('Event start or end time missing')
