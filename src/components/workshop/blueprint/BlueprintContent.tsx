@@ -3,7 +3,7 @@ import { BlueprintTabs } from "./BlueprintTabs";
 import { WorkshopSetupForm } from "./WorkshopSetupForm";
 import { GeneratedBlueprint } from "./GeneratedBlueprint";
 import { EmptyBlueprintState } from "./EmptyBlueprintState";
-import type { Blueprint } from "../types/workshop";
+import type { Blueprint, Attendee } from "../types/workshop";
 
 interface BlueprintContentProps {
   activeTab: string;
@@ -25,6 +25,8 @@ interface BlueprintContentProps {
   setWorkshopType: (type: 'online' | 'in-person') => void;
   loading: boolean;
   onGenerate: () => void;
+  attendees?: Attendee[];
+  updateAttendees?: (attendees: Attendee[]) => void;
 }
 
 export function BlueprintContent({
@@ -46,7 +48,9 @@ export function BlueprintContent({
   workshopType,
   setWorkshopType,
   loading,
-  onGenerate
+  onGenerate,
+  attendees = [],
+  updateAttendees
 }: BlueprintContentProps) {
   return (
     <div className="w-full mb-6">
@@ -75,6 +79,8 @@ export function BlueprintContent({
             setWorkshopType={setWorkshopType}
             loading={loading}
             onGenerate={onGenerate}
+            attendees={attendees}
+            updateAttendees={updateAttendees}
           />
         </div>
 

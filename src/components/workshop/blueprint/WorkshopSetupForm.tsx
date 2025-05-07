@@ -1,7 +1,8 @@
 
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SimplifiedWorkshopForm } from "../settings/SimplifiedWorkshopForm";
 import { ErrorMessage } from "./ErrorMessage";
+import type { Attendee } from "../types/workshop";
 
 interface WorkshopSetupFormProps {
   errorMessage: string | null;
@@ -20,6 +21,8 @@ interface WorkshopSetupFormProps {
   setWorkshopType: (type: 'online' | 'in-person') => void;
   loading: boolean;
   onGenerate: () => void;
+  attendees?: Attendee[];
+  updateAttendees?: (attendees: Attendee[]) => void;
 }
 
 export function WorkshopSetupForm({
@@ -38,33 +41,43 @@ export function WorkshopSetupForm({
   workshopType,
   setWorkshopType,
   loading,
-  onGenerate
+  onGenerate,
+  attendees,
+  updateAttendees
 }: WorkshopSetupFormProps) {
   return (
-    <Card>
-      <CardHeader>
-        <h3 className="text-lg font-medium">Workshop Design</h3>
-      </CardHeader>
-      <CardContent>
-        <ErrorMessage errorMessage={errorMessage} />
-        <SimplifiedWorkshopForm 
-          workshopId={workshopId}
-          workshopName={workshopName}
-          setWorkshopName={setWorkshopName}
-          problem={problem}
-          setProblem={setProblem}
-          metrics={metrics}
-          metricInput={metricInput}
-          setMetricInput={setMetricInput}
-          addMetric={addMetric}
-          duration={duration}
-          setDuration={setDuration}
-          workshopType={workshopType}
-          setWorkshopType={setWorkshopType}
-          loading={loading}
-          onGenerate={onGenerate}
-        />
-      </CardContent>
-    </Card>
+    <div>
+      {errorMessage && (
+        <div className="mb-6">
+          <ErrorMessage message={errorMessage} />
+        </div>
+      )}
+
+      <Alert className="mb-6 bg-primary/5">
+        <AlertDescription>
+          Fill in the workshop details below to generate a workshop agenda optimized for your needs.
+        </AlertDescription>
+      </Alert>
+
+      <SimplifiedWorkshopForm
+        workshopId={workshopId}
+        workshopName={workshopName}
+        problem={problem}
+        setProblem={setProblem}
+        metrics={metrics}
+        metricInput={metricInput}
+        setMetricInput={setMetricInput}
+        addMetric={addMetric}
+        duration={duration}
+        setDuration={setDuration}
+        workshopType={workshopType}
+        setWorkshopType={setWorkshopType}
+        setWorkshopName={setWorkshopName}
+        loading={loading}
+        onGenerate={onGenerate}
+        attendees={attendees}
+        updateAttendees={updateAttendees}
+      />
+    </div>
   );
 }

@@ -5,6 +5,7 @@ import { WorkshopTitle } from "./WorkshopTitle";
 import { WorkshopPeopleTime } from "./WorkshopPeopleTime";
 import { WorkshopObjectives } from "./WorkshopObjectives";
 import { WorkshopContext } from "./WorkshopContext";
+import type { Attendee } from "../types/workshop";
 
 interface SimplifiedWorkshopFormProps {
   workshopId: string | null;
@@ -22,6 +23,8 @@ interface SimplifiedWorkshopFormProps {
   setWorkshopName: (name: string) => void;
   loading: boolean;
   onGenerate: () => void;
+  attendees?: Attendee[];
+  updateAttendees?: (attendees: Attendee[]) => void;
 }
 
 export function SimplifiedWorkshopForm({
@@ -39,7 +42,9 @@ export function SimplifiedWorkshopForm({
   setWorkshopType,
   setWorkshopName,
   loading,
-  onGenerate
+  onGenerate,
+  attendees = [],
+  updateAttendees
 }: SimplifiedWorkshopFormProps) {
   // These states are used in this component only
   const [constraints, setConstraints] = useState<string[]>([]);
@@ -65,6 +70,8 @@ export function SimplifiedWorkshopForm({
         workshopType={workshopType}
         setWorkshopType={setWorkshopType}
         workshopId={workshopId}
+        attendees={attendees}
+        updateAttendees={updateAttendees}
       />
 
       <WorkshopObjectives

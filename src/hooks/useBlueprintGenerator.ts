@@ -3,7 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import { useWorkshopPersistence } from "@/hooks/useWorkshopPersistence";
-import type { Blueprint } from "@/components/workshop/types/workshop";
+import type { Blueprint, Attendee } from "@/components/workshop/types/workshop";
 
 export function useBlueprintGenerator() {
   const [loading, setLoading] = useState(false);
@@ -22,7 +22,8 @@ export function useBlueprintGenerator() {
     duration,
     workshopType,
     workshopName,
-    workshopId
+    workshopId,
+    attendees
   }: {
     problem: string;
     metrics: string[];
@@ -34,6 +35,7 @@ export function useBlueprintGenerator() {
     workshopType: 'online' | 'in-person';
     workshopName: string;
     workshopId: string | null;
+    attendees?: Attendee[];
   }) => {
     if (!problem) {
       toast.error("Please specify a workshop objective");
@@ -76,6 +78,8 @@ export function useBlueprintGenerator() {
           duration,
           constraints: constraints.join(", "),
           workshopType,
+          metrics,
+          attendees
         }
       });
 

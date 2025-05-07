@@ -9,10 +9,14 @@ import { useWorkshopSettings } from "@/hooks/useWorkshopSettings";
 import { useBlueprintData } from "@/hooks/useBlueprintData";
 import { BlueprintContent } from "./blueprint/BlueprintContent";
 import type { PredefinedFormat } from "@/types/OutputFormat";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { Attendee } from "./types/workshop";
 
 export function BlueprintGenerator() {
   const [searchParams] = useSearchParams();
   const workshopId = searchParams.get('id');
+  const [attendees, setAttendees] = useState<Attendee[]>([]);
 
   // Use our hooks for state management
   const {
@@ -73,6 +77,51 @@ export function BlueprintGenerator() {
     setWorkshopName
   );
 
+  // Fetch attendees when workshop ID changes
+  useEffect(() => {
+    const fetchAttendees = async () => {
+      if (!workshopId) return;
+      
+      try {
+        // First check if this is from a calendar invite
+        const { data: workshop, error: workshopError } = await supabase
+          .from('workshops')
+          .select('invitation_source_id')
+          .eq('id', workshopId)
+          .single();
+          
+        if (workshopError || !workshop || !workshop.invitation_source_id) {
+          return; // Not from calendar or error
+        }
+        
+        // Get calendar invite attendees
+        const { data: invite, error: inviteError } = await supabase
+          .from('inbound_invites')
+          .select('attendees')
+          .eq('id', workshop.invitation_source_id)
+          .single();
+          
+        if (inviteError || !invite || !invite.attendees) {
+          return;
+        }
+        
+        // Format attendees
+        const formattedAttendees: Attendee[] = Array.isArray(invite.attendees) ? 
+          invite.attendees.map((email: string) => ({
+            email,
+            role: "",
+            count: 1
+          })) : [];
+          
+        setAttendees(formattedAttendees);
+      } catch (error) {
+        console.error("Error fetching attendees:", error);
+      }
+    };
+    
+    fetchAttendees();
+  }, [workshopId]);
+
   // Sync the blueprint from generation to our local state
   if (generatedBlueprint && generatedBlueprint !== blueprint) {
     setBlueprint(generatedBlueprint);
@@ -106,13 +155,19 @@ export function BlueprintGenerator() {
       duration,
       workshopType,
       workshopName,
-      workshopId
+      workshopId,
+      attendees // Pass attendees to blueprint generator
     });
     
     if (result) {
       syncData({ problem, metrics, constraints, selectedModel, selectedFormat, customFormat });
       setActiveTab("blueprint");
     }
+  };
+
+  // Update attendees with role information from the workshop settings
+  const updateAttendeeRoles = (updatedAttendees: Attendee[]) => {
+    setAttendees(updatedAttendees);
   };
 
   return (
@@ -139,6 +194,8 @@ export function BlueprintGenerator() {
         setWorkshopType={setWorkshopType}
         loading={loading}
         onGenerate={handleGenerateBlueprint}
+        attendees={attendees}
+        updateAttendees={updateAttendeeRoles}
       />
     </div>
   );

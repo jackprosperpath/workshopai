@@ -19,14 +19,36 @@ serve(async (req) => {
       objective, 
       duration, 
       workshopType,
-      constraints 
+      constraints,
+      metrics,
+      attendees 
     } = await req.json();
 
-    // Adjust system prompt based on workshop type and constraints
+    // Format attendees information if available
+    let attendeesInfo = '';
+    if (attendees && attendees.length > 0) {
+      attendeesInfo = `Number of attendees: ${attendees.length}\nAttendee roles: ${
+        attendees
+          .filter(a => a.role)
+          .map(a => a.role)
+          .join(", ")
+      }`;
+    }
+
+    // Format success metrics if available
+    let metricsInfo = '';
+    if (metrics && metrics.length > 0) {
+      metricsInfo = `Success metrics to achieve:\n${metrics.map((m, i) => `${i+1}. ${m}`).join("\n")}`;
+    }
+
+    // Adjust system prompt based on workshop type, constraints, metrics and attendees
     const systemPrompt = `You are a professional workshop facilitator specializing in ${workshopType || 'collaborative'} sessions. 
 Design a workshop blueprint optimized for: ${objective}
+${metricsInfo ? `\n${metricsInfo}` : ''}
 Keep in mind these constraints: ${constraints || 'None specified'}
-Total duration should be: ${duration || '120'} minutes`;
+Total duration should be: ${duration || '120'} minutes
+Workshop type: ${workshopType || 'online'}
+${attendeesInfo ? `\n${attendeesInfo}` : ''}`;
 
     // Define the response format structure
     const responseFormatObject = {

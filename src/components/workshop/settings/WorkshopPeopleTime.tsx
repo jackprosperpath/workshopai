@@ -14,6 +14,8 @@ interface WorkshopPeopleTimeProps {
   workshopType: 'online' | 'in-person';
   setWorkshopType: (type: 'online' | 'in-person') => void;
   workshopId: string | null;
+  attendees?: Attendee[];
+  updateAttendees?: (attendees: Attendee[]) => void;
 }
 
 export function WorkshopPeopleTime({
@@ -21,13 +23,22 @@ export function WorkshopPeopleTime({
   setDuration,
   workshopType,
   setWorkshopType,
-  workshopId
+  workshopId,
+  attendees = [],
+  updateAttendees
 }: WorkshopPeopleTimeProps) {
-  const [attendees, setAttendees] = useState<Attendee[]>([{
+  const [localAttendees, setLocalAttendees] = useState<Attendee[]>(attendees.length > 0 ? attendees : [{
     role: "",
     count: 1
   }]);
   const [calendarInviteData, setCalendarInviteData] = useState<any>(null);
+
+  useEffect(() => {
+    // Initialize with passed attendees if available
+    if (attendees.length > 0) {
+      setLocalAttendees(attendees);
+    }
+  }, [attendees]);
 
   useEffect(() => {
     // Fetch calendar invite data if this workshop was created from a calendar invite
@@ -60,7 +71,10 @@ export function WorkshopPeopleTime({
               count: 1
             }));
             
-            setAttendees(calendarAttendees);
+            setLocalAttendees(calendarAttendees);
+            if (updateAttendees) {
+              updateAttendees(calendarAttendees);
+            }
           }
         } catch (error) {
           console.error("Error fetching calendar data:", error);
@@ -69,26 +83,36 @@ export function WorkshopPeopleTime({
 
       fetchCalendarData();
     }
-  }, [workshopId]);
+  }, [workshopId, updateAttendees]);
 
   const addAttendee = () => {
-    setAttendees([...attendees, { role: "", count: 1 }]);
+    const newAttendees = [...localAttendees, { role: "", count: 1 }];
+    setLocalAttendees(newAttendees);
+    if (updateAttendees) {
+      updateAttendees(newAttendees);
+    }
   };
 
   const updateAttendee = (index: number, field: keyof Attendee, value: string | number) => {
-    const newAttendees = [...attendees];
+    const newAttendees = [...localAttendees];
     newAttendees[index] = {
       ...newAttendees[index],
       [field]: value
     };
-    setAttendees(newAttendees);
+    setLocalAttendees(newAttendees);
+    if (updateAttendees) {
+      updateAttendees(newAttendees);
+    }
   };
 
   const removeAttendee = (index: number) => {
-    if (attendees.length > 1) {
-      const newAttendees = [...attendees];
+    if (localAttendees.length > 1) {
+      const newAttendees = [...localAttendees];
       newAttendees.splice(index, 1);
-      setAttendees(newAttendees);
+      setLocalAttendees(newAttendees);
+      if (updateAttendees) {
+        updateAttendees(newAttendees);
+      }
     }
   };
 
@@ -145,7 +169,7 @@ export function WorkshopPeopleTime({
         </div>
         
         <div className="space-y-3 mt-2">
-          {attendees.map((attendee, index) => (
+          {localAttendees.map((attendee, index) => (
             <div key={index} className="grid grid-cols-12 gap-2">
               <Input 
                 placeholder="Email address" 
@@ -164,7 +188,7 @@ export function WorkshopPeopleTime({
                 variant="ghost" 
                 size="icon" 
                 onClick={() => removeAttendee(index)}
-                disabled={attendees.length <= 1}
+                disabled={localAttendees.length <= 1}
                 className="col-span-1"
               >
                 <Minus className="h-4 w-4" />
