@@ -1,58 +1,54 @@
 
 import { Resend } from "npm:resend@3.1.0";
-import { agendaEmail } from "../../_shared/emailTemplates.ts";
+import { agendaEmail } from "../../../_shared/emailTemplates.ts";
+import type { Blueprint } from "../types/workshop.ts";
 
 /**
- * Send confirmation email
+ * Send a confirmation email to the workshop organizer
  */
 export async function sendConfirmationEmail(
   resend: Resend,
   email: string,
-  summary: string,
+  subject: string,
   description: string,
   workshopUrl: string,
-  blueprint: any = {}
+  blueprint: Blueprint | null
 ): Promise<void> {
   try {
-    // Generate agenda preview
-    const agendaPreview = description.substring(0, 300) + (description.length > 300 ? '...' : '');
-    
-    // Extract host name from email
-    const hostName = email.split('@')[0];
-    
-    console.log("Preparing to send email to:", email);
+    // Format the blueprint preview
+    const blueprintPreview = blueprint ? {
+      title: blueprint.title,
+      totalDuration: blueprint.totalDuration,
+      steps: blueprint.steps.slice(0, 3), // Get first 3 steps only
+      materials: blueprint.materials
+    } : null;
+
     console.log("Workshop URL:", workshopUrl);
-    console.log("Agenda preview length:", agendaPreview.length);
+    console.log("Agenda preview length:", description.length);
+    console.log("Preparing to send email to:", email);
 
-    // Prepare blueprint preview data
-    const blueprintPreview = {
-      title: summary,
-      totalDuration: blueprint.totalDuration || blueprint.duration || "60-90",
-      steps: blueprint.steps ? blueprint.steps.slice(0, 2) : [], // Just preview first 2 agenda items
-      materials: blueprint.materials ? blueprint.materials.slice(0, 3) : [] // Just preview first 3 materials
-    };
+    // Send the email
+    const { data, error } = await resend.emails.send({
+      from: "Teho Agenda Assistant <agenda@teho.ai>",
+      to: email,
+      subject: `Workshop Created: ${subject}`,
+      html: agendaEmail({
+        hostName: email.split('@')[0],
+        agendaPreview: description,
+        editorUrl: workshopUrl,
+        blueprintPreview
+      })
+    });
 
-    // Use the email template
-    const emailHtml = agendaEmail({
-      hostName,
-      agendaPreview,
-      editorUrl: workshopUrl,
-      blueprintPreview
-    });
-    
-    const emailResult = await resend.emails.send({
-      from: "Teho AI <noreply@teho.ai>",
-      to: [email],
-      reply_to: email, // Add reply-to header to avoid spam filters
-      subject: `Workshop Created: ${summary}`,
-      html: emailHtml,
-    });
-    
-    console.log("Email send result:", JSON.stringify(emailResult));
+    console.log("Email send result:", JSON.stringify({ data, error }));
+
+    if (error) {
+      throw error;
+    }
+
     console.log("Confirmation email sent to:", email);
-  } catch (emailError) {
-    console.error("Error sending confirmation email:", emailError);
-    console.error("Error details:", JSON.stringify(emailError, null, 2));
-    // Continue even if email fails
+  } catch (error) {
+    console.error("Failed to send confirmation email:", error);
+    throw new Error(`Failed to send confirmation email: ${error.message}`);
   }
 }

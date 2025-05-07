@@ -14,6 +14,7 @@ import {
   updateInvitationWithWorkshop 
 } from "./utils/databaseOperations.ts";
 import { sendConfirmationEmail } from "./utils/emailUtils.ts";
+import { generateBlueprintFromInvite } from "./utils/blueprintGenerator.ts";
 
 // Main request handler
 serve(async (req) => {
@@ -86,6 +87,16 @@ serve(async (req) => {
     // Update the invitation with the workshop ID
     await updateInvitationWithWorkshop(supabase, inviteId, workshopData.id);
     
+    // Generate a blueprint based on the calendar invite information
+    const blueprint = await generateBlueprintFromInvite(
+      supabase,
+      workshopData.id,
+      summary,
+      description,
+      durationMinutes,
+      attendees
+    );
+    
     // Send confirmation email to the organizer
     const workshopUrl = `https://app.teho.ai/workshop?id=${workshopData.share_id}`;
     await sendConfirmationEmail(
@@ -94,7 +105,7 @@ serve(async (req) => {
       summary, 
       description, 
       workshopUrl, 
-      workshopData.blueprint // Pass the blueprint data to the email function
+      blueprint // Pass the blueprint data to the email function
     );
     
     // Return success response
