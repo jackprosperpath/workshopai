@@ -86,17 +86,34 @@ export function BlueprintGenerator() {
       try {
         const { data, error } = await supabase
           .from('workshops')
-          .select('generated_blueprint')
+          .select('generated_blueprint, problem, metrics, constraints, selected_model, selected_format, custom_format, workshop_type, duration, name')
           .eq('id', workshopId)
           .single();
 
         if (error) throw error;
         
-        if (data && data.generated_blueprint) {
-          // Ensure the blueprint data is of the correct type
-          const blueprintData = data.generated_blueprint as Blueprint;
-          setBlueprint(blueprintData);
-          setActiveTab("blueprint");
+        // Load all workshop data to persist form values
+        if (data) {
+          // Load blueprint if exists
+          if (data.generated_blueprint) {
+            const blueprintData = data.generated_blueprint as Blueprint;
+            setBlueprint(blueprintData);
+            setActiveTab("blueprint");
+          }
+          
+          // Load all other form values to persist between tab switches
+          if (data.problem) setProblem(data.problem);
+          if (data.metrics) setMetrics(data.metrics);
+          if (data.constraints) setConstraints(data.constraints);
+          if (data.selected_model) setSelectedModel(data.selected_model as any);
+          if (data.selected_format && updateFormat) {
+            updateFormat(data.selected_format.type);
+          }
+          if (data.custom_format && setCustomFormat) {
+            setCustomFormat(data.custom_format);
+          }
+          if (data.workshop_type) setWorkshopType(data.workshop_type as 'online' | 'in-person');
+          if (data.name) setWorkshopName(data.name);
         }
       } catch (error) {
         console.error("Error checking existing blueprint:", error);
@@ -104,7 +121,7 @@ export function BlueprintGenerator() {
     }
 
     checkExistingBlueprint();
-  }, [workshopId, setBlueprint]);
+  }, [workshopId, setBlueprint, setProblem, setMetrics, setConstraints, setSelectedModel, updateFormat, setCustomFormat, setWorkshopType, setWorkshopName]);
 
   const handleGenerateBlueprint = async () => {
     const result = await generateBlueprint({
