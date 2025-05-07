@@ -10,6 +10,7 @@ import { WorkshopList } from "@/components/workshop/WorkshopList";
 import { WorkshopNameEditor } from "@/components/workshop/WorkshopNameEditor";
 import { WorkshopActions } from "@/components/workshop/WorkshopActions";
 import { CalendarInviteInfo } from "@/components/workshop/CalendarInviteInfo";
+import { CalendarIntegrationInfo } from "@/components/workshop/CalendarIntegrationInfo";
 
 const Workshop = () => {
   const [searchParams] = useSearchParams();
@@ -43,7 +44,10 @@ const Workshop = () => {
       <Navbar />
       <div className="container mx-auto p-6">
         {!workshopId ? (
-          <WorkshopList onCreateWorkshop={createWorkshop} />
+          <>
+            <CalendarIntegrationInfo />
+            <WorkshopList onCreateWorkshop={createWorkshop} />
+          </>
         ) : (
           <>
             <div className="flex flex-col gap-2 mb-6">

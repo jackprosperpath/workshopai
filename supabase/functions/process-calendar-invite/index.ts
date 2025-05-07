@@ -223,7 +223,7 @@ serve(async (req) => {
       })
       
       const emailResult = await resend.emails.send({
-        from: "Teho AI <noreply@app.teho.ai>",
+        from: "Teho AI <noreply@teho.ai>",
         to: [email],
         reply_to: email, // Add reply-to header to avoid spam filters
         subject: `Workshop Created: ${summary}`,
