@@ -2,11 +2,18 @@
 export function agendaEmail({
   hostName,
   agendaPreview,
-  editorUrl
+  editorUrl,
+  blueprintPreview = null
 }: {
   hostName: string;
   agendaPreview: string;
   editorUrl: string;
+  blueprintPreview?: {
+    title: string;
+    totalDuration: string;
+    steps: Array<{name: string; duration: string; description: string}>;
+    materials: string[];
+  } | null;
 }) {
   return `
     <html>
@@ -24,8 +31,36 @@ export function agendaEmail({
             </a>
           </div>
           
+          ${blueprintPreview ? `
+          <div style="background:#f9f9f9;padding:20px;border-radius:6px;margin:20px 0;border-left:4px solid #1f2937;">
+            <h3 style="margin-top:0;color:#1f2937;">${blueprintPreview.title}</h3>
+            <p style="margin:5px 0;color:#666;font-size:14px;">Total Duration: ${blueprintPreview.totalDuration} minutes</p>
+            
+            ${blueprintPreview.steps && blueprintPreview.steps.length > 0 ? `
+            <h4 style="margin:15px 0 5px;font-size:15px;color:#1f2937;">Agenda Preview:</h4>
+            <ul style="margin:0;padding-left:20px;">
+              ${blueprintPreview.steps.map(step => `
+                <li style="margin-bottom:8px;">
+                  <strong>${step.name}</strong> (${step.duration} min)<br>
+                  <span style="font-size:13px;color:#666;">${step.description?.substring(0, 100)}${step.description?.length > 100 ? '...' : ''}</span>
+                </li>
+              `).join('')}
+              ${blueprintPreview.steps.length > 2 ? '<li style="font-style:italic;font-size:13px;">...and more</li>' : ''}
+            </ul>
+            ` : ''}
+            
+            ${blueprintPreview.materials && blueprintPreview.materials.length > 0 ? `
+            <h4 style="margin:15px 0 5px;font-size:15px;color:#1f2937;">Materials Needed:</h4>
+            <ul style="margin:0;padding-left:20px;">
+              ${blueprintPreview.materials.map(material => `<li style="margin-bottom:4px;font-size:13px;">${material}</li>`).join('')}
+              ${blueprintPreview.materials.length > 3 ? '<li style="font-style:italic;font-size:13px;">...and more</li>' : ''}
+            </ul>
+            ` : ''}
+          </div>
+          ` : ''}
+          
           <div style="background:#f5f5f5;padding:15px;border-radius:6px;margin:20px 0;">
-            <strong>Meeting Agenda:</strong>
+            <strong>Original Meeting Description:</strong>
             <pre style="white-space:pre-wrap;margin-top:10px;font-family:inherit;">${agendaPreview}</pre>
           </div>
           

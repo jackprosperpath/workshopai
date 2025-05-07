@@ -88,7 +88,14 @@ serve(async (req) => {
     
     // Send confirmation email to the organizer
     const workshopUrl = `https://app.teho.ai/workshop?id=${workshopData.share_id}`;
-    await sendConfirmationEmail(resend, email, summary, description, workshopUrl);
+    await sendConfirmationEmail(
+      resend, 
+      email, 
+      summary, 
+      description, 
+      workshopUrl, 
+      workshopData.blueprint // Pass the blueprint data to the email function
+    );
     
     // Return success response
     return new Response(

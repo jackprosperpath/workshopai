@@ -10,7 +10,8 @@ export async function sendConfirmationEmail(
   email: string,
   summary: string,
   description: string,
-  workshopUrl: string
+  workshopUrl: string,
+  blueprint: any = {}
 ): Promise<void> {
   try {
     // Generate agenda preview
@@ -23,11 +24,20 @@ export async function sendConfirmationEmail(
     console.log("Workshop URL:", workshopUrl);
     console.log("Agenda preview length:", agendaPreview.length);
 
+    // Prepare blueprint preview data
+    const blueprintPreview = {
+      title: summary,
+      totalDuration: blueprint.totalDuration || blueprint.duration || "60-90",
+      steps: blueprint.steps ? blueprint.steps.slice(0, 2) : [], // Just preview first 2 agenda items
+      materials: blueprint.materials ? blueprint.materials.slice(0, 3) : [] // Just preview first 3 materials
+    };
+
     // Use the email template
     const emailHtml = agendaEmail({
       hostName,
       agendaPreview,
-      editorUrl: workshopUrl
+      editorUrl: workshopUrl,
+      blueprintPreview
     });
     
     const emailResult = await resend.emails.send({
