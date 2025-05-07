@@ -1,6 +1,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { CalendarDays, Mail } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 
 export function CalendarIntegrationInfo() {
   return (
@@ -15,17 +15,6 @@ export function CalendarIntegrationInfo() {
             <p className="text-muted-foreground">
               Add <strong>agenda@teho.ai</strong> as an attendee to your calendar invites to automatically 
               create workshops from your meetings.
-            </p>
-          </div>
-        </div>
-        
-        <div className="flex items-start gap-4">
-          <div className="bg-primary/10 p-3 rounded-full">
-            <Mail className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">
-              
             </p>
           </div>
         </div>
