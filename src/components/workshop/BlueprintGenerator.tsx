@@ -1,18 +1,13 @@
 
-import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import { usePromptCanvas } from "@/hooks/usePromptCanvas";
 import { usePromptCanvasSync } from "@/hooks/usePromptCanvasSync";
-import { GeneratedBlueprint } from "./blueprint/GeneratedBlueprint";
-import { BlueprintTabs } from "./blueprint/BlueprintTabs";
 import { CalendarSourceInfo } from "./blueprint/CalendarSourceInfo";
-import { WorkshopSetupForm } from "./blueprint/WorkshopSetupForm";
-import { EmptyBlueprintState } from "./blueprint/EmptyBlueprintState";
 import { useBlueprintGenerator } from "@/hooks/useBlueprintGenerator";
 import { useWorkshopSettings } from "@/hooks/useWorkshopSettings";
-import type { Blueprint } from "./types/workshop";
+import { useBlueprintData } from "@/hooks/useBlueprintData";
+import { BlueprintContent } from "./blueprint/BlueprintContent";
 import type { PredefinedFormat } from "@/types/OutputFormat";
 
 export function BlueprintGenerator() {
@@ -54,11 +49,34 @@ export function BlueprintGenerator() {
   // Blueprint generation hook
   const {
     loading,
-    blueprint,
-    setBlueprint,
+    blueprint: generatedBlueprint,
+    setBlueprint: setGeneratedBlueprint,
     errorMessage,
     generateBlueprint
   } = useBlueprintGenerator();
+
+  // Use new hook for handling blueprint data loading
+  const {
+    blueprint,
+    setBlueprint,
+    activeTab,
+    setActiveTab
+  } = useBlueprintData(
+    workshopId,
+    setProblem,
+    setMetrics,
+    setConstraints,
+    setSelectedModel,
+    updateFormat,
+    setCustomFormat,
+    setWorkshopType,
+    setWorkshopName
+  );
+
+  // Sync the blueprint from generation to our local state
+  if (generatedBlueprint && generatedBlueprint !== blueprint) {
+    setBlueprint(generatedBlueprint);
+  }
 
   // Data synchronization
   const { syncData } = usePromptCanvasSync(
@@ -69,91 +87,13 @@ export function BlueprintGenerator() {
       if (data.constraints !== undefined) setConstraints(data.constraints);
       if (data.selectedModel !== undefined) setSelectedModel(data.selectedModel);
       if (data.selectedFormat !== undefined && updateFormat) {
-        updateFormat(data.selectedFormat.type);
+        updateFormat(data.selectedFormat.type as PredefinedFormat);
       }
       if (data.customFormat !== undefined && setCustomFormat) {
         setCustomFormat(data.customFormat);
       }
     }
   );
-
-  const [activeTab, setActiveTab] = useState<string>("settings");
-  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
-
-  // Check for existing blueprint
-  useEffect(() => {
-    async function checkExistingBlueprint() {
-      if (!workshopId) return;
-
-      try {
-        const { data, error } = await supabase
-          .from('workshops')
-          .select('generated_blueprint, problem, metrics, constraints, selected_model, selected_format, custom_format, workshop_type, duration, name')
-          .eq('id', workshopId)
-          .single();
-
-        if (error) throw error;
-        
-        // Load all workshop data to persist form values
-        if (data) {
-          // Load blueprint if exists
-          if (data.generated_blueprint) {
-            const blueprintData = data.generated_blueprint as Blueprint;
-            setBlueprint(blueprintData);
-            
-            // Only set the tab to blueprint on initial load, not on subsequent data fetches
-            if (!initialLoadComplete) {
-              setActiveTab("blueprint");
-            }
-          }
-          
-          // Load all other form values to persist between tab switches
-          if (data.problem) setProblem(data.problem);
-          
-          // Fix the type issues by explicitly checking and converting types
-          if (data.metrics && Array.isArray(data.metrics)) {
-            setMetrics(data.metrics as string[]);
-          }
-          
-          if (data.constraints && Array.isArray(data.constraints)) {
-            setConstraints(data.constraints as string[]);
-          }
-          
-          if (data.selected_model) setSelectedModel(data.selected_model as any);
-          
-          if (data.selected_format && typeof data.selected_format === 'object' && 'type' in data.selected_format) {
-            // Ensure we're casting to the correct PredefinedFormat type
-            const formatType = data.selected_format.type;
-            if (typeof formatType === 'string' && (
-                formatType === 'detailed-report' || 
-                formatType === 'prd' || 
-                formatType === 'project-proposal' || 
-                formatType === 'strategic-plan' || 
-                formatType === 'business-case' ||
-                formatType === 'other'
-              )) {
-              updateFormat(formatType as PredefinedFormat);
-            }
-          }
-          
-          if (data.custom_format && typeof data.custom_format === 'string') {
-            setCustomFormat(data.custom_format);
-          }
-          
-          if (data.workshop_type) setWorkshopType(data.workshop_type as 'online' | 'in-person');
-          if (data.name) setWorkshopName(data.name);
-          
-          // Mark initial load as complete
-          setInitialLoadComplete(true);
-        }
-      } catch (error) {
-        console.error("Error checking existing blueprint:", error);
-        setInitialLoadComplete(true);
-      }
-    }
-
-    checkExistingBlueprint();
-  }, [workshopId, setBlueprint, setProblem, setMetrics, setConstraints, setSelectedModel, updateFormat, setCustomFormat, setWorkshopType, setWorkshopName, initialLoadComplete]);
 
   const handleGenerateBlueprint = async () => {
     const result = await generateBlueprint({
@@ -179,44 +119,27 @@ export function BlueprintGenerator() {
     <div className="space-y-8 pb-10">
       <CalendarSourceInfo isFromCalendar={isFromCalendar} />
       
-      <div className="w-full mb-6">
-        <BlueprintTabs 
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          blueprint={blueprint}
-        />
-        
-        <div className="mt-6">
-          <div className={activeTab === "settings" ? "block" : "hidden"}>
-            <WorkshopSetupForm 
-              errorMessage={errorMessage}
-              workshopId={workshopId}
-              workshopName={workshopName}
-              setWorkshopName={setWorkshopName}
-              problem={problem}
-              setProblem={setProblem}
-              metrics={metrics}
-              metricInput={metricInput}
-              setMetricInput={setMetricInput}
-              addMetric={addMetric}
-              duration={duration}
-              setDuration={setDuration}
-              workshopType={workshopType}
-              setWorkshopType={setWorkshopType}
-              loading={loading}
-              onGenerate={handleGenerateBlueprint}
-            />
-          </div>
-
-          <div className={activeTab === "blueprint" ? "block" : "hidden"}>
-            {blueprint ? (
-              <GeneratedBlueprint blueprint={blueprint} />
-            ) : (
-              <EmptyBlueprintState onNavigateToSettings={() => setActiveTab("settings")} />
-            )}
-          </div>
-        </div>
-      </div>
+      <BlueprintContent
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        blueprint={blueprint}
+        errorMessage={errorMessage}
+        workshopId={workshopId}
+        workshopName={workshopName}
+        setWorkshopName={setWorkshopName}
+        problem={problem}
+        setProblem={setProblem}
+        metrics={metrics}
+        metricInput={metricInput}
+        setMetricInput={setMetricInput}
+        addMetric={addMetric}
+        duration={duration}
+        setDuration={setDuration}
+        workshopType={workshopType}
+        setWorkshopType={setWorkshopType}
+        loading={loading}
+        onGenerate={handleGenerateBlueprint}
+      />
     </div>
   );
 }
