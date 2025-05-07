@@ -141,6 +141,23 @@ serve(async (req) => {
     console.log("Event end time:", endTime.toISOString());
     console.log("Event duration (minutes):", durationMinutes);
     console.log("Attendees:", attendees);
+    
+    // Check if the organizer already has a Teho account
+    console.log("Checking if organizer has an existing account...")
+    const { data: existingUsers, error: userError } = await supabase
+      .from('auth')
+      .select('users.id')
+      .eq('users.email', email)
+      .single()
+    
+    let ownerId = 'calendar-invite'
+    
+    if (!userError && existingUsers) {
+      console.log(`Found existing user with ID: ${existingUsers.id}`)
+      ownerId = existingUsers.id
+    } else {
+      console.log("No existing user found, using 'calendar-invite' as owner_id")
+    }
 
     // Store the invitation in the database
     const { data: inviteData, error: inviteError } = await supabase
@@ -170,7 +187,7 @@ serve(async (req) => {
     const { data: workshopData, error: workshopError } = await supabase
       .from('workshops')
       .insert({
-        owner_id: 'calendar-invite', // Placeholder until user claims the workshop
+        owner_id: ownerId, // Use the user ID if found, otherwise use 'calendar-invite'
         share_id: crypto.randomUUID().substring(0, 8),
         name: summary,
         problem: description,

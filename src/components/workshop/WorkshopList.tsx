@@ -26,17 +26,55 @@ export function WorkshopList({ onCreateWorkshop }: WorkshopListProps) {
         return;
       }
 
-      const { data, error } = await supabase
+      // First get workshops owned by the user
+      const { data: ownedWorkshops, error: ownedError } = await supabase
         .from('workshops')
         .select('*')
         .eq('owner_id', userData.user.id)
         .order('updated_at', { ascending: false });
 
-      if (error) {
-        throw error;
+      if (ownedError) {
+        throw ownedError;
       }
+
+      // Then get workshops created from calendar invites with the user's email
+      const { data: calendarWorkshops, error: calendarError } = await supabase
+        .from('inbound_invites')
+        .select('workshop_id, organizer_email, summary, created_at, status, workshops(*)')
+        .eq('organizer_email', userData.user.email)
+        .not('workshop_id', 'is', null)
+        .eq('status', 'processed')
+        .order('created_at', { ascending: false });
+
+      if (calendarError) {
+        throw calendarError;
+      }
+
+      // Transform calendar workshops to match the owned workshops format
+      const transformedCalendarWorkshops = calendarWorkshops
+        .filter(invite => invite.workshops) // Ensure the workshop exists
+        .map(invite => ({
+          ...invite.workshops,
+          source: 'calendar',
+          invitation_id: invite.id
+        }));
+
+      // Combine both sets of workshops, removing duplicates
+      const allWorkshops = [...ownedWorkshops];
       
-      setWorkshops(data || []);
+      // Add calendar workshops that don't already exist in owned workshops
+      transformedCalendarWorkshops.forEach(calendarWorkshop => {
+        if (!allWorkshops.some(workshop => workshop.id === calendarWorkshop.id)) {
+          allWorkshops.push(calendarWorkshop);
+        }
+      });
+      
+      // Sort by updated_at
+      allWorkshops.sort((a, b) => 
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      );
+      
+      setWorkshops(allWorkshops);
     } catch (error) {
       console.error('Error fetching workshops:', error);
       toast.error("Failed to load workshops");
