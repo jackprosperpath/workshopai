@@ -34,7 +34,7 @@ export function CalendarIntegrationInfo() {
                   <li>Add <span className="font-mono bg-accent/10 px-1 rounded">agenda@teho.ai</span> as an attendee</li>
                   <li>Fill in your meeting details, title, and description</li>
                   <li>Send the invite</li>
-                  <li>Our system will automatically generate a workshop blueprint</li>
+                  <li>Check your email for the workshop link</li>
                 </ol>
               </div>
             </div>
