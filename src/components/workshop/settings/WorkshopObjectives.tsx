@@ -27,7 +27,7 @@ export function WorkshopObjectives({
   setMetricInput,
   addMetric,
 }: WorkshopObjectivesProps) {
-  const [isTemplatesOpen, setIsTemplatesOpen] = useState(true);
+  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
 
   const handleTemplateSelect = (template: WorkshopTemplate) => {
     setProblem(template.purpose);
@@ -36,35 +36,16 @@ export function WorkshopObjectives({
 
   return (
     <div className="space-y-6">
-      <Collapsible 
-        open={isTemplatesOpen} 
-        onOpenChange={setIsTemplatesOpen}
-        className="space-y-4"
-      >
-        <div className="flex items-center justify-between">
-          <Label className="text-lg font-semibold">Workshop Templates</Label>
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <ChevronDown className={`h-4 w-4 transform transition-transform ${isTemplatesOpen ? '' : '-rotate-90'}`} />
-              <span className="sr-only">Toggle templates</span>
-            </Button>
-          </CollapsibleTrigger>
-        </div>
-        <CollapsibleContent>
-          <TemplateSelector onSelectTemplate={handleTemplateSelect} />
-        </CollapsibleContent>
-      </Collapsible>
-
       <div className="space-y-2">
-        <Label htmlFor="problem" className="text-base font-medium">What do you need to achieve?</Label>
+        <Label htmlFor="problem" className="text-base font-medium">Workshop Objective</Label>
         <Textarea
           id="problem"
-          placeholder="E.g., Align the team on Q3 OKRs, Conduct a product launch retrospective..."
+          placeholder="What do you need to achieve in this workshop?"
           className="min-h-[100px] text-base"
           value={problem}
           onChange={e => setProblem(e.target.value)}
         />
-        <p className="text-sm text-muted-foreground">Be specific about the outcome you want from this workshop.</p>
+        <p className="text-sm text-muted-foreground">Be specific about what you want to achieve.</p>
       </div>
 
       <ItemList
@@ -77,15 +58,19 @@ export function WorkshopObjectives({
         placeholder="Add success metric..."
       />
 
-      <div className="p-4 bg-muted/50 rounded-lg">
-        <h4 className="font-medium mb-2 flex items-center gap-2">
-          <span className="text-primary">💡</span> 
-          Workshop Tip
-        </h4>
-        <p className="text-sm text-muted-foreground">
-          Clear objectives lead to better outcomes. Try to frame your workshop goal as a specific problem to solve or decision to make.
-        </p>
-      </div>
+      <Collapsible 
+        open={isTemplatesOpen} 
+        onOpenChange={setIsTemplatesOpen}
+        className="border rounded-md mt-4 overflow-hidden"
+      >
+        <CollapsibleTrigger className="flex w-full items-center justify-between p-4 hover:bg-accent/20 transition-colors">
+          <span className="font-medium">Or Choose from Workshop Templates</span>
+          <ChevronDown className={`h-4 w-4 transition-transform ${isTemplatesOpen ? 'rotate-180' : ''}`} />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="p-4 border-t bg-muted/10">
+          <TemplateSelector onSelectTemplate={handleTemplateSelect} />
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }

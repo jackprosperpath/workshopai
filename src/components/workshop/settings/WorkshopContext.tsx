@@ -43,12 +43,14 @@ export function WorkshopContext({
       />
 
       <div className="space-y-2">
-        <Label>Context Documents</Label>
+        <Label className="text-base font-medium flex items-center gap-2">
+          <span>Context Documents (Optional)</span>
+        </Label>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Label className="text-sm text-muted-foreground block">
+            <p className="text-sm text-muted-foreground">
               Upload documents to provide additional context for the workshop
-            </Label>
+            </p>
           </TooltipTrigger>
           <TooltipContent>
             Supported formats: PDF, DOC, DOCX, TXT
@@ -57,14 +59,23 @@ export function WorkshopContext({
         <DocumentUpload onDocumentsUpdate={setDocuments} />
       </div>
 
-      <div className="p-4 bg-muted/50 rounded-lg">
-        <h4 className="font-medium mb-2 flex items-center gap-2">
-          <span className="text-primary">💡</span> 
-          Workshop Tip
-        </h4>
-        <p className="text-sm text-muted-foreground">
-          Adding relevant context documents helps the AI create a more targeted workshop experience. Consider including project briefs, relevant data, or previous workshop outputs.
-        </p>
+      <div className="flex justify-end">
+        <Button 
+          onClick={onGenerate} 
+          disabled={loading}
+          className="flex items-center"
+        >
+          {loading ? (
+            <>
+              <span className="animate-spin mr-2">⟳</span>
+              Generating...
+            </>
+          ) : (
+            <>
+              Generate Blueprint <CheckCircle className="ml-2 h-4 w-4" />
+            </>
+          )}
+        </Button>
       </div>
     </div>
   );
