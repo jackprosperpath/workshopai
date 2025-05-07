@@ -52,11 +52,7 @@ const Workshop = () => {
           <>
             <div className="flex flex-col gap-2 mb-6">
               <WorkshopActions />
-              <WorkshopNameEditor 
-                initialName={workshopName}
-                workshopId={workshopId}
-                onNameUpdate={updateWorkshopName}
-              />
+              {/* The workshop name can now be managed in the SimplifiedWorkshopForm */}
             </div>
             
             {/* Display calendar invite info if applicable */}

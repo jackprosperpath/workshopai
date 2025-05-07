@@ -14,7 +14,7 @@ import { LivePresenceLayer } from "./workshop/LivePresenceLayer";
 import { BlueprintGenerator } from "./workshop/BlueprintGenerator";
 
 export default function ConsensusWorkshop() {
-  const [activeTab, setActiveTab] = useState("blueprint");
+  const [activeTab, setActiveTab] = useState("workshop");
   const [loading, setLoading] = useState(false);
   const [searchParams] = useSearchParams();
   const workshopId = searchParams.get('id');
@@ -57,7 +57,7 @@ export default function ConsensusWorkshop() {
   
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
-    if (hash && ['blueprint', 'canvas', 'endorse'].includes(hash)) {
+    if (hash && ['workshop', 'canvas', 'endorse'].includes(hash)) {
       setActiveTab(hash);
     }
   }, []);
@@ -94,11 +94,11 @@ export default function ConsensusWorkshop() {
       <div className="flex-1">
         <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="blueprint">Workshop Design</TabsTrigger>
+            <TabsTrigger value="workshop">Workshop Design</TabsTrigger>
             <TabsTrigger value="canvas">Solution Canvas</TabsTrigger>
             <TabsTrigger value="endorse">Endorsement</TabsTrigger>
           </TabsList>
-          <TabsContent value="blueprint">
+          <TabsContent value="workshop">
             <BlueprintGenerator />
           </TabsContent>
           <TabsContent value="canvas" className="overflow-hidden">

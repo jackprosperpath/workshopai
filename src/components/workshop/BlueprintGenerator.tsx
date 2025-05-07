@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Calendar, InfoIcon } from "lucide-react";
+import { InfoIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
@@ -10,9 +10,8 @@ import { usePromptCanvasSync } from "@/hooks/usePromptCanvasSync";
 import { useWorkshopPersistence } from "@/hooks/useWorkshopPersistence";
 import { useSearchParams } from "react-router-dom";
 import { GeneratedBlueprint } from "./blueprint/GeneratedBlueprint";
-import { BlueprintSteps } from "./blueprint/BlueprintSteps";
-import { BlueprintHeader } from "./blueprint/BlueprintHeader";
 import { BlueprintTabs } from "./blueprint/BlueprintTabs";
+import { SimplifiedWorkshopForm } from "./settings/SimplifiedWorkshopForm";
 import type { Blueprint } from "./types/workshop";
 
 export function BlueprintGenerator() {
@@ -61,9 +60,9 @@ export function BlueprintGenerator() {
   const [loading, setLoading] = useState(false);
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
   const [activeTab, setActiveTab] = useState<string>("settings");
-  const [currentStep, setCurrentStep] = useState<number>(1);
   const [duration, setDuration] = useState(120);
   const [isFromCalendar, setIsFromCalendar] = useState(false);
+  const [workshopName, setWorkshopName] = useState("Untitled Workshop");
   
   const { saveWorkshopData, saveGeneratedBlueprint } = useWorkshopPersistence();
 
@@ -79,20 +78,24 @@ export function BlueprintGenerator() {
             invitation_source_id,
             problem,
             duration,
-            workshop_type
+            workshop_type,
+            name
           `)
           .eq('id', workshopId)
           .single();
 
         if (error) throw error;
         
-        if (data && data.invitation_source_id) {
-          setIsFromCalendar(true);
+        if (data) {
+          if (data.invitation_source_id) {
+            setIsFromCalendar(true);
+          }
           
-          // Pre-fill form with data from calendar invite
+          // Pre-fill form with data from workshop
           if (data.problem) setProblem(data.problem);
           if (data.duration) setDuration(data.duration);
           if (data.workshop_type) setWorkshopType(data.workshop_type as 'online' | 'in-person');
+          if (data.name) setWorkshopName(data.name);
         }
       } catch (error) {
         console.error("Error checking calendar source:", error);
@@ -147,6 +150,18 @@ export function BlueprintGenerator() {
       workshopType,
     });
     
+    // Also update name if it was changed
+    if (workshopId) {
+      try {
+        await supabase
+          .from('workshops')
+          .update({ name: workshopName })
+          .eq('id', workshopId);
+      } catch (error) {
+        console.error("Error updating workshop name:", error);
+      }
+    }
+    
     syncData({ problem, metrics, constraints, selectedModel, selectedFormat, customFormat });
     setLoading(true);
 
@@ -181,18 +196,6 @@ export function BlueprintGenerator() {
     }
   };
 
-  const nextStep = () => {
-    if (currentStep === 1 && !problem) {
-      toast.error("Please specify a workshop objective");
-      return;
-    }
-    setCurrentStep(currentStep + 1);
-  };
-
-  const prevStep = () => {
-    setCurrentStep(currentStep - 1);
-  };
-
   return (
     <div className="space-y-8 pb-10">
       {isFromCalendar && (
@@ -210,11 +213,13 @@ export function BlueprintGenerator() {
         <div className={activeTab === "settings" ? "block" : "hidden"}>
           <Card>
             <CardHeader>
-              <BlueprintHeader currentStep={currentStep} />
+              <h3 className="text-lg font-medium">Workshop Design</h3>
             </CardHeader>
             <CardContent>
-              <BlueprintSteps 
-                currentStep={currentStep}
+              <SimplifiedWorkshopForm 
+                workshopId={workshopId}
+                workshopName={workshopName}
+                setWorkshopName={setWorkshopName}
                 problem={problem}
                 setProblem={setProblem}
                 metrics={metrics}
@@ -225,14 +230,8 @@ export function BlueprintGenerator() {
                 setDuration={setDuration}
                 workshopType={workshopType}
                 setWorkshopType={setWorkshopType}
-                constraints={constraints}
-                constraintInput={constraintInput}
-                setConstraintInput={setConstraintInput}
-                addConstraint={addConstraint}
                 loading={loading}
                 onGenerate={generateBlueprint}
-                nextStep={nextStep}
-                prevStep={prevStep}
               />
             </CardContent>
           </Card>
@@ -244,7 +243,6 @@ export function BlueprintGenerator() {
           ) : (
             <Card>
               <CardContent className="p-8 flex flex-col items-center justify-center">
-                <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium text-center">No Blueprint Generated Yet</h3>
                 <p className="text-muted-foreground text-center mt-2 max-w-md">
                   Configure your workshop setup, then click "Generate Workshop Blueprint" to create your workshop agenda.

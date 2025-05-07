@@ -1,56 +1,40 @@
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Calendar, Info } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card";
+import { CalendarDays, Mail } from "lucide-react";
 
 export function CalendarIntegrationInfo() {
-  const navigate = useNavigate();
-
   return (
-    <div className="mb-8">
-      <h2 className="text-2xl font-bold mb-4">Get Started with Teho</h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Alert className="border-primary/20 bg-primary/5">
-          <Calendar className="h-5 w-5 text-primary" />
-          <AlertTitle className="font-medium">Option 1: Calendar Integration</AlertTitle>
-          <AlertDescription className="mt-2 space-y-2">
-            <p>
-              Create a workshop directly from your calendar by adding 
-              <code className="mx-1 px-1 py-0.5 bg-muted rounded text-sm">agenda@teho.ai</code>
-              as an attendee to any meeting.
+    <Card className="mb-6">
+      <CardContent className="p-5 space-y-4">
+        <div className="flex items-start gap-4">
+          <div className="bg-primary/10 p-3 rounded-full">
+            <CalendarDays className="h-6 w-6 text-primary" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-medium text-lg">Create Workshop from Calendar Invite</h3>
+            <p className="text-muted-foreground">
+              Add <strong>agenda@teho.ai</strong> as an attendee to your calendar invites to automatically 
+              create workshops from your meetings.
             </p>
-            <ul className="list-disc list-inside text-sm space-y-1">
-              <li>Include your agenda in the meeting description</li>
-              <li>We'll send you a link to access your workshop</li>
-              <li>Your calendar-created workshops will appear in your workshop history</li>
-            </ul>
-          </AlertDescription>
-        </Alert>
+          </div>
+        </div>
         
-        <Alert>
-          <Info className="h-5 w-5" />
-          <AlertTitle className="font-medium">Option 2: Create Directly in Teho</AlertTitle>
-          <AlertDescription className="mt-2 space-y-2">
-            <p>
-              Create a workshop directly in the app and customize it to your needs.
+        <div className="flex items-start gap-4">
+          <div className="bg-primary/10 p-3 rounded-full">
+            <Mail className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">
+              After adding <strong>agenda@teho.ai</strong> to your calendar invite, we'll 
+              create a workshop with pre-filled details and send you an access link via email.
             </p>
-            <ul className="list-disc list-inside text-sm space-y-1">
-              <li>Create a blank workshop blueprint</li>
-              <li>Choose from our templates (coming soon)</li>
-              <li>Customize every aspect of your workshop</li>
-            </ul>
-            <Button 
-              onClick={() => navigate("/workshop")} 
-              variant="outline" 
-              className="mt-3"
-            >
-              Create New Workshop
-            </Button>
-          </AlertDescription>
-        </Alert>
-      </div>
-    </div>
+          </div>
+        </div>
+        
+        <div className="text-sm text-center pt-2 border-t text-muted-foreground">
+          Or simply create a workshop directly using the options below
+        </div>
+      </CardContent>
+    </Card>
   );
 }
