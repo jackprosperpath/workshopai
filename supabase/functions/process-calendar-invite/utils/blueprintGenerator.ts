@@ -33,16 +33,30 @@ export async function generateBlueprintFromInvite(
   console.log(`Generating blueprint for workshop: ${workshopId}`);
   
   try {
-    // Call the blueprint generation function
+    // Format attendees for the blueprint generation
+    const formattedAttendees = attendees.map(email => ({
+      email,
+      role: "",  // We don't have roles from the calendar invite
+      count: 1   // Default to 1 person per email
+    }));
+
+    // Extract meeting objective from the description
+    // Remove Google Meet links and other auto-generated content
+    const cleanDescription = description.replace(
+      /-::~:~::~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~::~:~::-([\s\S]*)-::~:~::~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~::~:~::-/g, 
+      ''
+    ).trim();
+    
+    // Call the blueprint generation function with enhanced context
     const { data, error } = await supabase.functions.invoke("generate-workshop-blueprint", {
       body: {
-        context: description,
-        objective: description,
+        context: cleanDescription || summary,
+        objective: cleanDescription || summary,
         duration: durationMinutes,
-        workshopType: "online", // Default to online
+        workshopType: "online", // Default to online for calendar invites
         constraints: "Generated from calendar invite",
         metrics: ["Successful workshop completion"],
-        attendees: attendees.map(email => ({ email, role: "", count: 1 }))
+        attendees: formattedAttendees
       }
     });
     
