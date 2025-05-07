@@ -1,178 +1,130 @@
 
 import { useState, useEffect } from "react";
-import { Calendar, Check, Clock } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Calendar, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 
-interface CalendarInviteInfoProps {
+interface CalendarInviteProps {
   workshopId: string;
 }
 
-export function CalendarInviteInfo({ workshopId }: CalendarInviteInfoProps) {
+export function CalendarInviteInfo({ workshopId }: CalendarInviteProps) {
   const [inviteData, setInviteData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [claimLoading, setClaimLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadInviteData() {
+    const fetchInviteData = async () => {
       try {
-        const { data, error } = await supabase
+        // First we need to determine if this is a UUID or a share_id
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(workshopId);
+        
+        let workshopQuery = supabase
           .from('workshops')
-          .select(`
-            id,
-            name,
-            problem,
-            duration,
-            inbound_invites!inner (
-              id,
-              organizer_email,
-              summary,
-              description,
-              start_time,
-              end_time,
-              attendees,
-              status
-            )
-          `)
-          .eq('id', workshopId)
+          .select('id, name, invitation_source_id');
+        
+        if (isUuid) {
+          workshopQuery = workshopQuery.eq('id', workshopId);
+        } else {
+          workshopQuery = workshopQuery.eq('share_id', workshopId);
+        }
+
+        const { data: workshop, error: workshopError } = await workshopQuery.single();
+
+        if (workshopError) {
+          console.error("Error loading workshop:", workshopError);
+          setError("Could not load workshop data");
+          setLoading(false);
+          return;
+        }
+
+        if (!workshop?.invitation_source_id) {
+          // This workshop wasn't created from a calendar invite
+          setLoading(false);
+          return;
+        }
+
+        // Now fetch the invite data
+        const { data: invite, error: inviteError } = await supabase
+          .from('inbound_invites')
+          .select('*')
+          .eq('id', workshop.invitation_source_id)
           .single();
 
-        if (error) throw error;
-        
-        if (data && data.inbound_invites) {
-          setInviteData({
-            ...data,
-            inviteDetails: data.inbound_invites
-          });
+        if (inviteError) {
+          console.error("Error loading calendar invite data:", inviteError);
+          setError("Could not load calendar invite data");
+          setLoading(false);
+          return;
         }
-      } catch (error) {
-        console.error("Error loading calendar invite data:", error);
-      } finally {
+
+        setInviteData(invite);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error loading calendar invite data:", err);
+        setError("Failed to load calendar information");
         setLoading(false);
       }
-    }
+    };
 
     if (workshopId) {
-      loadInviteData();
+      fetchInviteData();
     }
   }, [workshopId]);
 
-  const claimWorkshop = async () => {
-    try {
-      setClaimLoading(true);
-      
-      const { data: userData } = await supabase.auth.getUser();
-      
-      if (!userData.user) {
-        toast.error("You need to be signed in to claim this workshop");
-        return;
-      }
-      
-      const { error } = await supabase
-        .from('workshops')
-        .update({
-          owner_id: userData.user.id
-        })
-        .eq('id', workshopId);
-        
-      if (error) throw error;
-      
-      toast.success("Workshop claimed successfully");
-      
-      // Refresh the page to update UI
-      window.location.reload();
-    } catch (error) {
-      console.error("Error claiming workshop:", error);
-      toast.error("Failed to claim workshop");
-    } finally {
-      setClaimLoading(false);
-    }
-  };
-
   if (loading) {
     return (
-      <Card className="border-dashed border-amber-300">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center">
-            <Calendar className="mr-2 h-5 w-5 animate-pulse" />
-            <p>Loading calendar information...</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="mb-6">
+        <Skeleton className="h-[80px] w-full rounded-md" />
+      </div>
     );
   }
-  
-  if (!inviteData) {
+
+  if (error || !inviteData) {
+    // Don't show anything if there's no calendar data
     return null;
   }
+
+  const startDate = new Date(inviteData.start_time);
+  const endDate = new Date(inviteData.end_time);
   
-  const { inviteDetails } = inviteData;
-  const startTime = inviteDetails?.start_time ? new Date(inviteDetails.start_time) : null;
-  const endTime = inviteDetails?.end_time ? new Date(inviteDetails.end_time) : null;
+  const formatDate = (date: Date) => {
+    return date.toLocaleString('en-US', {
+      weekday: 'short',
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   return (
-    <Card className="border-amber-200 bg-amber-50 mb-6">
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-lg flex items-center">
-              <Calendar className="mr-2 h-5 w-5 text-amber-600" />
-              Calendar-Generated Workshop
-            </CardTitle>
-            <CardDescription>
-              {inviteDetails?.organizer_email && (
-                <span>From: {inviteDetails.organizer_email}</span>
-              )}
-            </CardDescription>
-          </div>
-          <Badge variant="outline" className="bg-amber-100">
-            {inviteData.owner_id === 'calendar-invite' ? 'Unclaimed' : 'Claimed'}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {startTime && endTime && (
-          <div className="flex items-center mb-3 text-sm text-muted-foreground">
-            <Clock className="mr-1 h-4 w-4" />
-            <span>{format(startTime, 'MMM d, yyyy h:mm a')} - {format(endTime, 'h:mm a')}</span>
-          </div>
-        )}
-        
-        {inviteDetails?.attendees && Array.isArray(inviteDetails.attendees) && inviteDetails.attendees.length > 0 && (
-          <div className="mb-4">
-            <p className="text-sm font-medium mb-1">Attendees:</p>
-            <div className="flex flex-wrap gap-1">
-              {inviteDetails.attendees.map((email: string, idx: number) => (
-                <Badge key={idx} variant="secondary" className="text-xs">
-                  {email}
-                </Badge>
-              ))}
+    <Alert className="mb-6">
+      <Calendar className="h-5 w-5" />
+      <AlertTitle className="font-medium">Calendar Invite</AlertTitle>
+      <AlertDescription>
+        <div className="mt-2">
+          <div><span className="font-semibold">When:</span> {formatDate(startDate)} to {formatDate(endDate)}</div>
+          {inviteData.organizer_email && (
+            <div className="mt-1">
+              <span className="font-semibold">Organizer:</span> {inviteData.organizer_email}
             </div>
+          )}
+          {inviteData.attendees && inviteData.attendees.length > 0 && (
+            <div className="mt-1">
+              <span className="font-semibold">Attendees:</span> {inviteData.attendees.join(', ')}
+            </div>
+          )}
+          <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+            <Mail className="h-4 w-4" />
+            <span>Workshop agenda generated from calendar invite</span>
           </div>
-        )}
-        
-        {inviteData.owner_id === 'calendar-invite' && (
-          <Button 
-            onClick={claimWorkshop} 
-            className="w-full mt-2"
-            disabled={claimLoading}
-          >
-            {claimLoading ? (
-              <span className="flex items-center">
-                <span className="animate-spin mr-2">⟳</span> Claiming...
-              </span>
-            ) : (
-              <span className="flex items-center">
-                <Check className="mr-2 h-4 w-4" /> Claim This Workshop
-              </span>
-            )}
-          </Button>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      </AlertDescription>
+    </Alert>
   );
 }

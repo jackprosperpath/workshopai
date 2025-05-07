@@ -134,6 +134,14 @@ serve(async (req) => {
       return null
     }).filter(Boolean)
     
+    console.log("Organizer email:", email);
+    console.log("Event summary:", summary);
+    console.log("Event description:", description);
+    console.log("Event start time:", startTime.toISOString());
+    console.log("Event end time:", endTime.toISOString());
+    console.log("Event duration (minutes):", durationMinutes);
+    console.log("Attendees:", attendees);
+
     // Store the invitation in the database
     const { data: inviteData, error: inviteError } = await supabase
       .from('inbound_invites')
@@ -155,6 +163,8 @@ serve(async (req) => {
       console.error('Error storing invitation:', inviteError)
       throw inviteError
     }
+
+    console.log("Invite stored with ID:", inviteData.id);
     
     // Create a workshop from this invitation
     const { data: workshopData, error: workshopError } = await supabase
@@ -175,6 +185,8 @@ serve(async (req) => {
       console.error('Error creating workshop:', workshopError)
       throw workshopError
     }
+    
+    console.log("Workshop created with ID:", workshopData.id, "and share_id:", workshopData.share_id);
     
     // Update the invitation with the workshop ID
     await supabase
@@ -199,6 +211,10 @@ serve(async (req) => {
       // Extract host name from email
       const hostName = email.split('@')[0]
       
+      console.log("Preparing to send email to:", email);
+      console.log("Workshop URL:", workshopUrl);
+      console.log("Agenda preview length:", agendaPreview.length);
+
       // Use the new email template
       const emailHtml = agendaEmail({
         hostName,
@@ -206,7 +222,7 @@ serve(async (req) => {
         editorUrl: workshopUrl
       })
       
-      await resend.emails.send({
+      const emailResult = await resend.emails.send({
         from: "Teho AI <noreply@app.teho.ai>",
         to: [email],
         reply_to: email, // Add reply-to header to avoid spam filters
@@ -214,9 +230,11 @@ serve(async (req) => {
         html: emailHtml,
       });
       
+      console.log("Email send result:", JSON.stringify(emailResult));
       console.log("Confirmation email sent to:", email);
     } catch (emailError) {
       console.error("Error sending confirmation email:", emailError);
+      console.error("Error details:", JSON.stringify(emailError, null, 2));
       // Continue with response even if email fails
     }
     
