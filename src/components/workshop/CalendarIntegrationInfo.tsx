@@ -25,8 +25,7 @@ export function CalendarIntegrationInfo() {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">
-              After adding <strong>agenda@teho.ai</strong> to your calendar invite, we'll 
-              create a workshop with pre-filled details and send you an access link via email.
+              
             </p>
           </div>
         </div>
