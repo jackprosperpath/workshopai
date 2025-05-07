@@ -1,10 +1,7 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { CalendarDays } from "lucide-react";
-
 export function CalendarIntegrationInfo() {
-  return (
-    <Card className="mb-6">
+  return <Card className="mb-6">
       <CardContent className="p-5 space-y-4">
         <div className="flex items-start gap-4">
           <div className="bg-primary/10 p-3 rounded-full">
@@ -18,10 +15,7 @@ export function CalendarIntegrationInfo() {
           </div>
         </div>
         
-        <div className="text-sm text-center pt-2 border-t text-muted-foreground">
-          Or simply create a workshop directly using the options below
-        </div>
+        <div className="text-sm text-center pt-2 border-t text-muted-foreground">Or simply create a new workshop below</div>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 }
