@@ -15,6 +15,29 @@ export function agendaEmail({
     materials: string[];
   } | null;
 }) {
+  // Create a simpler, markdown-style preview format
+  let blueprintPreviewText = '';
+  
+  if (blueprintPreview) {
+    blueprintPreviewText = `
+## ${blueprintPreview.title}
+**Total Duration:** ${blueprintPreview.totalDuration} minutes
+
+### Agenda Preview:
+${blueprintPreview.steps && blueprintPreview.steps.length > 0 
+  ? blueprintPreview.steps.map((step, index) => 
+      `${index + 1}. **${step.name}** (${step.duration} min)\n   ${step.description?.substring(0, 100)}${step.description?.length > 100 ? '...' : ''}`
+    ).join('\n\n') + (blueprintPreview.steps.length > 2 ? '\n\n...and more' : '')
+  : 'No agenda items yet'}
+
+### Materials Needed:
+${blueprintPreview.materials && blueprintPreview.materials.length > 0
+  ? blueprintPreview.materials.map(material => `• ${material}`).join('\n') + 
+    (blueprintPreview.materials.length > 3 ? '\n• ...and more' : '')
+  : 'No materials specified'}
+`;
+  }
+
   return `
     <html>
       <body style="font-family:Arial,sans-serif;line-height:1.4;">
@@ -33,29 +56,7 @@ export function agendaEmail({
           
           ${blueprintPreview ? `
           <div style="background:#f9f9f9;padding:20px;border-radius:6px;margin:20px 0;border-left:4px solid #1f2937;">
-            <h3 style="margin-top:0;color:#1f2937;">${blueprintPreview.title}</h3>
-            <p style="margin:5px 0;color:#666;font-size:14px;">Total Duration: ${blueprintPreview.totalDuration} minutes</p>
-            
-            ${blueprintPreview.steps && blueprintPreview.steps.length > 0 ? `
-            <h4 style="margin:15px 0 5px;font-size:15px;color:#1f2937;">Agenda Preview:</h4>
-            <ul style="margin:0;padding-left:20px;">
-              ${blueprintPreview.steps.map(step => `
-                <li style="margin-bottom:8px;">
-                  <strong>${step.name}</strong> (${step.duration} min)<br>
-                  <span style="font-size:13px;color:#666;">${step.description?.substring(0, 100)}${step.description?.length > 100 ? '...' : ''}</span>
-                </li>
-              `).join('')}
-              ${blueprintPreview.steps.length > 2 ? '<li style="font-style:italic;font-size:13px;">...and more</li>' : ''}
-            </ul>
-            ` : ''}
-            
-            ${blueprintPreview.materials && blueprintPreview.materials.length > 0 ? `
-            <h4 style="margin:15px 0 5px;font-size:15px;color:#1f2937;">Materials Needed:</h4>
-            <ul style="margin:0;padding-left:20px;">
-              ${blueprintPreview.materials.map(material => `<li style="margin-bottom:4px;font-size:13px;">${material}</li>`).join('')}
-              ${blueprintPreview.materials.length > 3 ? '<li style="font-style:italic;font-size:13px;">...and more</li>' : ''}
-            </ul>
-            ` : ''}
+            <pre style="white-space:pre-wrap;margin:0;font-family:inherit;font-size:14px;line-height:1.5;">${blueprintPreviewText}</pre>
           </div>
           ` : ''}
           
