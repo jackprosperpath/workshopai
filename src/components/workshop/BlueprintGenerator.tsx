@@ -78,6 +78,7 @@ export function BlueprintGenerator() {
   );
 
   const [activeTab, setActiveTab] = useState<string>("settings");
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   // Check for existing blueprint
   useEffect(() => {
@@ -99,7 +100,11 @@ export function BlueprintGenerator() {
           if (data.generated_blueprint) {
             const blueprintData = data.generated_blueprint as Blueprint;
             setBlueprint(blueprintData);
-            setActiveTab("blueprint");
+            
+            // Only set the tab to blueprint on initial load, not on subsequent data fetches
+            if (!initialLoadComplete) {
+              setActiveTab("blueprint");
+            }
           }
           
           // Load all other form values to persist between tab switches
@@ -137,14 +142,18 @@ export function BlueprintGenerator() {
           
           if (data.workshop_type) setWorkshopType(data.workshop_type as 'online' | 'in-person');
           if (data.name) setWorkshopName(data.name);
+          
+          // Mark initial load as complete
+          setInitialLoadComplete(true);
         }
       } catch (error) {
         console.error("Error checking existing blueprint:", error);
+        setInitialLoadComplete(true);
       }
     }
 
     checkExistingBlueprint();
-  }, [workshopId, setBlueprint, setProblem, setMetrics, setConstraints, setSelectedModel, updateFormat, setCustomFormat, setWorkshopType, setWorkshopName]);
+  }, [workshopId, setBlueprint, setProblem, setMetrics, setConstraints, setSelectedModel, updateFormat, setCustomFormat, setWorkshopType, setWorkshopName, initialLoadComplete]);
 
   const handleGenerateBlueprint = async () => {
     const result = await generateBlueprint({
