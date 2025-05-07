@@ -49,7 +49,7 @@ export function WorkshopSetupForm({
     <div>
       {errorMessage && (
         <div className="mb-6">
-          <ErrorMessage message={errorMessage} />
+          <ErrorMessage errorMessage={errorMessage} />
         </div>
       )}
 
