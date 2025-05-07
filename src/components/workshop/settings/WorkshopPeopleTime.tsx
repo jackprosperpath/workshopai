@@ -176,7 +176,6 @@ export function WorkshopPeopleTime({
                 value={attendee.email || ""}
                 onChange={(e) => updateAttendee(index, "email", e.target.value)} 
                 className="col-span-6" 
-                readOnly={!!calendarInviteData?.attendees}
               />
               <Input 
                 placeholder="Role (e.g., Facilitator)" 

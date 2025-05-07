@@ -1,50 +1,45 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Attendee } from "@/components/workshop/types/workshop";
 
-export function useWorkshopSettings(workshopId: string | null) {
-  const [isFromCalendar, setIsFromCalendar] = useState(false);
-  const [workshopName, setWorkshopName] = useState("Untitled Workshop");
-  const [duration, setDuration] = useState(120);
+export const useWorkshopSettings = (workshopId: string | null) => {
+  const [workshopName, setWorkshopName] = useState<string>("Untitled Workshop");
+  const [duration, setDuration] = useState<number>(120); // Default 2 hours
   const [workshopType, setWorkshopType] = useState<'online' | 'in-person'>('online');
-  
-  // Check if this workshop was created from a calendar invite
-  useEffect(() => {
-    async function checkCalendarSource() {
-      if (!workshopId) return;
+  const [isFromCalendar, setIsFromCalendar] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
+  useEffect(() => {
+    const fetchWorkshopSettings = async () => {
+      if (!workshopId) return;
+      
+      setLoading(true);
       try {
         const { data, error } = await supabase
           .from('workshops')
-          .select(`
-            invitation_source_id,
-            problem,
-            duration,
-            workshop_type,
-            name
-          `)
+          .select('name, duration, workshop_type, invitation_source_id')
           .eq('id', workshopId)
           .single();
 
-        if (error) throw error;
-        
+        if (error) {
+          console.error("Error fetching workshop settings:", error);
+          return;
+        }
+
         if (data) {
-          if (data.invitation_source_id) {
-            setIsFromCalendar(true);
-          }
-          
-          // Pre-fill form with data from workshop
+          if (data.name) setWorkshopName(data.name);
           if (data.duration) setDuration(data.duration);
           if (data.workshop_type) setWorkshopType(data.workshop_type as 'online' | 'in-person');
-          if (data.name) setWorkshopName(data.name);
+          setIsFromCalendar(!!data.invitation_source_id);
         }
       } catch (error) {
-        console.error("Error checking calendar source:", error);
+        console.error("Error in fetchWorkshopSettings:", error);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
 
-    checkCalendarSource();
+    fetchWorkshopSettings();
   }, [workshopId]);
 
   return {
@@ -55,5 +50,6 @@ export function useWorkshopSettings(workshopId: string | null) {
     setDuration,
     workshopType,
     setWorkshopType,
+    loading,
   };
-}
+};

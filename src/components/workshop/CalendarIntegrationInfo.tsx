@@ -1,5 +1,7 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { CalendarDays } from "lucide-react";
+
 export function CalendarIntegrationInfo() {
   return <Card className="mb-6">
       <CardContent className="p-5 space-y-4">

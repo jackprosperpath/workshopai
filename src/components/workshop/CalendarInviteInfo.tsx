@@ -121,7 +121,7 @@ export function CalendarInviteInfo({ workshopId }: CalendarInviteProps) {
           )}
           <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
             <Mail className="h-4 w-4" />
-            <span>Workshop agenda generated from calendar invite</span>
+            <span>Workshop agenda generated from calendar invite - you can edit any fields below</span>
           </div>
         </div>
       </AlertDescription>
