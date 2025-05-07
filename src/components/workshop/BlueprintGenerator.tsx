@@ -13,6 +13,7 @@ import { EmptyBlueprintState } from "./blueprint/EmptyBlueprintState";
 import { useBlueprintGenerator } from "@/hooks/useBlueprintGenerator";
 import { useWorkshopSettings } from "@/hooks/useWorkshopSettings";
 import type { Blueprint } from "./types/workshop";
+import type { PredefinedFormat } from "@/types/OutputFormat";
 
 export function BlueprintGenerator() {
   const [searchParams] = useSearchParams();
@@ -116,7 +117,18 @@ export function BlueprintGenerator() {
           if (data.selected_model) setSelectedModel(data.selected_model as any);
           
           if (data.selected_format && typeof data.selected_format === 'object' && 'type' in data.selected_format) {
-            updateFormat(data.selected_format.type);
+            // Ensure we're casting to the correct PredefinedFormat type
+            const formatType = data.selected_format.type;
+            if (typeof formatType === 'string' && (
+                formatType === 'detailed-report' || 
+                formatType === 'prd' || 
+                formatType === 'project-proposal' || 
+                formatType === 'strategic-plan' || 
+                formatType === 'business-case' ||
+                formatType === 'other'
+              )) {
+              updateFormat(formatType as PredefinedFormat);
+            }
           }
           
           if (data.custom_format && typeof data.custom_format === 'string') {
