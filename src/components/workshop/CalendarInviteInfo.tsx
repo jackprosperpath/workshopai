@@ -32,7 +32,7 @@ export function CalendarInviteInfo({ workshopId }: CalendarInviteProps) {
           workshopQuery = workshopQuery.eq('share_id', workshopId);
         }
 
-        const { data: workshop, error: workshopError } = await workshopQuery.single();
+        const { data: workshop, error: workshopError } = await workshopQuery.maybeSingle();
 
         if (workshopError) {
           console.error("Error loading workshop:", workshopError);
@@ -52,7 +52,7 @@ export function CalendarInviteInfo({ workshopId }: CalendarInviteProps) {
           .from('inbound_invites')
           .select('*')
           .eq('id', workshop.invitation_source_id)
-          .single();
+          .maybeSingle();
 
         if (inviteError) {
           console.error("Error loading calendar invite data:", inviteError);

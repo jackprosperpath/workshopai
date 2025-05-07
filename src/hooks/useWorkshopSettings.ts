@@ -19,7 +19,7 @@ export const useWorkshopSettings = (workshopId: string | null) => {
           .from('workshops')
           .select('name, duration, workshop_type, invitation_source_id')
           .eq('id', workshopId)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error("Error fetching workshop settings:", error);

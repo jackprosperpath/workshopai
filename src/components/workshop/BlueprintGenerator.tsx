@@ -17,6 +17,7 @@ export function BlueprintGenerator() {
   const [searchParams] = useSearchParams();
   const workshopId = searchParams.get('id');
   const [attendees, setAttendees] = useState<Attendee[]>([]);
+  const [shouldLoadFromCalendar, setShouldLoadFromCalendar] = useState<boolean>(true);
 
   // Use our hooks for state management
   const {
@@ -80,7 +81,7 @@ export function BlueprintGenerator() {
   // Fetch attendees when workshop ID changes
   useEffect(() => {
     const fetchAttendees = async () => {
-      if (!workshopId) return;
+      if (!workshopId || !shouldLoadFromCalendar) return;
       
       try {
         // First check if this is from a calendar invite
@@ -113,14 +114,21 @@ export function BlueprintGenerator() {
             count: 1
           })) : [];
           
-        setAttendees(formattedAttendees);
+        // Only update if we have new attendees and they haven't been edited yet
+        if (formattedAttendees.length > 0 && 
+           (attendees.length === 0 || 
+            (attendees.length === 1 && !attendees[0].email))) {
+          setAttendees(formattedAttendees);
+          // After loading from calendar once, don't reload to avoid overwriting user edits
+          setShouldLoadFromCalendar(false);
+        }
       } catch (error) {
         console.error("Error fetching attendees:", error);
       }
     };
     
     fetchAttendees();
-  }, [workshopId]);
+  }, [workshopId, attendees, shouldLoadFromCalendar]);
 
   // Sync the blueprint from generation to our local state
   if (generatedBlueprint && generatedBlueprint !== blueprint) {
@@ -168,6 +176,8 @@ export function BlueprintGenerator() {
   // Update attendees with role information from the workshop settings
   const updateAttendeeRoles = (updatedAttendees: Attendee[]) => {
     setAttendees(updatedAttendees);
+    // Once user has explicitly updated attendees, don't reload from calendar
+    setShouldLoadFromCalendar(false);
   };
 
   return (

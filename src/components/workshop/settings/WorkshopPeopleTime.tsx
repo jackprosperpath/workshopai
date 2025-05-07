@@ -51,7 +51,7 @@ export function WorkshopPeopleTime({
             .eq('id', workshopId)
             .single();
 
-          if (workshopError || !workshop.invitation_source_id) return;
+          if (workshopError || !workshop?.invitation_source_id) return;
 
           const { data: invite, error: inviteError } = await supabase
             .from('inbound_invites')
@@ -63,8 +63,8 @@ export function WorkshopPeopleTime({
 
           setCalendarInviteData(invite);
           
-          // Pre-populate attendees if available from calendar invite
-          if (invite.attendees && Array.isArray(invite.attendees) && invite.attendees.length > 0) {
+          // Pre-populate attendees if available from calendar invite, but only on initial load
+          if (invite.attendees && Array.isArray(invite.attendees) && invite.attendees.length > 0 && localAttendees.length <= 1 && !localAttendees[0].email) {
             const calendarAttendees = invite.attendees.map((email: string) => ({
               email,
               role: "",
@@ -83,7 +83,7 @@ export function WorkshopPeopleTime({
 
       fetchCalendarData();
     }
-  }, [workshopId, updateAttendees]);
+  }, [workshopId, updateAttendees, localAttendees]);
 
   const addAttendee = () => {
     const newAttendees = [...localAttendees, { role: "", count: 1 }];
@@ -162,7 +162,7 @@ export function WorkshopPeopleTime({
             <Users className="h-4 w-4 text-muted-foreground" />
             {calendarInviteData?.attendees && (
               <span className="text-xs text-muted-foreground">
-                From calendar invite
+                From calendar invite (editable)
               </span>
             )}
           </div>
