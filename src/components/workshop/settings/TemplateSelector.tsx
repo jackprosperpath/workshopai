@@ -1,3 +1,4 @@
+
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,9 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Clock } from "lucide-react";
 import { WORKSHOP_TEMPLATES, TEMPLATE_CATEGORIES } from "@/data/workshopTemplates";
 import type { WorkshopTemplate } from "@/types/WorkshopTemplates";
+
 interface TemplateSelectorProps {
   onSelectTemplate: (template: WorkshopTemplate) => void;
 }
+
 export function TemplateSelector({
   onSelectTemplate
 }: TemplateSelectorProps) {
@@ -37,7 +40,11 @@ export function TemplateSelector({
                         </ul>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {template.idealFor.map((role, index) => {})}
+                        {template.idealFor.map((role, index) => (
+                          <Badge key={index} variant="outline">
+                            {role}
+                          </Badge>
+                        ))}
                       </div>
                       <Button className="w-full" onClick={() => onSelectTemplate(template)}>
                         Use Template
