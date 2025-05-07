@@ -103,15 +103,26 @@ export function BlueprintGenerator() {
           
           // Load all other form values to persist between tab switches
           if (data.problem) setProblem(data.problem);
-          if (data.metrics) setMetrics(data.metrics);
-          if (data.constraints) setConstraints(data.constraints);
+          
+          // Fix the type issues by explicitly checking and converting types
+          if (data.metrics && Array.isArray(data.metrics)) {
+            setMetrics(data.metrics as string[]);
+          }
+          
+          if (data.constraints && Array.isArray(data.constraints)) {
+            setConstraints(data.constraints as string[]);
+          }
+          
           if (data.selected_model) setSelectedModel(data.selected_model as any);
-          if (data.selected_format && updateFormat) {
+          
+          if (data.selected_format && typeof data.selected_format === 'object' && 'type' in data.selected_format) {
             updateFormat(data.selected_format.type);
           }
-          if (data.custom_format && setCustomFormat) {
+          
+          if (data.custom_format && typeof data.custom_format === 'string') {
             setCustomFormat(data.custom_format);
           }
+          
           if (data.workshop_type) setWorkshopType(data.workshop_type as 'online' | 'in-person');
           if (data.name) setWorkshopName(data.name);
         }

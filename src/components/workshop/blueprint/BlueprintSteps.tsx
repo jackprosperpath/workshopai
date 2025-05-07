@@ -26,6 +26,7 @@ interface BlueprintStepsProps {
   onGenerate: () => void;
   nextStep: () => void;
   prevStep: () => void;
+  workshopId: string | null; // Add the missing required prop
 }
 
 export function BlueprintSteps({
@@ -48,6 +49,7 @@ export function BlueprintSteps({
   onGenerate,
   nextStep,
   prevStep,
+  workshopId, // Pass it to the components that need it
 }: BlueprintStepsProps) {
   return (
     <>
@@ -68,6 +70,7 @@ export function BlueprintSteps({
           setDuration={setDuration}
           workshopType={workshopType}
           setWorkshopType={setWorkshopType}
+          workshopId={workshopId}
         />
       )}
       
