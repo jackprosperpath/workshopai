@@ -28,6 +28,28 @@ Design a workshop blueprint optimized for: ${objective}
 Keep in mind these constraints: ${constraints || 'None specified'}
 Total duration should be: ${duration || '120'} minutes`;
 
+    // Define the response format structure
+    const responseFormatObject = {
+      title: "Workshop title",
+      description: "Brief description of the workshop",
+      objective: "Main workshop objective",
+      totalDuration: "Total workshop duration in minutes",
+      materials: ["List of required materials"],
+      preparation: ["Preparation steps before the workshop"],
+      steps: [
+        {
+          name: "Step or activity name",
+          duration: "Duration in minutes",
+          description: "Detailed description of the activity",
+          facilitation_notes: "Tips for the facilitator"
+        }
+      ],
+      expected_outcomes: ["List of expected outcomes"],
+      follow_up: ["Suggested follow-up activities"]
+    };
+
+    console.log(`Sending request to OpenAI API for workshop: ${objective}`);
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -38,17 +60,25 @@ Total duration should be: ${duration || '120'} minutes`;
         model: 'gpt-4o',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Create a detailed workshop blueprint for: ${objective}` }
+          { role: 'user', content: `Create a detailed workshop blueprint for: ${objective}. 
+Return your response as a JSON object that follows this format: ${JSON.stringify(responseFormatObject, null, 2)}` }
         ],
         response_format: { type: "json_object" },
         temperature: 0.7,
       }),
     });
 
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("OpenAI API error:", errorData);
+      throw new Error(`OpenAI API returned status ${response.status}: ${JSON.stringify(errorData)}`);
+    }
+
     const data = await response.json();
     
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      throw new Error('Invalid response from OpenAI API');
+      console.error("Invalid response structure from OpenAI:", data);
+      throw new Error('Invalid response structure from OpenAI API');
     }
     
     // Parse the JSON response from OpenAI
@@ -57,6 +87,7 @@ Total duration should be: ${duration || '120'} minutes`;
     
     try {
       blueprint = JSON.parse(blueprintText);
+      console.log("Successfully generated blueprint");
     } catch (e) {
       console.error("Failed to parse JSON response:", blueprintText);
       throw new Error('Failed to parse workshop blueprint');

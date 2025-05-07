@@ -63,6 +63,7 @@ export function BlueprintGenerator() {
   const [duration, setDuration] = useState(120);
   const [isFromCalendar, setIsFromCalendar] = useState(false);
   const [workshopName, setWorkshopName] = useState("Untitled Workshop");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   const { saveWorkshopData, saveGeneratedBlueprint } = useWorkshopPersistence();
 
@@ -139,6 +140,9 @@ export function BlueprintGenerator() {
       return;
     }
 
+    // Clear any previous errors
+    setErrorMessage(null);
+
     await saveWorkshopData({
       problem,
       metrics,
@@ -176,7 +180,18 @@ export function BlueprintGenerator() {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Function invoke error:", error);
+        throw new Error(`Function error: ${error.message}`);
+      }
+
+      if (!data) {
+        throw new Error("No data returned from function");
+      }
+
+      if (data.error) {
+        throw new Error(`API error: ${data.error}`);
+      }
 
       if (data.blueprint) {
         // Properly type-cast the blueprint data
@@ -190,6 +205,7 @@ export function BlueprintGenerator() {
       }
     } catch (error) {
       console.error("Error generating blueprint:", error);
+      setErrorMessage(error instanceof Error ? error.message : "Failed to generate workshop blueprint");
       toast.error("Failed to generate workshop blueprint");
     } finally {
       setLoading(false);
@@ -216,6 +232,12 @@ export function BlueprintGenerator() {
               <h3 className="text-lg font-medium">Workshop Design</h3>
             </CardHeader>
             <CardContent>
+              {errorMessage && (
+                <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-md text-sm text-destructive">
+                  <p className="font-medium">Error generating blueprint:</p>
+                  <p>{errorMessage}</p>
+                </div>
+              )}
               <SimplifiedWorkshopForm 
                 workshopId={workshopId}
                 workshopName={workshopName}
