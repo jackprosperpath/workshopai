@@ -1,13 +1,13 @@
 
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
-import PostItBackground from "./PostItBackground";
+import { HeroBackgroundAnimation } from "./HeroBackgroundAnimation";
 
 export const Hero = () => {
   return (
     <section className="relative flex flex-col items-center text-center py-32 px-8 overflow-hidden">
-      {/* Lo-fi Post-it animated background behind everything else */}
-      <PostItBackground />
+      {/* Full-page animated background behind everything else */}
+      <HeroBackgroundAnimation />
       <div className="max-w-3xl relative z-10">
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
           Co-create with your team & AI
