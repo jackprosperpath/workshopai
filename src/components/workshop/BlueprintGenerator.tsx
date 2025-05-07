@@ -170,41 +170,43 @@ export function BlueprintGenerator() {
     <div className="space-y-8 pb-10">
       <CalendarSourceInfo isFromCalendar={isFromCalendar} />
       
-      <div className="w-full">
-        <div className={activeTab === "settings" ? "block" : "hidden"}>
-          <WorkshopSetupForm 
-            errorMessage={errorMessage}
-            workshopId={workshopId}
-            workshopName={workshopName}
-            setWorkshopName={setWorkshopName}
-            problem={problem}
-            setProblem={setProblem}
-            metrics={metrics}
-            metricInput={metricInput}
-            setMetricInput={setMetricInput}
-            addMetric={addMetric}
-            duration={duration}
-            setDuration={setDuration}
-            workshopType={workshopType}
-            setWorkshopType={setWorkshopType}
-            loading={loading}
-            onGenerate={handleGenerateBlueprint}
-          />
-        </div>
-
-        <div className={activeTab === "blueprint" ? "block" : "hidden"}>
-          {blueprint ? (
-            <GeneratedBlueprint blueprint={blueprint} />
-          ) : (
-            <EmptyBlueprintState onNavigateToSettings={() => setActiveTab("settings")} />
-          )}
-        </div>
-
+      <div className="w-full mb-6">
         <BlueprintTabs 
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           blueprint={blueprint}
         />
+        
+        <div className="mt-6">
+          <div className={activeTab === "settings" ? "block" : "hidden"}>
+            <WorkshopSetupForm 
+              errorMessage={errorMessage}
+              workshopId={workshopId}
+              workshopName={workshopName}
+              setWorkshopName={setWorkshopName}
+              problem={problem}
+              setProblem={setProblem}
+              metrics={metrics}
+              metricInput={metricInput}
+              setMetricInput={setMetricInput}
+              addMetric={addMetric}
+              duration={duration}
+              setDuration={setDuration}
+              workshopType={workshopType}
+              setWorkshopType={setWorkshopType}
+              loading={loading}
+              onGenerate={handleGenerateBlueprint}
+            />
+          </div>
+
+          <div className={activeTab === "blueprint" ? "block" : "hidden"}>
+            {blueprint ? (
+              <GeneratedBlueprint blueprint={blueprint} />
+            ) : (
+              <EmptyBlueprintState onNavigateToSettings={() => setActiveTab("settings")} />
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
