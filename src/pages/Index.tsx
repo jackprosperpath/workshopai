@@ -6,12 +6,14 @@ import { HowItWorks } from "@/components/HowItWorks";
 import { Testimonials } from "@/components/Testimonials";
 import { Pricing } from "@/components/Pricing";
 import { CTA } from "@/components/CTA";
+import { LogoStrip } from "@/components/LogoStrip";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       <Hero />
+      <LogoStrip />
       <Features />
       <HowItWorks />
       <Testimonials />
