@@ -19,7 +19,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    const siteUrl = Deno.env.get("SITE_URL") ?? "https://workshopai.lovable.app";
+    const siteUrl = Deno.env.get("SITE_URL") ?? "https://app.teho.ai";
     const isDevelopment = siteUrl.includes("localhost") || siteUrl.includes("127.0.0.1");
     
     console.log("Environment variables check:");
@@ -182,18 +182,18 @@ serve(async (req) => {
     try {
       // Using the Resend API to send the email invite
       const emailParams = {
-        from: "Workshop AI <onboarding@resend.dev>", 
+        from: "Teho AI <noreply@app.teho.ai>", 
         to: [isDevelopment && inviterEmail ? inviterEmail : normalizedEmail],
-        subject: `You've been invited to collaborate on a Workshop AI project`,
+        subject: `You've been invited to collaborate on a Teho AI workshop`,
         html: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #3b82f6;">Workshop Collaboration Invite</h2>
+            <h2 style="color: #4F46E5;">Workshop Collaboration Invite</h2>
             <p>You've been invited to collaborate on the workshop "${workshopData.name}".</p>
             ${isDevelopment && inviterEmail !== normalizedEmail ? 
               `<p><strong>Note:</strong> This is a development environment email. In production, this would be sent to: ${normalizedEmail}</p>` : ''}
             <p>Click the button below to join:</p>
             <a href="${siteUrl}/workshop?id=${workshopData.share_id || workshopData.id}&invite=${invitation.id}" 
-               style="display: inline-block; background-color: #3b82f6; color: white; 
+               style="display: inline-block; background-color: #4F46E5; color: white; 
                       padding: 10px 20px; text-decoration: none; border-radius: 5px; 
                       margin: 15px 0;">
               Join Workshop
@@ -260,6 +260,7 @@ serve(async (req) => {
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
+        
       }
     );
   }

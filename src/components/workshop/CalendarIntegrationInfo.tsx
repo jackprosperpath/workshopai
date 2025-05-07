@@ -6,7 +6,7 @@ import { toast } from "@/components/ui/sonner";
 
 export function CalendarIntegrationInfo() {
   const copyEmailToClipboard = () => {
-    navigator.clipboard.writeText("workshop@workshopai.app")
+    navigator.clipboard.writeText("agenda@teho.ai")
       .then(() => toast.success("Email address copied to clipboard"))
       .catch(err => toast.error("Failed to copy email address"));
   };
@@ -31,7 +31,7 @@ export function CalendarIntegrationInfo() {
                 <h4 className="font-medium mb-1">How it works</h4>
                 <ol className="text-sm text-muted-foreground space-y-2 ml-5 list-decimal">
                   <li>Create a calendar invite in Google Calendar or Outlook</li>
-                  <li>Add <span className="font-mono bg-accent/10 px-1 rounded">workshop@workshopai.app</span> as an attendee</li>
+                  <li>Add <span className="font-mono bg-accent/10 px-1 rounded">agenda@teho.ai</span> as an attendee</li>
                   <li>Fill in your meeting details, title, and description</li>
                   <li>Send the invite</li>
                   <li>Our system will automatically generate a workshop blueprint</li>
