@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
-import { Component, parse } from "npm:ical@0.8.0"
+import ical from "npm:ical@0.8.0"
 import { Resend } from "npm:resend@3.1.0"
 import { simpleParser } from "npm:mailparser@3.6.6"
 import { agendaEmail } from "../_shared/emailTemplates.ts"
@@ -83,8 +83,9 @@ serve(async (req) => {
       throw new Error('Missing required parameters: ICS content or sender email')
     }
     
-    // Parse the ICS file
-    const parsedIcs = parse(rawIcs)
+    // Parse the ICS file - FIXED LINE
+    console.log('Attempting to parse ICS file...')
+    const parsedIcs = ical.parseICS(rawIcs)
     console.log('Parsed ICS data:', JSON.stringify(parsedIcs))
     
     // Get the first event from the ICS file
@@ -94,7 +95,7 @@ serve(async (req) => {
       throw new Error('No events found in the ICS file')
     }
     
-    const event = events[0] as Component
+    const event = events[0] as ical.CalendarComponent
     
     if (!event.start || !event.end) {
       throw new Error('Event start or end time missing')
