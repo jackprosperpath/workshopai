@@ -23,6 +23,7 @@ export function WorkshopList({ onCreateWorkshop }: WorkshopListProps) {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {
         console.log("No authenticated user found");
+        setIsLoadingWorkshops(false);
         return;
       }
 
@@ -38,32 +39,44 @@ export function WorkshopList({ onCreateWorkshop }: WorkshopListProps) {
       }
 
       // Then get workshops created from calendar invites with the user's email
-      const { data: calendarWorkshops, error: calendarError } = await supabase
+      const { data: calendarInvites, error: invitesError } = await supabase
         .from('inbound_invites')
-        .select('workshop_id, organizer_email, summary, created_at, status, workshops(*)')
+        .select('id, workshop_id, organizer_email, summary, created_at, status')
         .eq('organizer_email', userData.user.email)
         .not('workshop_id', 'is', null)
         .eq('status', 'processed')
         .order('created_at', { ascending: false });
 
-      if (calendarError) {
-        throw calendarError;
+      if (invitesError) {
+        throw invitesError;
       }
 
-      // Transform calendar workshops to match the owned workshops format
-      const transformedCalendarWorkshops = calendarWorkshops
-        .filter(invite => invite.workshops) // Ensure the workshop exists
-        .map(invite => ({
-          ...invite.workshops,
-          source: 'calendar',
-          invitation_id: invite.workshop_id // Use workshop_id from invite instead of id
+      // For each calendar invite, fetch the workshop details
+      let calendarWorkshops = [];
+      if (calendarInvites && calendarInvites.length > 0) {
+        const workshopIds = calendarInvites.map(invite => invite.workshop_id);
+        
+        const { data: inviteWorkshops, error: workshopsError } = await supabase
+          .from('workshops')
+          .select('*')
+          .in('id', workshopIds);
+          
+        if (workshopsError) {
+          throw workshopsError;
+        }
+
+        // Annotate calendar workshops with source info
+        calendarWorkshops = inviteWorkshops.map(workshop => ({
+          ...workshop,
+          source: 'calendar'
         }));
+      }
 
       // Combine both sets of workshops, removing duplicates
       const allWorkshops = [...ownedWorkshops];
       
       // Add calendar workshops that don't already exist in owned workshops
-      transformedCalendarWorkshops.forEach(calendarWorkshop => {
+      calendarWorkshops.forEach(calendarWorkshop => {
         if (!allWorkshops.some(workshop => workshop.id === calendarWorkshop.id)) {
           allWorkshops.push(calendarWorkshop);
         }
@@ -71,7 +84,8 @@ export function WorkshopList({ onCreateWorkshop }: WorkshopListProps) {
       
       // Sort by updated_at
       allWorkshops.sort((a, b) => 
-        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        new Date(b.updated_at || b.created_at).getTime() - 
+        new Date(a.updated_at || a.created_at).getTime()
       );
       
       setWorkshops(allWorkshops);

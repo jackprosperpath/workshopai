@@ -130,20 +130,26 @@ function parseIcsData(rawIcs: string): {
 }
 
 // Function to find existing user by email
-async function findExistingUser(supabase: any, email: string): Promise<string> {
+async function findExistingUser(supabase: any, email: string): Promise<string | null> {
   console.log("Checking if organizer has an existing account...");
-  const { data: existingUsers, error: userError } = await supabase
-    .from('auth')
-    .select('users.id')
-    .eq('users.email', email)
-    .single();
   
-  if (!userError && existingUsers) {
-    console.log(`Found existing user with ID: ${existingUsers.id}`);
-    return existingUsers.id;
+  // Query to find a user with the provided email
+  const { data: users, error } = await supabase.auth.admin.listUsers();
+  
+  if (error) {
+    console.error("Error fetching users:", error);
+    return null;
+  }
+  
+  // Find the user with matching email
+  const matchingUser = users?.users?.find(user => user.email === email);
+  
+  if (matchingUser) {
+    console.log(`Found existing user with ID: ${matchingUser.id}`);
+    return matchingUser.id;
   } else {
-    console.log("No existing user found, using 'calendar-invite' as owner_id");
-    return 'calendar-invite';
+    console.log("No existing user found with that email");
+    return null;
   }
 }
 
@@ -183,16 +189,19 @@ async function storeInvitation(
 // Function to create workshop from invitation
 async function createWorkshopFromInvite(
   supabase: any,
-  ownerId: string,
+  ownerId: string | null,
   summary: string,
   description: string,
   durationMinutes: number,
   inviteId: string
 ): Promise<{ id: string; share_id: string }> {
+  // If no ownerId was found, use a special identifier for calendar-based workshops
+  const effectiveOwnerId = ownerId || 'calendar-invite';
+  
   const { data: workshopData, error: workshopError } = await supabase
     .from('workshops')
     .insert({
-      owner_id: ownerId,
+      owner_id: effectiveOwnerId,
       share_id: crypto.randomUUID().substring(0, 8),
       name: summary,
       problem: description,
@@ -208,7 +217,7 @@ async function createWorkshopFromInvite(
     throw workshopError;
   }
   
-  console.log("Workshop created with ID:", workshopData.id, "and share_id:", workshopData.share_id);
+  console.log("Workshop created with ID:", workshopData.id, "share_id:", workshopData.share_id, "and owner_id:", effectiveOwnerId);
   return workshopData;
 }
 
@@ -310,6 +319,7 @@ serve(async (req) => {
     
     // Check if the organizer already has a Teho account
     const ownerId = await findExistingUser(supabase, email);
+    console.log("User lookup result:", ownerId ? `Found user: ${ownerId}` : "No user found");
 
     // Store the invitation in the database
     const inviteId = await storeInvitation(
