@@ -24,7 +24,8 @@ export async function sendConfirmationEmail(
     } : null;
 
     console.log("Workshop URL:", workshopUrl);
-    console.log("Agenda preview length:", description.length);
+    console.log("Description length:", description.length);
+    console.log("Blueprint preview available:", !!blueprintPreview);
     console.log("Preparing to send email to:", email);
 
     // Send the email

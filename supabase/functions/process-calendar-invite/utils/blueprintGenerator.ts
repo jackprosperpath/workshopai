@@ -31,6 +31,10 @@ export async function generateBlueprintFromInvite(
   attendees: string[]
 ): Promise<Blueprint> {
   console.log(`Generating blueprint for workshop: ${workshopId}`);
+  console.log(`Summary: ${summary}`);
+  console.log(`Description: ${description}`);
+  console.log(`Duration: ${durationMinutes} minutes`);
+  console.log(`Attendees: ${attendees.join(', ')}`);
   
   try {
     // Format attendees for the blueprint generation
@@ -47,7 +51,10 @@ export async function generateBlueprintFromInvite(
       ''
     ).trim();
     
+    console.log(`Clean description: "${cleanDescription}"`);
+    
     // Call the blueprint generation function with enhanced context
+    console.log("Calling generate-workshop-blueprint function...");
     const { data, error } = await supabase.functions.invoke("generate-workshop-blueprint", {
       body: {
         context: cleanDescription || summary,
@@ -65,37 +72,50 @@ export async function generateBlueprintFromInvite(
       throw error;
     }
     
-    console.log("Blueprint generated successfully");
+    console.log("Blueprint generation response:", data);
     
     // If we got a blueprint back, store it with the workshop
     if (data?.blueprint) {
+      console.log("Updating workshop with generated blueprint");
       // Update the workshop with the generated blueprint
-      await supabase
+      const { error: updateError } = await supabase
         .from('workshops')
         .update({ 
           generated_blueprint: data.blueprint,
+          problem: cleanDescription || summary,
           updated_at: new Date().toISOString()
         })
         .eq('id', workshopId);
       
-      console.log("Workshop updated with generated blueprint");
+      if (updateError) {
+        console.error("Error updating workshop with generated blueprint:", updateError);
+      } else {
+        console.log("Workshop updated with generated blueprint successfully");
+      }
       
       return data.blueprint;
     }
     
     // If there's no blueprint data, create a simple one
+    console.log("No blueprint data returned, creating default blueprint");
     const simpleBlueprint = createDefaultBlueprint(summary, description, durationMinutes);
     
     // Update the workshop with the simple blueprint
-    await supabase
+    const { error: fallbackError } = await supabase
       .from('workshops')
       .update({ 
         generated_blueprint: simpleBlueprint,
+        problem: cleanDescription || summary,
         updated_at: new Date().toISOString()
       })
       .eq('id', workshopId);
     
-    console.log("Workshop updated with default blueprint");
+    if (fallbackError) {
+      console.error("Error updating workshop with default blueprint:", fallbackError);
+    } else {
+      console.log("Workshop updated with default blueprint successfully");
+    }
+    
     return simpleBlueprint;
     
   } catch (error) {
@@ -109,9 +129,11 @@ export async function generateBlueprintFromInvite(
         .from('workshops')
         .update({ 
           generated_blueprint: fallbackBlueprint,
+          problem: description || summary,
           updated_at: new Date().toISOString()
         })
         .eq('id', workshopId);
+      console.log("Workshop updated with fallback blueprint after error");
     } catch (updateError) {
       console.error("Failed to update workshop with fallback blueprint:", updateError);
     }
