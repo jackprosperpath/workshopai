@@ -52,6 +52,7 @@
     "date-fns": "^3.6.0",
     "dom-to-image": "^2.6.0",
     "embla-carousel-react": "^8.3.0",
+    "fabric": "^5.5.2",
     "ical": "^0.8.0",
     "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",

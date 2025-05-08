@@ -1,3 +1,4 @@
+
 import { useSearchParams } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
 import { usePromptCanvas } from "@/hooks/usePromptCanvas";
@@ -13,7 +14,11 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Attendee, Blueprint } from "./types/workshop";
 import { useWorkshopPersistence } from "@/hooks/useWorkshopPersistence";
 
-export function BlueprintGenerator() {
+interface BlueprintGeneratorProps {
+  onBlueprintGenerated?: (blueprint: Blueprint | null) => void;
+}
+
+export function BlueprintGenerator({ onBlueprintGenerated }: BlueprintGeneratorProps) {
   const [searchParams] = useSearchParams();
   const workshopId = searchParams.get('id');
   const [attendees, setAttendees] = useState<Attendee[]>([]);
@@ -79,6 +84,13 @@ export function BlueprintGenerator() {
     setWorkshopName
   );
 
+  // Pass blueprint data to parent component if callback provided
+  useEffect(() => {
+    if (onBlueprintGenerated && blueprint) {
+      onBlueprintGenerated(blueprint);
+    }
+  }, [blueprint, onBlueprintGenerated]);
+
   // Fetch attendees when workshop ID changes
   useEffect(() => {
     const fetchAttendees = async () => {
@@ -133,6 +145,11 @@ export function BlueprintGenerator() {
   // Sync the blueprint from generation to our local state
   if (generatedBlueprint && generatedBlueprint !== blueprint) {
     setBlueprint(generatedBlueprint);
+    
+    // Also update parent component if callback provided
+    if (onBlueprintGenerated) {
+      onBlueprintGenerated(generatedBlueprint);
+    }
   }
 
   // Data synchronization
@@ -170,6 +187,11 @@ export function BlueprintGenerator() {
     if (result) {
       syncData({ problem, metrics, constraints, selectedModel, selectedFormat, customFormat });
       setActiveTab("blueprint");
+      
+      // Update parent component if callback provided
+      if (onBlueprintGenerated) {
+        onBlueprintGenerated(result);
+      }
     }
   };
 
@@ -187,6 +209,12 @@ export function BlueprintGenerator() {
     try {
       await saveGeneratedBlueprint(updatedBlueprint);
       setBlueprint(updatedBlueprint);
+      
+      // Update parent component if callback provided
+      if (onBlueprintGenerated) {
+        onBlueprintGenerated(updatedBlueprint);
+      }
+      
       return Promise.resolve();
     } catch (error) {
       console.error("Error updating blueprint:", error);
