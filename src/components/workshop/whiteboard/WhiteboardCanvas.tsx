@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
-import { Canvas, Object as FabricObject, Rect, Circle, IText } from "fabric";
+import { fabric } from "fabric";
 import { Button } from "@/components/ui/button";
 import { Pen, Square, Circle as CircleIcon, Text, StickyNote, Move, Trash2, Download } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
@@ -16,7 +16,7 @@ interface WhiteboardCanvasProps {
 
 export function WhiteboardCanvas({ blueprintId, readOnly = false }: WhiteboardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [fabricCanvas, setFabricCanvas] = useState<Canvas | null>(null);
+  const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
   const [activeTool, setActiveTool] = useState<Tool>("select");
   const [activeColor, setActiveColor] = useState("#9b87f5");
   const [searchParams] = useSearchParams();
@@ -27,7 +27,7 @@ export function WhiteboardCanvas({ blueprintId, readOnly = false }: WhiteboardCa
   useEffect(() => {
     if (!canvasRef.current) return;
     
-    const canvas = new Canvas(canvasRef.current, {
+    const canvas = new fabric.Canvas(canvasRef.current, {
       width: window.innerWidth * 0.9,
       height: window.innerHeight * 0.7,
       backgroundColor: "#f9f9f9",
@@ -168,11 +168,11 @@ export function WhiteboardCanvas({ blueprintId, readOnly = false }: WhiteboardCa
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    let obj: FabricObject;
+    let obj: fabric.Object;
     
     switch (activeTool) {
       case "rect":
-        obj = new Rect({
+        obj = new fabric.Rect({
           left: x,
           top: y,
           fill: activeColor,
@@ -182,7 +182,7 @@ export function WhiteboardCanvas({ blueprintId, readOnly = false }: WhiteboardCa
         });
         break;
       case "circle":
-        obj = new Circle({
+        obj = new fabric.Circle({
           left: x,
           top: y,
           fill: activeColor,
@@ -191,7 +191,7 @@ export function WhiteboardCanvas({ blueprintId, readOnly = false }: WhiteboardCa
         });
         break;
       case "text":
-        obj = new IText("Edit this text", {
+        obj = new fabric.IText("Edit this text", {
           left: x,
           top: y,
           fontFamily: "Arial",
@@ -201,7 +201,7 @@ export function WhiteboardCanvas({ blueprintId, readOnly = false }: WhiteboardCa
         break;
       case "sticky":
         // Create a sticky note (rect + text)
-        obj = new Rect({
+        obj = new fabric.Rect({
           left: x,
           top: y,
           fill: "#FFEB3B",
@@ -210,7 +210,7 @@ export function WhiteboardCanvas({ blueprintId, readOnly = false }: WhiteboardCa
           opacity: 1,
         });
         
-        const text = new IText("Sticky note", {
+        const text = new fabric.IText("Sticky note", {
           left: x + 20,
           top: y + 20,
           fontFamily: "Arial",
