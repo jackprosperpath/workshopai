@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { WhiteboardView } from "./WhiteboardView";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
@@ -11,6 +11,7 @@ interface WhiteboardTabProps {
 
 export function WhiteboardTab({ blueprint }: WhiteboardTabProps) {
   const [showInfo, setShowInfo] = useState(true);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
   
   return (
     <div className="space-y-4">
@@ -31,7 +32,9 @@ export function WhiteboardTab({ blueprint }: WhiteboardTabProps) {
         </Alert>
       )}
       
-      <WhiteboardView blueprint={blueprint} />
+      <div ref={canvasContainerRef}>
+        <WhiteboardView blueprint={blueprint} />
+      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Canvas, Object as FabricObject, Rect, Circle, IText } from "fabric";
 import { Button } from "@/components/ui/button";
-import { Pen, Square, Circle as CircleIcon, Text, Sticky as StickyIcon, Move, Trash2, Download } from "lucide-react";
+import { Pen, Square, Circle as CircleIcon, Text, StickyNote, Move, Trash2, Download } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams } from "react-router-dom";
@@ -78,18 +78,39 @@ export function WhiteboardCanvas({ blueprintId, readOnly = false }: WhiteboardCa
       setIsSaving(true);
       const canvasJSON = JSON.stringify(fabricCanvas.toJSON());
       
-      const { error } = await supabase
+      // First check if whiteboard already exists
+      const { data, error: selectError } = await supabase
         .from('workshop_whiteboards')
-        .upsert({
-          workshop_id: workshopId,
-          blueprint_id: blueprintId || null,
-          canvas_data: canvasJSON,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'workshop_id,blueprint_id'
-        });
+        .select('id')
+        .eq('workshop_id', workshopId)
+        .eq('blueprint_id', blueprintId || null)
+        .maybeSingle();
+        
+      if (selectError) throw selectError;
       
-      if (error) throw error;
+      if (data) {
+        // Update existing whiteboard
+        const { error } = await supabase
+          .from('workshop_whiteboards')
+          .update({
+            canvas_data: canvasJSON,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', data.id);
+          
+        if (error) throw error;
+      } else {
+        // Create new whiteboard
+        const { error } = await supabase
+          .from('workshop_whiteboards')
+          .insert({
+            workshop_id: workshopId,
+            blueprint_id: blueprintId || null,
+            canvas_data: canvasJSON
+          });
+          
+        if (error) throw error;
+      }
       
       toast.success("Whiteboard saved successfully");
     } catch (err) {
@@ -317,7 +338,7 @@ export function WhiteboardCanvas({ blueprintId, readOnly = false }: WhiteboardCa
             onClick={() => handleToolClick("sticky")}
             title="Sticky Note Tool"
           >
-            <StickyIcon className="h-4 w-4" />
+            <StickyNote className="h-4 w-4" />
           </Button>
         </div>
         

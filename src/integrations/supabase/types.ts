@@ -150,6 +150,41 @@ export type Database = {
           },
         ]
       }
+      workshop_whiteboards: {
+        Row: {
+          blueprint_id: string | null
+          canvas_data: string
+          created_at: string
+          id: string
+          updated_at: string
+          workshop_id: string
+        }
+        Insert: {
+          blueprint_id?: string | null
+          canvas_data: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          workshop_id: string
+        }
+        Update: {
+          blueprint_id?: string | null
+          canvas_data?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          workshop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workshop_whiteboards_workshop_id_fkey"
+            columns: ["workshop_id"]
+            isOneToOne: false
+            referencedRelation: "workshops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workshops: {
         Row: {
           constraints: Json | null

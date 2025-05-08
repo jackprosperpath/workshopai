@@ -1,10 +1,12 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { WhiteboardCanvas } from "./WhiteboardCanvas";
 import { Separator } from "@/components/ui/separator";
+import { CollaboratorCursors } from "./CollaboratorCursors";
+import { useWhiteboardCollaboration } from "@/hooks/useWhiteboardCollaboration";
 import type { Blueprint } from "../types/workshop";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -17,10 +19,14 @@ export function WhiteboardView({ blueprint }: WhiteboardViewProps) {
   const [searchParams] = useSearchParams();
   const workshopId = searchParams.get('id');
   const [activeStepIndex, setActiveStepIndex] = useState(0);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   
   // Get list of steps from blueprint
   const steps = blueprint?.steps || [];
   const activeStep = steps[activeStepIndex];
+  
+  // Set up whiteboard collaboration
+  const { cursors } = useWhiteboardCollaboration(workshopId, canvasRef);
   
   const handleNextStep = () => {
     if (activeStepIndex < steps.length - 1) {
@@ -49,7 +55,10 @@ export function WhiteboardView({ blueprint }: WhiteboardViewProps) {
               This is a collaborative workspace for the entire workshop. Use the tools below to brainstorm, plan, and collaborate.
             </p>
           </div>
-          <WhiteboardCanvas />
+          <div className="relative">
+            <CollaboratorCursors cursors={cursors} />
+            <WhiteboardCanvas />
+          </div>
         </TabsContent>
         
         <TabsContent value="blueprint" className="mt-4">
@@ -99,7 +108,10 @@ export function WhiteboardView({ blueprint }: WhiteboardViewProps) {
                 </div>
               </div>
               
-              <WhiteboardCanvas blueprintId={`step-${activeStepIndex}`} />
+              <div className="relative">
+                <CollaboratorCursors cursors={cursors} />
+                <WhiteboardCanvas blueprintId={`step-${activeStepIndex}`} />
+              </div>
             </div>
           ) : (
             <div className="text-center p-12 bg-white rounded-lg border">
