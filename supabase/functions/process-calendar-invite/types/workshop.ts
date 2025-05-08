@@ -19,5 +19,4 @@ export interface Blueprint {
 export interface Attendee {
   email: string;
   role: string;
-  count: number;
 }

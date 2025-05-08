@@ -1,4 +1,3 @@
-
 import { useSearchParams } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
 import { usePromptCanvas } from "@/hooks/usePromptCanvas";
@@ -110,8 +109,7 @@ export function BlueprintGenerator() {
         const formattedAttendees: Attendee[] = Array.isArray(invite.attendees) ? 
           invite.attendees.map((email: string) => ({
             email,
-            role: "",
-            count: 1
+            role: ""
           })) : [];
           
         // Only update if we have new attendees and they haven't been edited yet

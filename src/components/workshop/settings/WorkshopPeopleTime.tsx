@@ -43,7 +43,7 @@ export function WorkshopPeopleTime({
   updateAttendees
 }: WorkshopPeopleTimeProps) {
   const [calendarInviteData, setCalendarInviteData] = useState<any>(null);
-  const [localAttendees, setLocalAttendees] = useState<Attendee[]>(attendees.length ? attendees : [{ email: "", role: "", count: 1 }]);
+  const [localAttendees, setLocalAttendees] = useState<Attendee[]>(attendees.length ? attendees : [{ email: "", role: "" }]);
   const [dataWasLoadedFromCalendar, setDataWasLoadedFromCalendar] = useState<boolean>(false);
 
   // Sync prop changes to local state
@@ -84,8 +84,7 @@ export function WorkshopPeopleTime({
               (localAttendees.length === 0 || (localAttendees.length === 1 && !localAttendees[0].email))) {
             const calendarAttendees = invite.attendees.map((email: string) => ({
               email,
-              role: "",
-              count: 1
+              role: ""
             }));
             
             setLocalAttendees(calendarAttendees);
@@ -106,7 +105,7 @@ export function WorkshopPeopleTime({
   }, [workshopId, updateAttendees, localAttendees, dataWasLoadedFromCalendar]);
 
   const addAttendee = () => {
-    const newAttendees = [...localAttendees, { email: "", role: "", count: 1 }];
+    const newAttendees = [...localAttendees, { email: "", role: "" }];
     setLocalAttendees(newAttendees);
     if (updateAttendees) {
       updateAttendees(newAttendees);
@@ -121,7 +120,7 @@ export function WorkshopPeopleTime({
     }
   };
 
-  const updateAttendeeField = (index: number, field: keyof Attendee, value: string | number) => {
+  const updateAttendeeField = (index: number, field: keyof Attendee, value: string) => {
     const newAttendees = [...localAttendees];
     newAttendees[index] = { ...newAttendees[index], [field]: value };
     setLocalAttendees(newAttendees);
@@ -195,7 +194,6 @@ export function WorkshopPeopleTime({
               <TableRow>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead>Count</TableHead>
                 <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -216,16 +214,6 @@ export function WorkshopPeopleTime({
                       onChange={(e) => updateAttendeeField(index, "role", e.target.value)}
                       placeholder="Role (e.g. Product Manager)"
                       className="bg-background"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input 
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={attendee.count || 1}
-                      onChange={(e) => updateAttendeeField(index, "count", parseInt(e.target.value) || 1)}
-                      className="w-16 bg-background"
                     />
                   </TableCell>
                   <TableCell>

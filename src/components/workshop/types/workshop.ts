@@ -1,7 +1,6 @@
 
 export type Attendee = {
   role: string;
-  count: number;
   email?: string;
 };
 
