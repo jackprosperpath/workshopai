@@ -4,10 +4,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ItemList } from "../ItemList";
-import { TemplateSelector } from "./TemplateSelector";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown } from "lucide-react";
-import type { WorkshopTemplate } from "@/types/WorkshopTemplates";
+// import { TemplateSelector } from "./TemplateSelector";
+// import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+// import { ChevronDown } from "lucide-react";
+// import type { WorkshopTemplate } from "@/types/WorkshopTemplates";
 import { useState } from "react";
 
 interface WorkshopObjectivesProps {
@@ -27,12 +27,12 @@ export function WorkshopObjectives({
   setMetricInput,
   addMetric,
 }: WorkshopObjectivesProps) {
-  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
+  // const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
 
-  const handleTemplateSelect = (template: WorkshopTemplate) => {
-    setProblem(template.purpose);
-    setIsTemplatesOpen(false);
-  };
+  // const handleTemplateSelect = (template: WorkshopTemplate) => {
+  //   setProblem(template.purpose);
+  //   setIsTemplatesOpen(false);
+  // };
 
   return (
     <div className="space-y-6">
@@ -58,6 +58,7 @@ export function WorkshopObjectives({
         placeholder="Add success metric..."
       />
 
+      {/* Commenting out the template selector section
       <Collapsible 
         open={isTemplatesOpen} 
         onOpenChange={setIsTemplatesOpen}
@@ -71,6 +72,7 @@ export function WorkshopObjectives({
           <TemplateSelector onSelectTemplate={handleTemplateSelect} />
         </CollapsibleContent>
       </Collapsible>
+      */}
     </div>
   );
 }
