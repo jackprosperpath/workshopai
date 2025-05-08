@@ -27,6 +27,7 @@ interface BlueprintContentProps {
   onGenerate: () => void;
   attendees?: Attendee[];
   updateAttendees?: (attendees: Attendee[]) => void;
+  onBlueprintUpdate?: (updatedBlueprint: Blueprint) => Promise<void>;
 }
 
 export function BlueprintContent({
@@ -50,7 +51,8 @@ export function BlueprintContent({
   loading,
   onGenerate,
   attendees = [],
-  updateAttendees
+  updateAttendees,
+  onBlueprintUpdate
 }: BlueprintContentProps) {
   return (
     <div className="w-full mb-6">
@@ -86,7 +88,10 @@ export function BlueprintContent({
 
         <div className={activeTab === "blueprint" ? "block" : "hidden"}>
           {blueprint ? (
-            <GeneratedBlueprint blueprint={blueprint} />
+            <GeneratedBlueprint 
+              blueprint={blueprint}
+              onBlueprintUpdate={onBlueprintUpdate}
+            />
           ) : (
             <EmptyBlueprintState onNavigateToSettings={() => setActiveTab("settings")} />
           )}

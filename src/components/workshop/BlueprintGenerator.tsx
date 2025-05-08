@@ -10,13 +10,15 @@ import { BlueprintContent } from "./blueprint/BlueprintContent";
 import type { PredefinedFormat } from "@/types/OutputFormat";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Attendee } from "./types/workshop";
+import type { Attendee, Blueprint } from "./types/workshop";
+import { useWorkshopPersistence } from "@/hooks/useWorkshopPersistence";
 
 export function BlueprintGenerator() {
   const [searchParams] = useSearchParams();
   const workshopId = searchParams.get('id');
   const [attendees, setAttendees] = useState<Attendee[]>([]);
   const [shouldLoadFromCalendar, setShouldLoadFromCalendar] = useState<boolean>(true);
+  const { saveGeneratedBlueprint } = useWorkshopPersistence();
 
   // Use our hooks for state management
   const {
@@ -162,7 +164,7 @@ export function BlueprintGenerator() {
       workshopType,
       workshopName,
       workshopId,
-      attendees // Pass attendees to blueprint generator
+      attendees
     });
     
     if (result) {
@@ -176,6 +178,20 @@ export function BlueprintGenerator() {
     setAttendees(updatedAttendees);
     // Once user has explicitly updated attendees, don't reload from calendar
     setShouldLoadFromCalendar(false);
+  };
+
+  // Handler for blueprint updates
+  const handleBlueprintUpdate = async (updatedBlueprint: Blueprint) => {
+    if (!workshopId) return;
+    
+    try {
+      await saveGeneratedBlueprint(updatedBlueprint);
+      setBlueprint(updatedBlueprint);
+      return Promise.resolve();
+    } catch (error) {
+      console.error("Error updating blueprint:", error);
+      return Promise.reject(error);
+    }
   };
 
   return (
@@ -204,6 +220,7 @@ export function BlueprintGenerator() {
         onGenerate={handleGenerateBlueprint}
         attendees={attendees}
         updateAttendees={updateAttendeeRoles}
+        onBlueprintUpdate={handleBlueprintUpdate}
       />
     </div>
   );

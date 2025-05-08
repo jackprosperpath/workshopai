@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
@@ -76,6 +77,7 @@ export function useWorkshopPersistence() {
     } catch (error) {
       console.error("Error saving blueprint:", error);
       toast.error("Failed to save blueprint");
+      throw error;
     }
   }, [workshopId]);
 
