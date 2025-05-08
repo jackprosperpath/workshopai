@@ -58,7 +58,7 @@ export function WorkshopNameEditor({ initialName, workshopId, onNameUpdate }: Wo
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="max-w-[300px]"
+            className="max-w-[300px] bg-background"
             placeholder="Enter workshop name..."
             onBlur={handleSave}
             onKeyDown={(e) => {

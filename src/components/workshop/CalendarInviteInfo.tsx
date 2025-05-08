@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, Mail } from "lucide-react";
+import { Calendar, Mail, Edit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 
@@ -120,8 +120,8 @@ export function CalendarInviteInfo({ workshopId }: CalendarInviteProps) {
             </div>
           )}
           <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-            <Mail className="h-4 w-4" />
-            <span>Workshop agenda generated from calendar invite - you can edit any fields below</span>
+            <Edit className="h-4 w-4" />
+            <span>Workshop data was generated from calendar invite - you can edit any fields below to refine it</span>
           </div>
         </div>
       </AlertDescription>

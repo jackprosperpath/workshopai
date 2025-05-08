@@ -16,6 +16,7 @@ export function WorkshopTitle({ workshopName, setWorkshopName }: WorkshopTitlePr
         value={workshopName}
         onChange={(e) => setWorkshopName(e.target.value)}
         placeholder="Enter workshop title"
+        className="bg-background"
       />
     </div>
   );
