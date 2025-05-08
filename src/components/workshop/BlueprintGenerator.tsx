@@ -1,6 +1,5 @@
 
 import { useSearchParams } from "react-router-dom";
-import { toast } from "@/components/ui/sonner";
 import { usePromptCanvas } from "@/hooks/usePromptCanvas";
 import { usePromptCanvasSync } from "@/hooks/usePromptCanvasSync";
 import { CalendarSourceInfo } from "./blueprint/CalendarSourceInfo";
@@ -8,11 +7,11 @@ import { useBlueprintGenerator } from "@/hooks/useBlueprintGenerator";
 import { useWorkshopSettings } from "@/hooks/useWorkshopSettings";
 import { useBlueprintData } from "@/hooks/useBlueprintData";
 import { BlueprintContent } from "./blueprint/BlueprintContent";
-import type { PredefinedFormat } from "@/types/OutputFormat";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { Attendee, Blueprint } from "./types/workshop";
+import type { Blueprint } from "./types/workshop";
 import { useWorkshopPersistence } from "@/hooks/useWorkshopPersistence";
+import { useCalendarAttendees } from "@/hooks/useCalendarAttendees";
+import { useBlueprintGenerationState } from "@/hooks/useBlueprintGenerationState";
+import { useBlueprintSynchronization } from "@/hooks/useBlueprintSynchronization";
 
 interface BlueprintGeneratorProps {
   onBlueprintGenerated?: (blueprint: Blueprint | null) => void;
@@ -21,8 +20,6 @@ interface BlueprintGeneratorProps {
 export function BlueprintGenerator({ onBlueprintGenerated }: BlueprintGeneratorProps) {
   const [searchParams] = useSearchParams();
   const workshopId = searchParams.get('id');
-  const [attendees, setAttendees] = useState<Attendee[]>([]);
-  const [shouldLoadFromCalendar, setShouldLoadFromCalendar] = useState<boolean>(true);
   const { saveGeneratedBlueprint } = useWorkshopPersistence();
 
   // Use our hooks for state management
@@ -57,19 +54,26 @@ export function BlueprintGenerator({ onBlueprintGenerated }: BlueprintGeneratorP
     setDuration,
   } = useWorkshopSettings(workshopId);
 
+  // Calendar attendees hook
+  const { attendees, updateAttendeeRoles } = useCalendarAttendees(workshopId);
+
   // Blueprint generation hook
   const {
     loading,
     blueprint: generatedBlueprint,
-    setBlueprint: setGeneratedBlueprint,
     errorMessage,
     generateBlueprint
   } = useBlueprintGenerator();
 
-  // Use new hook for handling blueprint data loading
+  // Blueprint state management hook
   const {
     blueprint,
     setBlueprint,
+    handleBlueprintUpdate
+  } = useBlueprintGenerationState({ onBlueprintGenerated });
+
+  // Use new hook for handling blueprint data loading
+  const {
     activeTab,
     setActiveTab
   } = useBlueprintData(
@@ -81,76 +85,12 @@ export function BlueprintGenerator({ onBlueprintGenerated }: BlueprintGeneratorP
     updateFormat,
     setCustomFormat,
     setWorkshopType,
-    setWorkshopName
+    setWorkshopName,
+    setBlueprint
   );
 
-  // Pass blueprint data to parent component if callback provided
-  useEffect(() => {
-    if (onBlueprintGenerated && blueprint) {
-      onBlueprintGenerated(blueprint);
-    }
-  }, [blueprint, onBlueprintGenerated]);
-
-  // Fetch attendees when workshop ID changes
-  useEffect(() => {
-    const fetchAttendees = async () => {
-      if (!workshopId || !shouldLoadFromCalendar) return;
-      
-      try {
-        // First check if this is from a calendar invite
-        const { data: workshop, error: workshopError } = await supabase
-          .from('workshops')
-          .select('invitation_source_id')
-          .eq('id', workshopId)
-          .single();
-          
-        if (workshopError || !workshop || !workshop.invitation_source_id) {
-          return; // Not from calendar or error
-        }
-        
-        // Get calendar invite attendees
-        const { data: invite, error: inviteError } = await supabase
-          .from('inbound_invites')
-          .select('attendees')
-          .eq('id', workshop.invitation_source_id)
-          .single();
-          
-        if (inviteError || !invite || !invite.attendees) {
-          return;
-        }
-        
-        // Format attendees
-        const formattedAttendees: Attendee[] = Array.isArray(invite.attendees) ? 
-          invite.attendees.map((email: string) => ({
-            email,
-            role: ""
-          })) : [];
-          
-        // Only update if we have new attendees and they haven't been edited yet
-        if (formattedAttendees.length > 0 && 
-           (attendees.length === 0 || 
-            (attendees.length === 1 && !attendees[0].email))) {
-          setAttendees(formattedAttendees);
-          // After loading from calendar once, don't reload to avoid overwriting user edits
-          setShouldLoadFromCalendar(false);
-        }
-      } catch (error) {
-        console.error("Error fetching attendees:", error);
-      }
-    };
-    
-    fetchAttendees();
-  }, [workshopId, attendees, shouldLoadFromCalendar]);
-
-  // Sync the blueprint from generation to our local state
-  if (generatedBlueprint && generatedBlueprint !== blueprint) {
-    setBlueprint(generatedBlueprint);
-    
-    // Also update parent component if callback provided
-    if (onBlueprintGenerated) {
-      onBlueprintGenerated(generatedBlueprint);
-    }
-  }
+  // Sync the generated blueprint with our local state
+  useBlueprintSynchronization(generatedBlueprint, blueprint, setBlueprint, onBlueprintGenerated);
 
   // Data synchronization
   const { syncData } = usePromptCanvasSync(
@@ -161,7 +101,7 @@ export function BlueprintGenerator({ onBlueprintGenerated }: BlueprintGeneratorP
       if (data.constraints !== undefined) setConstraints(data.constraints);
       if (data.selectedModel !== undefined) setSelectedModel(data.selectedModel);
       if (data.selectedFormat !== undefined && updateFormat) {
-        updateFormat(data.selectedFormat.type as PredefinedFormat);
+        updateFormat(data.selectedFormat.type);
       }
       if (data.customFormat !== undefined && setCustomFormat) {
         setCustomFormat(data.customFormat);
@@ -187,39 +127,13 @@ export function BlueprintGenerator({ onBlueprintGenerated }: BlueprintGeneratorP
     if (result) {
       syncData({ problem, metrics, constraints, selectedModel, selectedFormat, customFormat });
       setActiveTab("blueprint");
-      
-      // Update parent component if callback provided
-      if (onBlueprintGenerated) {
-        onBlueprintGenerated(result);
-      }
     }
-  };
-
-  // Update attendees with role information from the workshop settings
-  const updateAttendeeRoles = (updatedAttendees: Attendee[]) => {
-    setAttendees(updatedAttendees);
-    // Once user has explicitly updated attendees, don't reload from calendar
-    setShouldLoadFromCalendar(false);
   };
 
   // Handler for blueprint updates
-  const handleBlueprintUpdate = async (updatedBlueprint: Blueprint) => {
-    if (!workshopId) return;
-    
-    try {
-      await saveGeneratedBlueprint(updatedBlueprint);
-      setBlueprint(updatedBlueprint);
-      
-      // Update parent component if callback provided
-      if (onBlueprintGenerated) {
-        onBlueprintGenerated(updatedBlueprint);
-      }
-      
-      return Promise.resolve();
-    } catch (error) {
-      console.error("Error updating blueprint:", error);
-      return Promise.reject(error);
-    }
+  const onBlueprintUpdate = async (updatedBlueprint: Blueprint) => {
+    if (!workshopId) return Promise.reject(new Error("No workshop ID"));
+    return handleBlueprintUpdate(updatedBlueprint, saveGeneratedBlueprint);
   };
 
   return (
@@ -248,7 +162,7 @@ export function BlueprintGenerator({ onBlueprintGenerated }: BlueprintGeneratorP
         onGenerate={handleGenerateBlueprint}
         attendees={attendees}
         updateAttendees={updateAttendeeRoles}
-        onBlueprintUpdate={handleBlueprintUpdate}
+        onBlueprintUpdate={onBlueprintUpdate}
       />
     </div>
   );
