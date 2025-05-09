@@ -28,20 +28,27 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    const siteUrl = Deno.env.get('SITE_URL') ?? "https://app.teho.ai";
+    const isDevelopment = siteUrl.includes("localhost") || siteUrl.includes("127.0.0.1");
     
-    // Validate environment variables
+    console.log("Environment variables check:");
+    console.log("- SUPABASE_URL exists:", !!supabaseUrl);
+    console.log("- SUPABASE_SERVICE_ROLE_KEY exists:", !!supabaseServiceKey);
+    console.log("- RESEND_API_KEY exists:", !!resendApiKey);
+    console.log("- SITE_URL:", siteUrl);
+    console.log("- Is Development:", isDevelopment);
+    
     if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Missing Supabase credentials');
+      throw new Error("Missing required environment variables: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY");
     }
     
     if (!resendApiKey) {
-      throw new Error('Missing Resend API key');
+      throw new Error("RESEND_API_KEY is not set");
     }
-
-    // Initialize clients
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const resend = new Resend(resendApiKey);
     
+    const resend = new Resend(resendApiKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     // Parse request body
     const body = await req.json();
     
@@ -50,7 +57,7 @@ serve(async (req) => {
     
     // Parse the ICS data and extract event information
     const parsedIcs = ical.parseICS(rawIcs);
-    const { summary, description, startTime, endTime, durationMinutes, attendees } = parseIcsData(rawIcs);
+    const { summary, description, startTime, endTime, durationMinutes, attendees, status } = parseIcsData(rawIcs);
     
     // Log extracted information
     console.log("Organizer email:", email);
@@ -59,7 +66,23 @@ serve(async (req) => {
     console.log("Event start time:", startTime.toISOString());
     console.log("Event end time:", endTime.toISOString());
     console.log("Event duration (minutes):", durationMinutes);
+    console.log("Event status:", status);
     console.log("Attendees:", attendees);
+    
+    // Check if the event is active (not cancelled or declined)
+    if (status === 'CANCELLED') {
+      console.log("Event is cancelled, skipping workshop creation");
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: 'Event is cancelled, skipping workshop creation',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
+    }
     
     // Check if the organizer already has a Teho account
     const ownerId = await findExistingUser(supabase, email);
@@ -71,7 +94,7 @@ serve(async (req) => {
       rawIcs, 
       parsedIcs, 
       email, 
-      { summary, description, startTime, endTime, attendees }
+      { summary, description, startTime, endTime, attendees, status }
     );
 
     // Create a workshop from this invitation
@@ -98,7 +121,7 @@ serve(async (req) => {
     );
     
     // Send confirmation email to the organizer
-    const workshopUrl = `https://app.teho.ai/workshop?id=${workshopData.share_id}`;
+    const workshopUrl = `${siteUrl}/workshop?id=${workshopData.share_id}`;
     await sendConfirmationEmail(
       resend, 
       email, 

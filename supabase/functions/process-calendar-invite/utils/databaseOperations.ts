@@ -22,7 +22,7 @@ export async function storeInvitation(
       start_time: eventData.startTime.toISOString(),
       end_time: eventData.endTime.toISOString(),
       attendees: eventData.attendees,
-      status: 'pending'
+      status: eventData.status || 'pending'
     })
     .select('id')
     .single();
