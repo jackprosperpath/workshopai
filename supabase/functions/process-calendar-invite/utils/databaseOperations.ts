@@ -1,4 +1,5 @@
-import type { Blueprint } from "../types/workshop.ts";
+
+import type { ConciseBlueprint } from "../types/workshop.ts"; // Updated import
 import type { EventData } from "./parseIcs.ts";
 
 /**
@@ -42,7 +43,7 @@ export async function storeInvitation(
 export async function storeGeneratedBlueprint(
   supabase: any,
   inboundInviteId: string,
-  blueprintData: Blueprint
+  blueprintData: ConciseBlueprint // Updated type
 ): Promise<{ id: string; share_id: string }> {
   const shareId = crypto.randomUUID().substring(0, 12); // Generate a unique share ID
 
@@ -50,7 +51,7 @@ export async function storeGeneratedBlueprint(
     .from('generated_blueprints')
     .insert({
       inbound_invite_id: inboundInviteId,
-      blueprint_data: blueprintData,
+      blueprint_data: blueprintData, // blueprintData is now ConciseBlueprint
       share_id: shareId,
     })
     .select('id, share_id')
