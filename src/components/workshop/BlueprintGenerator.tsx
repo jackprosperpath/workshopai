@@ -10,7 +10,7 @@ import { BlueprintHeader } from './blueprint/BlueprintHeader';
 import { WorkshopSetupForm } from './blueprint/WorkshopSetupForm';
 import { GeneratedBlueprint } from './blueprint/GeneratedBlueprint';
 import { BlueprintTabs } from './blueprint/BlueprintTabs';
-import { CalendarSourceInfo } from './blueprint/CalendarSourceInfo';
+import { CalendarSourceInfo, CalendarSourceInfoProps } from './blueprint/CalendarSourceInfo'; // Ensure props are exported if needed elsewhere, or just use here
 
 interface BlueprintGeneratorProps {
   workshopIdParam?: string | null;
@@ -32,7 +32,7 @@ export function BlueprintGenerator({
   onWorkshopNameChange,
 }: BlueprintGeneratorProps) {
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(1); // This seems unused, consider removing if not part of a future plan
   const [activeTab, setActiveTab] = useState<"settings" | "blueprint">("settings");
   
   // Workshop ID and state management
@@ -73,7 +73,11 @@ export function BlueprintGenerator({
       if (data) {
         if (data.name) setWorkshopName(data.name);
         if (data.problem) setProblem(data.problem);
-        if (data.metrics) setMetrics(data.metrics);
+        if (data.metrics && Array.isArray(data.metrics)) {
+          setMetrics(data.metrics.filter((m): m is string => typeof m === 'string'));
+        } else {
+          setMetrics([]);
+        }
         if (data.duration) setDuration(data.duration);
         if (data.workshop_type) setWorkshopType(data.workshop_type as 'online' | 'in-person');
         if (data.generated_blueprint) setBlueprint(data.generated_blueprint as Blueprint);
@@ -124,7 +128,7 @@ export function BlueprintGenerator({
           metrics,
           duration,
           workshop_type: workshopType,
-          attendees: attendees.map(a => ({ email: a.email, name: a.name, role: a.role })),
+          attendees: attendees.map(a => ({ email: a.email, role: a.role })), // Fixed: removed a.name
         },
       });
 
@@ -203,7 +207,7 @@ export function BlueprintGenerator({
           metricInput={metricInput}
           setMetricInput={setMetricInput}
           addMetric={addMetric}
-          removeMetric={removeMetric}
+          removeMetric={removeMetric} // Make sure this is passed
           duration={duration}
           setDuration={setDuration}
           workshopType={workshopType}
@@ -221,7 +225,7 @@ export function BlueprintGenerator({
     return <div className="text-center p-4">Select a tab or generate a blueprint to begin.</div>;
   };
 
-  if (!workshopId && workshopIdParam) {
+  if (!workshopId && workshopIdParam) { //This logic might be slightly off if workshopIdParam is present but fetch fails
     return (
       <div className="flex justify-center items-center min-h-[300px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -237,7 +241,7 @@ export function BlueprintGenerator({
         {workshopId && <CalendarSourceInfo workshopId={workshopId} />}
         <BlueprintTabs 
           activeTab={activeTab} 
-          setActiveTab={(tab: "settings" | "blueprint") => setActiveTab(tab)} 
+          setActiveTab={(tab) => setActiveTab(tab)} 
           blueprint={blueprint} 
         />
       </CardHeader>
@@ -255,3 +259,4 @@ export function BlueprintGenerator({
     </Card>
   );
 }
+

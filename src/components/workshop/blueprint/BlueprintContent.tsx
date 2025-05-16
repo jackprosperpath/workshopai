@@ -6,8 +6,8 @@ import { EmptyBlueprintState } from "./EmptyBlueprintState";
 import type { Blueprint, Attendee } from "../types/workshop";
 
 interface BlueprintContentProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+  activeTab: "settings" | "blueprint"; // Changed from string
+  setActiveTab: (tab: "settings" | "blueprint") => void; // Changed from (tab: string) => void
   blueprint: Blueprint | null;
   errorMessage: string | null;
   workshopId: string | null;
@@ -19,6 +19,7 @@ interface BlueprintContentProps {
   metricInput: string;
   setMetricInput: (value: string) => void;
   addMetric: () => void;
+  removeMetric: (index: number) => void; // Added
   duration: number;
   setDuration: (value: number) => void;
   workshopType: 'online' | 'in-person';
@@ -44,6 +45,7 @@ export function BlueprintContent({
   metricInput,
   setMetricInput,
   addMetric,
+  removeMetric, // Added
   duration,
   setDuration,
   workshopType,
@@ -75,6 +77,7 @@ export function BlueprintContent({
             metricInput={metricInput}
             setMetricInput={setMetricInput}
             addMetric={addMetric}
+            removeMetric={removeMetric} // Added pass-through
             duration={duration}
             setDuration={setDuration}
             workshopType={workshopType}
@@ -100,3 +103,4 @@ export function BlueprintContent({
     </div>
   );
 }
+

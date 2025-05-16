@@ -16,7 +16,7 @@ interface WorkshopObjectivesProps {
   metricInput: string;
   setMetricInput: (value: string) => void;
   addMetric: () => void;
-  removeMetric: (index: number) => void;
+  removeMetric: (index: number) => void; // This prop is already here
 }
 
 export function WorkshopObjectives({
@@ -26,7 +26,7 @@ export function WorkshopObjectives({
   metricInput,
   setMetricInput,
   addMetric,
-  removeMetric,
+  removeMetric, // This prop is already here
 }: WorkshopObjectivesProps) {
   // const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
 
@@ -56,7 +56,7 @@ export function WorkshopObjectives({
         inputValue={metricInput}
         setInputValue={setMetricInput}
         onAdd={addMetric}
-        onRemove={removeMetric}
+        onRemove={removeMetric} // Pass removeMetric as onRemove
         placeholder="Add success metric..."
       />
 
@@ -64,3 +64,4 @@ export function WorkshopObjectives({
     </div>
   );
 }
+

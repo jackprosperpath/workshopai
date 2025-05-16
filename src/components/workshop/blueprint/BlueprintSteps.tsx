@@ -1,4 +1,3 @@
-
 import { CheckCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WorkshopObjectives } from "../settings/WorkshopObjectives";
@@ -14,6 +13,7 @@ interface BlueprintStepsProps {
   metricInput: string;
   setMetricInput: (value: string) => void;
   addMetric: () => void;
+  removeMetric: (index: number) => void;
   duration: number;
   setDuration: (value: number) => void;
   workshopType: 'online' | 'in-person';
@@ -26,7 +26,7 @@ interface BlueprintStepsProps {
   onGenerate: () => void;
   nextStep: () => void;
   prevStep: () => void;
-  workshopId: string | null; // Add the missing required prop
+  workshopId: string | null; 
 }
 
 export function BlueprintSteps({
@@ -37,6 +37,7 @@ export function BlueprintSteps({
   metricInput,
   setMetricInput,
   addMetric,
+  removeMetric,
   duration,
   setDuration,
   workshopType,
@@ -49,7 +50,7 @@ export function BlueprintSteps({
   onGenerate,
   nextStep,
   prevStep,
-  workshopId, // Pass it to the components that need it
+  workshopId, 
 }: BlueprintStepsProps) {
   return (
     <>
@@ -61,6 +62,7 @@ export function BlueprintSteps({
           metricInput={metricInput}
           setMetricInput={setMetricInput}
           addMetric={addMetric}
+          removeMetric={removeMetric}
         />
       )}
       
