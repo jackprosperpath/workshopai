@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -13,6 +14,9 @@ const fetchBlueprint = async (shareId: string | undefined): Promise<ConciseBluep
   if (!shareId) {
     return null;
   }
+  
+  console.log("Fetching blueprint with share_id:", shareId);
+  
   const { data, error } = await supabase
     .from('generated_blueprints')
     .select('blueprint_data')
@@ -25,8 +29,11 @@ const fetchBlueprint = async (shareId: string | undefined): Promise<ConciseBluep
   }
 
   if (!data || !data.blueprint_data) {
+    console.log("No blueprint found for share_id:", shareId);
     return null; // Blueprint not found or blueprint_data is null
   }
+  
+  console.log("Blueprint found:", data.blueprint_data);
   
   // The blueprint_data from the DB should match ConciseBlueprint structure
   // Cast to unknown first, then to ConciseBlueprint to satisfy TypeScript
@@ -35,6 +42,9 @@ const fetchBlueprint = async (shareId: string | undefined): Promise<ConciseBluep
 
 const BlueprintViewer: React.FC = () => {
   const { shareId } = useParams<{ shareId: string }>();
+  
+  console.log("BlueprintViewer rendering with shareId:", shareId);
+  
   const { data: blueprint, isLoading, error } = useQuery<ConciseBlueprint | null>({
     queryKey: ['blueprint', shareId],
     queryFn: () => fetchBlueprint(shareId),

@@ -1,3 +1,4 @@
+
 export function agendaEmail({
   hostName,
   agendaPreview,
@@ -158,16 +159,32 @@ export async function sendBlueprintReadyEmail(
 
   try {
     await resend.emails.send({
-      from: "Teho.ai <agenda@teho.ai>", // Ensure this sender is verified in Resend
+      from: "Teho Meeting Assistant <meeting@teho.ai>", // More professional from address
       to,
       subject,
       html: htmlContent,
+      // Adding email headers to improve deliverability
+      headers: {
+        "X-Entity-Ref-ID": `blueprint-${Date.now()}`, // Unique ID to prevent threading
+        "List-Unsubscribe": "<mailto:unsubscribe@teho.ai>", // Required by many inbox providers
+      },
+      // Including text version improves deliverability
+      text: `Your Blueprint is Ready!
+      
+Great news! We've used AI to generate a blueprint for your meeting: "${workshopTitle}"
+
+${workshopDescription}
+
+View & Share Your Blueprint: ${blueprintShareUrl}
+
+You can share this link with attendees or collaborators to give them a clear overview of the plan.
+
+Powered by teho.ai
+Automate your meeting preparation. Add agenda@teho.ai to your next calendar invite.`,
     });
     console.log(`Blueprint ready email successfully sent to ${to}`);
   } catch (error) {
     console.error(`Error sending blueprint ready email to ${to}:`, error);
-    // Re-throw the error to be handled by the calling function in emailUtils.ts
-    // This allows the caller to decide on retry logic or further error reporting.
     throw error;
   }
 }
