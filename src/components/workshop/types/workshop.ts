@@ -1,3 +1,4 @@
+
 export type Attendee = {
   name?: string; // Added optional name property
   role: string;
@@ -9,6 +10,7 @@ export type BlueprintStep = {
   duration: string;
   description: string;
   facilitation_notes: string;
+  materials?: string[]; // Added optional materials property
 };
 
 export type Blueprint = {
@@ -34,3 +36,4 @@ export type TeamMemberRole = {
   role: string;
   status: "pending" | "accepted" | "declined";
 };
+

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Blueprint, BlueprintStep } from "@/components/workshop/types/workshop";
 // Updated import path for ConciseBlueprint
-import type { ConciseBlueprint } from "../../../supabase/functions/process-calendar-invite/types/workshop"; 
+import type { ConciseBlueprint } from "../../supabase/functions/process-calendar-invite/types/workshop"; 
 
 
 export function useBlueprintData(workshopId: string) {
@@ -73,7 +73,7 @@ export function useBlueprintData(workshopId: string) {
               ...step,
               facilitation_notes: step.facilitation_notes || "",
               description: step.description || "",
-              materials: step.materials || [],
+              materials: step.materials || [], // This line is now valid with the updated BlueprintStep type
               duration: step.duration || "0",
             }));
           }
@@ -118,7 +118,7 @@ export function useBlueprintData(workshopId: string) {
               email: nameOrEmail.includes('@') ? nameOrEmail : "", // If it looks like an email, use it
               role: "Attendee" 
             })) : [],
-            materials: [], // Not typically detailed in concise format
+            materials: [], // Not typically detailed in concise format for the overall blueprint from concise
           };
           setBlueprint(fullBlueprint);
         } else {
@@ -154,3 +154,4 @@ export function useBlueprintData(workshopId: string) {
 
 // Helper for joining objectives, can be moved to a utils file
 const SemicolonSpace = () => "; ";
+
