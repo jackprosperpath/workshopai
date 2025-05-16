@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -62,13 +63,13 @@ export function PromptCanvas({
     >
       <div className="p-4 flex items-center justify-between border-b">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">Workshop Context</h2>
+          <h2 className="text-lg font-semibold">Blueprint Context</h2>
           <Tooltip>
             <TooltipTrigger>
               <Info className="h-4 w-4 text-muted-foreground" />
             </TooltipTrigger>
             <TooltipContent>
-              Define your problem, success metrics, and constraints to generate solutions
+              Define your meeting's topic, success metrics, and any constraints to generate the blueprint.
             </TooltipContent>
           </Tooltip>
         </div>
@@ -86,7 +87,7 @@ export function PromptCanvas({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Label className="text-sm text-muted-foreground block">
-                  Select the desired format for the generated solution
+                  Select the desired format for the generated blueprint
                 </Label>
               </TooltipTrigger>
               <TooltipContent>
@@ -103,20 +104,20 @@ export function PromptCanvas({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="problem">Scope Statement</Label>
+            <Label htmlFor="problem">Meeting Topic/Goal</Label>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Label className="text-sm text-muted-foreground block">
-                  Clearly describe the problem or opportunity that needs to be explored
+                  Clearly describe the main topic, objective, or problem this meeting aims to address.
                 </Label>
               </TooltipTrigger>
               <TooltipContent>
-                Be specific and concise in describing your problem
+                Be specific and concise.
               </TooltipContent>
             </Tooltip>
             <Textarea
               id="problem"
-              placeholder="Describe the problem you want to solve..."
+              placeholder="E.g., Plan Q3 marketing strategy, Brainstorm new product features, Review project progress..."
               className="min-h-[100px]"
               value={problem}
               onChange={(e) => setProblem(e.target.value)}
@@ -125,7 +126,7 @@ export function PromptCanvas({
 
           <ItemList
             label="Success Metrics"
-            tooltipText="Define how success will be measured"
+            tooltipText="How will you know if the meeting (and its blueprint) was successful?"
             items={metrics}
             inputValue={metricInput}
             setInputValue={setMetricInput}
@@ -135,7 +136,7 @@ export function PromptCanvas({
 
           <ItemList
             label="Constraints"
-            tooltipText="List any limitations or requirements"
+            tooltipText="List any limitations or requirements (e.g., budget, specific tools, non-negotiable attendees)."
             items={constraints}
             inputValue={constraintInput}
             setInputValue={setConstraintInput}
@@ -148,7 +149,7 @@ export function PromptCanvas({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Label className="text-sm text-muted-foreground block">
-                  Upload documents to provide additional context for the solution generation
+                  Upload documents to provide additional context for the blueprint generation
                 </Label>
               </TooltipTrigger>
               <TooltipContent>
@@ -163,10 +164,11 @@ export function PromptCanvas({
             disabled={loading}
             className="w-full"
           >
-            {loading ? "Generating..." : "Generate Solution"}
+            {loading ? "Generating..." : "Generate Blueprint"}
           </Button>
         </div>
       </CollapsibleContent>
     </Collapsible>
   );
 }
+

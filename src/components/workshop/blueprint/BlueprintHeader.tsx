@@ -1,4 +1,3 @@
-
 import { CardTitle, CardDescription } from "@/components/ui/card";
 
 interface BlueprintHeaderProps {
@@ -8,9 +7,9 @@ interface BlueprintHeaderProps {
 export function BlueprintHeader({ currentStep }: BlueprintHeaderProps) {
   return (
     <>
-      <CardTitle>Create Workshop Blueprint</CardTitle>
+      <CardTitle>Create Meeting Blueprint</CardTitle>
       <CardDescription>
-        Follow these 3 steps to create your AI-facilitated workshop
+        Follow these steps to define your AI-generated meeting blueprint
       </CardDescription>
       <div className="flex justify-between items-center mt-4">
         <div className="flex items-center space-x-2">

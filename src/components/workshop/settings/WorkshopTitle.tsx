@@ -10,14 +10,15 @@ interface WorkshopTitleProps {
 export function WorkshopTitle({ workshopName, setWorkshopName }: WorkshopTitleProps) {
   return (
     <div className="space-y-2">
-      <Label htmlFor="workshop-name" className="text-base font-medium">Workshop Title</Label>
+      <Label htmlFor="workshop-name" className="text-base font-medium">Blueprint Title</Label>
       <Input 
         id="workshop-name" 
         value={workshopName}
         onChange={(e) => setWorkshopName(e.target.value)}
-        placeholder="Enter workshop title"
+        placeholder="Enter blueprint title"
         className="bg-background"
       />
     </div>
   );
 }
+

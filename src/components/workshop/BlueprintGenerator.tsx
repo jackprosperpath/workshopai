@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -81,6 +80,8 @@ export function BlueprintGenerator({
         if (data.duration) setDuration(data.duration);
         if (data.workshop_type) setWorkshopType(data.workshop_type as 'online' | 'in-person');
         if (data.generated_blueprint) setBlueprint(data.generated_blueprint as Blueprint);
+        // Ensure attendees are loaded if available, though not explicitly in schema for this table in this snippet
+        // For now, we rely on initialAttendees or manual input for this component instance
       }
     } catch (error: any) {
       console.error("Error fetching workshop:", error);
@@ -122,21 +123,26 @@ export function BlueprintGenerator({
     try {
       const response = await supabase.functions.invoke("generate-workshop-blueprint", {
         body: {
-          workshopId: workshopId,
+          workshopId: workshopId, // workshopId can be null if creating a new one
           name: workshopName,
           problem,
           metrics,
           duration,
           workshop_type: workshopType,
-          attendees: attendees.map(a => ({ email: a.email, role: a.role })), // Fixed: removed a.name
+          attendees: attendees.map(a => ({ email: a.email, role: a.role })),
         },
       });
 
       if (response.error) throw response.error;
       if (!response.data) throw new Error("No data returned from blueprint generation.");
+      
+      // If a new workshop was created, the function might return the new workshopId
+      if (response.data.workshopId && !workshopId) {
+        setWorkshopId(response.data.workshopId);
+      }
 
       setBlueprint(response.data.blueprint);
-      toast({ title: "Blueprint Generated!", description: "Your workshop blueprint is ready." });
+      toast({ title: "Blueprint Generated!", description: "Your meeting blueprint is ready." });
       setActiveTab("blueprint");
     } catch (error: any) {
       console.error("Error generating blueprint:", error);
@@ -153,7 +159,7 @@ export function BlueprintGenerator({
   
   const handleSaveSettings = async () => {
     if (!workshopId) {
-      toast({ title: "Error", description: "Workshop ID is missing.", variant: "destructive" });
+      toast({ title: "Error", description: "Blueprint ID is missing.", variant: "destructive" });
       return;
     }
     setLoading(true);
@@ -167,12 +173,13 @@ export function BlueprintGenerator({
           metrics: metrics,
           duration: duration,
           workshop_type: workshopType,
+          // attendees are part of generated_blueprint, not top-level workshop columns based on previous context
         })
         .eq('id', workshopId);
 
       if (error) throw error;
 
-      toast({ title: "Settings Saved", description: "Workshop settings have been updated." });
+      toast({ title: "Settings Saved", description: "Blueprint settings have been updated." });
     } catch (error: any) {
       console.error("Error saving settings:", error);
       setErrorMessage(error.message || "Failed to save settings.");
@@ -188,10 +195,10 @@ export function BlueprintGenerator({
 
   const renderContent = () => {
     if (loadingWorkshop) {
-      return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /> <span className="ml-2">Loading workshop...</span></div>;
+      return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /> <span className="ml-2">Loading blueprint data...</span></div>;
     }
     if (workshopError) {
-      return <div className="text-red-500 flex items-center"><AlertCircle className="mr-2"/> Error loading workshop data: {workshopError}</div>;
+      return <div className="text-red-500 flex items-center"><AlertCircle className="mr-2"/> Error loading blueprint data: {workshopError}</div>;
     }
 
     if (activeTab === "settings") {
@@ -207,13 +214,13 @@ export function BlueprintGenerator({
           metricInput={metricInput}
           setMetricInput={setMetricInput}
           addMetric={addMetric}
-          removeMetric={removeMetric} // Make sure this is passed
+          removeMetric={removeMetric} 
           duration={duration}
           setDuration={setDuration}
           workshopType={workshopType}
           setWorkshopType={setWorkshopType}
           loading={loading}
-          onGenerate={generateBlueprint}
+          onGenerate={generateBlueprint} // This will be used by PromptCanvas via WorkshopContext
           attendees={attendees}
           updateAttendees={setAttendees}
         />
@@ -222,14 +229,18 @@ export function BlueprintGenerator({
     if (activeTab === "blueprint" && blueprint) {
       return <GeneratedBlueprint blueprint={blueprint} />;
     }
+    // If blueprint is null and tab is blueprint, show empty state or message
+    if (activeTab === "blueprint" && !blueprint) {
+      return <EmptyBlueprintState onNavigateToSettings={() => setActiveTab("settings")} />;
+    }
     return <div className="text-center p-4">Select a tab or generate a blueprint to begin.</div>;
   };
 
-  if (!workshopId && workshopIdParam) { //This logic might be slightly off if workshopIdParam is present but fetch fails
+  if (!workshopId && workshopIdParam) { 
     return (
       <div className="flex justify-center items-center min-h-[300px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="ml-2">Loading workshop details...</p>
+        <p className="ml-2">Loading blueprint details...</p>
       </div>
     );
   }
@@ -250,13 +261,12 @@ export function BlueprintGenerator({
       </CardContent>
       {activeTab === 'settings' && (
         <CardFooter className="flex justify-end">
-          <Button onClick={workshopId ? handleSaveSettings : generateBlueprint} disabled={loading}>
+          <Button onClick={workshopId ? handleSaveSettings : generateBlueprint} disabled={loading || !problem} /* Disable generate if problem is empty */>
             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {workshopId ? (loading ? 'Saving...' : 'Save Settings') : (loading ? 'Generating...' : 'Generate Blueprint')}
+            {workshopId ? (loading ? 'Saving...' : 'Save Blueprint Setup') : (loading ? 'Generating...' : 'Generate Blueprint')}
           </Button>
         </CardFooter>
       )}
     </Card>
   );
 }
-

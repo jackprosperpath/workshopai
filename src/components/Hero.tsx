@@ -10,10 +10,10 @@ export const Hero = () => {
       <PostItBackground />
       <div className="max-w-3xl relative z-10">
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-          Co-create with your team & AI
+          Instantly Generate AI Meeting Blueprints
         </h1>
         <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
-          Turn every meeting into an AI-powered workshop that sparks meaningful discussion and gets you from ideas to action quickly
+          Get AI-powered blueprints for any meeting. Simply add agenda@teho.ai to your calendar invite or create one manually.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link to="/auth">
@@ -26,3 +26,4 @@ export const Hero = () => {
     </section>
   );
 };
+
