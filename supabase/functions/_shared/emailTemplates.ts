@@ -77,3 +77,97 @@ ${blueprintPreview.materials && blueprintPreview.materials.length > 0
     </html>
   `;
 }
+
+import { Resend } from "npm:resend@3.1.0";
+
+export async function sendBlueprintReadyEmail(
+  resend: Resend,
+  to: string,
+  workshopTitle: string,
+  workshopDescription: string,
+  blueprintShareUrl: string
+): Promise<void> {
+  const subject = `✨ Your AI-Generated Blueprint for "${workshopTitle}" is Ready!`;
+  const siteUrl = Deno.env.get('SITE_URL') || 'https://app.teho.ai';
+  const logoUrl = `${siteUrl}/logo-teho-dark.svg`; // Assuming a dark logo variant for light email backgrounds
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${subject}</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f7; color: #333333; }
+        .container { width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .header { padding: 30px 20px 20px 20px; text-align: center; border-bottom: 1px solid #eeeeee; }
+        .header img { height: 40px; width: auto; }
+        .content { padding: 30px 40px; }
+        .content h1 { font-size: 24px; font-weight: bold; color: #2c3e50; margin-top: 0; margin-bottom: 15px; }
+        .content p { font-size: 16px; line-height: 1.6; margin-bottom: 10px; }
+        .description-box { background-color: #f9f9f9; padding: 15px; border-radius: 6px; margin-bottom: 25px; border-left: 3px solid #3498db; }
+        .description-box p { font-size: 15px; line-height: 1.5; margin:0; }
+        .button-container { text-align: center; margin-bottom: 25px; }
+        .button { background-color: #3498db; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px; }
+        .footer { padding: 20px 40px; text-align: center; border-top: 1px solid #eeeeee; background-color: #f8f9fa; }
+        .footer p { font-size: 12px; color: #7f8c8d; margin: 0; }
+        .footer a { color: #3498db; text-decoration: none; }
+        .footer code { background-color: #ecf0f1; padding: 2px 4px; border-radius: 3px; color: #2c3e50; }
+      </style>
+    </head>
+    <body>
+      <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f4f7;">
+        <tr>
+          <td align="center" style="padding: 20px;">
+            <div class="container">
+              <div class="header">
+                <img src="${logoUrl}" alt="teho.ai Logo">
+              </div>
+              <div class="content">
+                <h1>Your Blueprint is Ready!</h1>
+                <p>Hi there,</p>
+                <p>
+                  Great news! We've used AI to generate a blueprint for your meeting: <strong>${workshopTitle}</strong>.
+                </p>
+                <div class="description-box">
+                  <p>${workshopDescription}</p>
+                </div>
+                <div class="button-container">
+                  <a href="${blueprintShareUrl}" target="_blank" class="button">
+                    View & Share Blueprint
+                  </a>
+                </div>
+                <p>
+                  You can share this link with attendees or collaborators to give them a clear overview of the plan.
+                </p>
+              </div>
+              <div class="footer">
+                <p>Powered by <a href="https://teho.ai" target="_blank">teho.ai</a></p>
+                <p style="margin-top: 5px;">
+                  Automate your meeting preparation. Add <code>agenda@teho.ai</code> to your next calendar invite.
+                </p>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: "Teho.ai <agenda@teho.ai>", // Ensure this sender is verified in Resend
+      to,
+      subject,
+      html: htmlContent,
+    });
+    console.log(`Blueprint ready email successfully sent to ${to}`);
+  } catch (error) {
+    console.error(`Error sending blueprint ready email to ${to}:`, error);
+    // Re-throw the error to be handled by the calling function in emailUtils.ts
+    // This allows the caller to decide on retry logic or further error reporting.
+    throw error;
+  }
+}
