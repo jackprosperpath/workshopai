@@ -8,7 +8,6 @@ import { ItemList } from "../ItemList";
 // import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 // import { ChevronDown } from "lucide-react";
 // import type { WorkshopTemplate } from "@/types/WorkshopTemplates";
-import { useState } from "react";
 
 interface WorkshopObjectivesProps {
   problem: string;
@@ -17,6 +16,7 @@ interface WorkshopObjectivesProps {
   metricInput: string;
   setMetricInput: (value: string) => void;
   addMetric: () => void;
+  removeMetric: (index: number) => void;
 }
 
 export function WorkshopObjectives({
@@ -26,6 +26,7 @@ export function WorkshopObjectives({
   metricInput,
   setMetricInput,
   addMetric,
+  removeMetric,
 }: WorkshopObjectivesProps) {
   // const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
 
@@ -55,24 +56,11 @@ export function WorkshopObjectives({
         inputValue={metricInput}
         setInputValue={setMetricInput}
         onAdd={addMetric}
+        onRemove={removeMetric}
         placeholder="Add success metric..."
       />
 
-      {/* Commenting out the template selector section
-      <Collapsible 
-        open={isTemplatesOpen} 
-        onOpenChange={setIsTemplatesOpen}
-        className="border rounded-md mt-4 overflow-hidden"
-      >
-        <CollapsibleTrigger className="flex w-full items-center justify-between p-4 hover:bg-accent/20 transition-colors">
-          <span className="font-medium">Or Choose from Workshop Templates</span>
-          <ChevronDown className={`h-4 w-4 transition-transform ${isTemplatesOpen ? 'rotate-180' : ''}`} />
-        </CollapsibleTrigger>
-        <CollapsibleContent className="p-4 border-t bg-muted/10">
-          <TemplateSelector onSelectTemplate={handleTemplateSelect} />
-        </CollapsibleContent>
-      </Collapsible>
-      */}
+      {/* Commenting out the template selector section */}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -12,13 +12,8 @@ import { GeneratedBlueprint } from './blueprint/GeneratedBlueprint';
 import { BlueprintTabs } from './blueprint/BlueprintTabs';
 import { CalendarSourceInfo } from './blueprint/CalendarSourceInfo';
 
-import { useCalendarAttendees } from '@/hooks/useCalendarAttendees';
-import { useBlueprintGenerationState } from '@/hooks/useBlueprintGenerationState';
-import { useBlueprintSynchronization } from '@/hooks/useBlueprintSynchronization';
-import { useWorkshop } from '@/hooks/useWorkshop'; // Assuming this hook provides workshop data
-
 interface BlueprintGeneratorProps {
-  workshopIdParam: string | null;
+  workshopIdParam?: string | null;
   initialName?: string;
   initialProblem?: string;
   initialDuration?: number;
@@ -37,36 +32,59 @@ export function BlueprintGenerator({
   onWorkshopNameChange,
 }: BlueprintGeneratorProps) {
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState(1); // Step management remains internal
+  const [currentStep, setCurrentStep] = useState(1);
   const [activeTab, setActiveTab] = useState<"settings" | "blueprint">("settings");
-
-  const { workshop, workshopId, setWorkshopId, loadingWorkshop, workshopError } = useWorkshop(workshopIdParam);
-
-  const {
-    workshopName, setWorkshopName,
-    problem, setProblem,
-    metrics, metricInput, setMetricInput, addMetric, removeMetric,
-    duration, setDuration,
-    workshopType, setWorkshopType,
-    attendees, setAttendees,
-    blueprint, setBlueprint,
-    loading, setLoading,
-    errorMessage, setErrorMessage,
-  } = useBlueprintGenerationState(
-    initialName,
-    initialProblem,
-    initialDuration,
-    initialAttendees
-  );
-
-  useCalendarAttendees(workshopId, setAttendees, setWorkshopName, setProblem, setDuration);
-  useBlueprintSynchronization(workshopId, setBlueprint, setWorkshopName, setProblem, setDuration, setMetrics, setWorkshopType, setAttendees);
-
+  
+  // Workshop ID and state management
+  const [workshopId, setWorkshopId] = useState<string | null>(workshopIdParam || null);
+  const [loadingWorkshop, setLoadingWorkshop] = useState(false);
+  const [workshopError, setWorkshopError] = useState<string | null>(null);
+  
+  // Workshop data state
+  const [workshopName, setWorkshopName] = useState(initialName);
+  const [problem, setProblem] = useState(initialProblem);
+  const [metrics, setMetrics] = useState<string[]>([]);
+  const [metricInput, setMetricInput] = useState("");
+  const [duration, setDuration] = useState(initialDuration);
+  const [workshopType, setWorkshopType] = useState<'online' | 'in-person'>('online');
+  const [attendees, setAttendees] = useState<Attendee[]>(initialAttendees);
+  const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
   useEffect(() => {
     if (workshopIdParam) {
       setWorkshopId(workshopIdParam);
+      fetchWorkshopDetails(workshopIdParam);
     }
-  }, [workshopIdParam, setWorkshopId]);
+  }, [workshopIdParam]);
+
+  const fetchWorkshopDetails = async (id: string) => {
+    setLoadingWorkshop(true);
+    try {
+      const { data, error } = await supabase
+        .from('workshops')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (error) throw error;
+      
+      if (data) {
+        if (data.name) setWorkshopName(data.name);
+        if (data.problem) setProblem(data.problem);
+        if (data.metrics) setMetrics(data.metrics);
+        if (data.duration) setDuration(data.duration);
+        if (data.workshop_type) setWorkshopType(data.workshop_type as 'online' | 'in-person');
+        if (data.generated_blueprint) setBlueprint(data.generated_blueprint as Blueprint);
+      }
+    } catch (error: any) {
+      console.error("Error fetching workshop:", error);
+      setWorkshopError(error.message);
+    } finally {
+      setLoadingWorkshop(false);
+    }
+  };
 
   useEffect(() => {
     if (onWorkshopNameChange && workshopName) {
@@ -75,13 +93,24 @@ export function BlueprintGenerator({
   }, [workshopName, onWorkshopNameChange]);
 
   useEffect(() => {
-    if (blueprint) {
+    if (blueprint && onBlueprintGenerated) {
       setActiveTab("blueprint");
-      if (onBlueprintGenerated) {
-        onBlueprintGenerated(blueprint);
-      }
+      onBlueprintGenerated(blueprint);
     }
   }, [blueprint, onBlueprintGenerated]);
+
+  const addMetric = () => {
+    if (metricInput.trim()) {
+      setMetrics([...metrics, metricInput.trim()]);
+      setMetricInput("");
+    }
+  };
+
+  const removeMetric = (index: number) => {
+    const updatedMetrics = [...metrics];
+    updatedMetrics.splice(index, 1);
+    setMetrics(updatedMetrics);
+  };
 
   const generateBlueprint = async () => {
     setLoading(true);
@@ -89,7 +118,7 @@ export function BlueprintGenerator({
     try {
       const response = await supabase.functions.invoke("generate-workshop-blueprint", {
         body: {
-          workshopId: workshopId, // Use workshopId from useWorkshop hook
+          workshopId: workshopId,
           name: workshopName,
           problem,
           metrics,
@@ -131,10 +160,9 @@ export function BlueprintGenerator({
         .update({
           name: workshopName,
           problem: problem,
-          // metrics: metrics, // Assuming metrics is an array of strings
+          metrics: metrics,
           duration: duration,
           workshop_type: workshopType,
-          // attendees: attendees // You might need to handle attendees update differently, e.g., a separate table
         })
         .eq('id', workshopId);
 
@@ -153,7 +181,6 @@ export function BlueprintGenerator({
       setLoading(false);
     }
   };
-
 
   const renderContent = () => {
     if (loadingWorkshop) {
@@ -176,7 +203,7 @@ export function BlueprintGenerator({
           metricInput={metricInput}
           setMetricInput={setMetricInput}
           addMetric={addMetric}
-          // removeMetric={removeMetric} // This function is missing from useBlueprintGenerationState
+          removeMetric={removeMetric}
           duration={duration}
           setDuration={setDuration}
           workshopType={workshopType}
@@ -195,7 +222,6 @@ export function BlueprintGenerator({
   };
 
   if (!workshopId && workshopIdParam) {
-    // If workshopIdParam is present but workshopId is not yet set (still loading/resolving), show loading.
     return (
       <div className="flex justify-center items-center min-h-[300px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -203,19 +229,17 @@ export function BlueprintGenerator({
       </div>
     );
   }
-  
-  if (!workshopId && !workshopIdParam) {
-     // This case implies creating a new workshop from scratch without a param
-     // It might require a slightly different UI or flow, but for now, we allow proceeding to settings
-  }
-
 
   return (
     <Card className="w-full max-w-3xl mx-auto">
       <CardHeader>
         <BlueprintHeader currentStep={currentStep} />
         {workshopId && <CalendarSourceInfo workshopId={workshopId} />}
-        <BlueprintTabs activeTab={activeTab} setActiveTab={setActiveTab} blueprint={blueprint} />
+        <BlueprintTabs 
+          activeTab={activeTab} 
+          setActiveTab={(tab: "settings" | "blueprint") => setActiveTab(tab)} 
+          blueprint={blueprint} 
+        />
       </CardHeader>
       <CardContent className="mt-2">
         {renderContent()}

@@ -102,7 +102,10 @@ export default function ConsensusWorkshop() {
             <TabsTrigger value="endorse">Endorsement</TabsTrigger>
           </TabsList>
           <TabsContent value="workshop">
-            <BlueprintGenerator onBlueprintGenerated={setBlueprint} />
+            <BlueprintGenerator 
+              workshopIdParam={workshopId} 
+              onBlueprintGenerated={setBlueprint}
+            />
           </TabsContent>
           <TabsContent value="canvas" className="overflow-hidden">
             <DraftLimitWrapper>

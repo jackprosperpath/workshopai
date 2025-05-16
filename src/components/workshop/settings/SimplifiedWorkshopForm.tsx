@@ -16,6 +16,7 @@ interface SimplifiedWorkshopFormProps {
   metricInput: string;
   setMetricInput: (value: string) => void;
   addMetric: () => void;
+  removeMetric: (index: number) => void;
   duration: number;
   setDuration: (value: number) => void;
   workshopType: 'online' | 'in-person';
@@ -36,6 +37,7 @@ export function SimplifiedWorkshopForm({
   metricInput,
   setMetricInput,
   addMetric,
+  removeMetric,
   duration,
   setDuration,
   workshopType,
@@ -81,6 +83,7 @@ export function SimplifiedWorkshopForm({
         metricInput={metricInput}
         setMetricInput={setMetricInput}
         addMetric={addMetric}
+        removeMetric={removeMetric}
       />
 
       <WorkshopContext

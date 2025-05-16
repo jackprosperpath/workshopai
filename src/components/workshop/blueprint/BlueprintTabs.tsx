@@ -1,42 +1,36 @@
 
-import { Button } from "@/components/ui/button";
+import React from 'react';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Settings, FileText } from "lucide-react";
 import type { Blueprint } from "../types/workshop";
 
 interface BlueprintTabsProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+  activeTab: "settings" | "blueprint";
+  setActiveTab: (tab: "settings" | "blueprint") => void;
   blueprint: Blueprint | null;
 }
 
-export function BlueprintTabs({
-  activeTab,
-  setActiveTab,
-  blueprint
-}: BlueprintTabsProps) {
-  // Helper function to handle tab changes
-  const handleTabChange = (tab: string) => {
-    // Only allow switching to blueprint tab if blueprint exists
-    if (tab === "blueprint" && !blueprint) {
-      return;
-    }
-    setActiveTab(tab);
-  };
-  
+export function BlueprintTabs({ activeTab, setActiveTab, blueprint }: BlueprintTabsProps) {
   return (
-    <div className="flex justify-center gap-4 mt-6">
-      <Button 
-        variant={activeTab === "settings" ? "default" : "outline"}
-        onClick={() => handleTabChange("settings")}
-      >
-        Workshop Setup
-      </Button>
-      <Button 
-        variant={activeTab === "blueprint" ? "default" : "outline"}
-        onClick={() => handleTabChange("blueprint")}
-        disabled={!blueprint}
-      >
-        Generated Blueprint
-      </Button>
-    </div>
+    <Tabs 
+      value={activeTab} 
+      onValueChange={(value) => setActiveTab(value as "settings" | "blueprint")}
+      className="w-full mt-4"
+    >
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="settings" className="flex items-center">
+          <Settings className="w-4 h-4 mr-2" />
+          Workshop Settings
+        </TabsTrigger>
+        <TabsTrigger 
+          value="blueprint" 
+          className="flex items-center"
+          disabled={!blueprint}
+        >
+          <FileText className="w-4 h-4 mr-2" />
+          Generated Blueprint
+        </TabsTrigger>
+      </TabsList>
+    </Tabs>
   );
 }
