@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Blueprint } from "@/components/workshop/types/workshop";
@@ -13,6 +12,7 @@ export function useBlueprintData(workshopId: string) {
     async function fetchBlueprintData() {
       if (!workshopId) {
         setIsLoading(false);
+        setBlueprint(null); // Ensure blueprint is null if no workshopId
         return;
       }
 
@@ -23,14 +23,12 @@ export function useBlueprintData(workshopId: string) {
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         const isValidUuid = uuidRegex.test(workshopId);
         
-        // First try to get workshop by ID or share_id
         let workshopData = null;
         
         if (isValidUuid) {
-          // Try direct UUID lookup first
           const { data: workshopById, error: workshopByIdError } = await supabase
             .from('workshops')
-            .select('id, generated_blueprint, name')
+            .select('id, generated_blueprint, name, share_id') // Added share_id
             .eq('id', workshopId)
             .maybeSingle();
             
@@ -39,11 +37,10 @@ export function useBlueprintData(workshopId: string) {
           }
         }
         
-        // If no workshop found by ID or it's not a UUID, try share_id lookup
         if (!workshopData) {
           const { data: workshopByShareId, error: workshopByShareIdError } = await supabase
             .from('workshops')
-            .select('id, generated_blueprint, name')
+            .select('id, generated_blueprint, name, share_id') // Added share_id
             .eq('share_id', workshopId)
             .maybeSingle();
             
@@ -52,61 +49,59 @@ export function useBlueprintData(workshopId: string) {
           }
         }
         
-        // If still no workshop, try looking in generated_blueprints table
-        if (!workshopData) {
-          const { data: blueprintData, error: blueprintError } = await supabase
-            .from('generated_blueprints')
-            .select('blueprint_data')
-            .eq('share_id', workshopId)
-            .maybeSingle();
-            
-          if (!blueprintError && blueprintData && blueprintData.blueprint_data) {
-            // Convert concise blueprint to full blueprint format
-            const conciseBp = blueprintData.blueprint_data as ConciseBlueprint;
-            
-            // Create a blueprint from the concise data
-            const fullBlueprint: Blueprint = {
-              title: conciseBp.workshopTitle,
-              description: conciseBp.meetingContext || "",
-              objectives: conciseBp.objectives,
-              agenda: conciseBp.agendaItems,
-              attendees: conciseBp.attendeesList ? conciseBp.attendeesList.map(name => ({
-                name,
-                email: "",
-                role: "Attendee"
-              })) : [],
-              steps: conciseBp.basicTimeline.map(step => ({
-                name: step.activity,
-                description: "",
-                duration: parseInt(step.durationEstimate) || 5,
-                materials: []
-              })),
-              materials: []
-            };
-            
-            setBlueprint(fullBlueprint);
-            setIsLoading(false);
-            return;
-          }
-        }
-        
-        // Process workshop data if found
         if (workshopData && workshopData.generated_blueprint) {
-          // Add attendees property if not exists
-          const blueprintData = workshopData.generated_blueprint as Blueprint;
-          // Ensure the blueprint has an attendees property (even if empty)
+          const blueprintData = workshopData.generated_blueprint as unknown as Blueprint;
           if (!blueprintData.attendees) {
             blueprintData.attendees = [];
           }
-          
+          // Ensure steps have facilitation_notes
+          if (blueprintData.steps) {
+            blueprintData.steps = blueprintData.steps.map(step => ({
+              ...step,
+              facilitation_notes: step.facilitation_notes || "",
+            }));
+          }
           setBlueprint(blueprintData);
+        } else if (!workshopData) { // If workshopData is still null, try generated_blueprints
+          const { data: blueprintRecord, error: blueprintError } = await supabase
+            .from('generated_blueprints')
+            .select('blueprint_data, share_id')
+            .eq('share_id', workshopId) // Use workshopId which might be a share_id
+            .maybeSingle();
+
+          if (!blueprintError && blueprintRecord && blueprintRecord.blueprint_data) {
+            const conciseBp = blueprintRecord.blueprint_data as unknown as ConciseBlueprint;
+            const fullBlueprint: Blueprint = {
+              title: conciseBp.workshopTitle,
+              description: conciseBp.meetingContext || "",
+              objective: conciseBp.objectives.join SemicolonSpace(), // Assuming objective is a single string
+              steps: conciseBp.basicTimeline.map(step => ({
+                name: step.activity,
+                description: "", // Default or map from conciseBp if available
+                duration: step.durationEstimate, // Already a string
+                materials: [], // Default or map from conciseBp if available
+                facilitation_notes: "", // Default
+              })),
+              attendees: conciseBp.attendeesList ? conciseBp.attendeesList.map(name => ({
+                name, // Add name property
+                email: "", // Default
+                role: "Attendee" // Default
+              })) : [],
+              materials: [], // Default or map from conciseBp if available
+              // Add other optional fields from Blueprint if needed, with defaults
+            };
+            setBlueprint(fullBlueprint);
+          } else {
+            setBlueprint(null); // No blueprint found
+            if (blueprintError) setError(blueprintError);
+          }
         } else {
-          // No blueprint found
-          setBlueprint(null);
+           setBlueprint(null); // No blueprint in workshopData
         }
       } catch (err: any) {
         console.error("Error fetching blueprint data:", err);
         setError(err);
+        setBlueprint(null);
       } finally {
         setIsLoading(false);
       }
@@ -117,3 +112,6 @@ export function useBlueprintData(workshopId: string) {
 
   return { blueprint, isLoading, error };
 }
+
+// Helper for joining objectives, can be moved to a utils file
+const SemicolonSpace = () => "; ";

@@ -1,10 +1,11 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { WorkshopHistory } from "@/components/workshop/WorkshopHistory";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
+import type { ConciseBlueprint } from "@/types/blueprint";
+import type { Blueprint } from "@/components/workshop/types/workshop";
 
 interface WorkshopListProps {
   onCreateWorkshop: () => void;
@@ -28,7 +29,7 @@ export function WorkshopList({ onCreateWorkshop }: WorkshopListProps) {
       }
 
       // First get workshops owned by the user
-      const { data: ownedWorkshops, error: ownedError } = await supabase
+      const { data: ownedWorkshopsResult, error: ownedError } = await supabase
         .from('workshops')
         .select('*')
         .eq('owner_id', userData.user.id)
@@ -37,9 +38,11 @@ export function WorkshopList({ onCreateWorkshop }: WorkshopListProps) {
       if (ownedError) {
         throw ownedError;
       }
+      const ownedWorkshops = ownedWorkshopsResult || [];
+
 
       // Then get workshops created from calendar invites with the user's email
-      const { data: calendarInvites, error: invitesError } = await supabase
+      const { data: calendarInvitesResult, error: invitesError } = await supabase
         .from('inbound_invites')
         .select('id, workshop_id, organizer_email, summary, created_at, status')
         .eq('organizer_email', userData.user.email)
@@ -49,9 +52,10 @@ export function WorkshopList({ onCreateWorkshop }: WorkshopListProps) {
       if (invitesError) {
         throw invitesError;
       }
+      const calendarInvites = calendarInvitesResult || [];
 
       // Also get standalone blueprints from generated_blueprints table
-      const { data: generatedBlueprints, error: blueprintsError } = await supabase
+      const { data: generatedBlueprintsResult, error: blueprintsError } = await supabase
         .from('generated_blueprints')
         .select('id, blueprint_data, share_id, created_at, inbound_invite_id')
         .order('created_at', { ascending: false });
@@ -59,43 +63,48 @@ export function WorkshopList({ onCreateWorkshop }: WorkshopListProps) {
       if (blueprintsError) {
         throw blueprintsError;
       }
+      const generatedBlueprints = generatedBlueprintsResult || [];
 
       // For each calendar invite, fetch the workshop details
-      let calendarWorkshops = [];
+      let calendarWorkshopsData = [];
       if (calendarInvites && calendarInvites.length > 0) {
-        const workshopIds = calendarInvites.map(invite => invite.workshop_id);
+        const workshopIds = calendarInvites.map(invite => invite.workshop_id).filter(id => id !== null) as string[];
         
-        const { data: inviteWorkshops, error: workshopsError } = await supabase
-          .from('workshops')
-          .select('*')
-          .in('id', workshopIds);
-          
-        if (workshopsError) {
-          throw workshopsError;
-        }
+        if (workshopIds.length > 0) {
+          const { data: inviteWorkshops, error: workshopsError } = await supabase
+            .from('workshops')
+            .select('*')
+            .in('id', workshopIds);
+            
+          if (workshopsError) {
+            throw workshopsError;
+          }
 
-        // Annotate calendar workshops with source info
-        calendarWorkshops = inviteWorkshops.map(workshop => ({
-          ...workshop,
-          source: 'calendar'
-        }));
+          // Annotate calendar workshops with source info
+          calendarWorkshopsData = (inviteWorkshops || []).map(workshop => ({
+            ...workshop,
+            source: 'calendar'
+          }));
+        }
       }
 
       // Convert standalone blueprints to workshop format for unified list
-      let standaloneBlueprints = [];
+      let standaloneBlueprintsData = [];
       if (generatedBlueprints && generatedBlueprints.length > 0) {
-        standaloneBlueprints = generatedBlueprints
+        standaloneBlueprintsData = generatedBlueprints
           .filter(bp => bp.blueprint_data && !calendarInvites.some(invite => invite.id === bp.inbound_invite_id))
           .map(bp => {
-            const conciseBp = bp.blueprint_data;
+            const conciseBp = bp.blueprint_data as unknown as ConciseBlueprint;
             return {
-              id: bp.share_id,
+              id: bp.share_id, // Use share_id as id for these
               name: conciseBp.workshopTitle || "Untitled Meeting",
               problem: conciseBp.meetingContext || "",
               created_at: bp.created_at,
-              updated_at: bp.created_at,
+              updated_at: bp.created_at, // Using created_at as updated_at for consistency
               share_id: bp.share_id,
-              source: 'generated_blueprint',
+              owner_id: userData.user?.id || "", // Attempt to assign owner
+              source: 'generated_blueprint', // Indicate the source
+              // Convert ConciseBlueprint to the full Blueprint structure for workshop list
               generated_blueprint: {
                 title: conciseBp.workshopTitle,
                 description: conciseBp.meetingContext || "",
@@ -106,10 +115,11 @@ export function WorkshopList({ onCreateWorkshop }: WorkshopListProps) {
                   name: step.activity,
                   description: "",
                   duration: parseInt(step.durationEstimate) || 5,
-                  materials: []
+                  materials: [],
+                  facilitation_notes: ""
                 })) : [],
                 materials: []
-              }
+              } as Blueprint // Cast to Blueprint
             };
           });
       }
@@ -118,26 +128,29 @@ export function WorkshopList({ onCreateWorkshop }: WorkshopListProps) {
       const allWorkshops = [...ownedWorkshops];
       
       // Add calendar workshops that don't already exist in owned workshops
-      calendarWorkshops.forEach(calendarWorkshop => {
+      calendarWorkshopsData.forEach(calendarWorkshop => {
         if (!allWorkshops.some(workshop => workshop.id === calendarWorkshop.id)) {
           allWorkshops.push(calendarWorkshop);
         }
       });
       
       // Add standalone blueprints as workshops
-      standaloneBlueprints.forEach(blueprint => {
-        if (!allWorkshops.some(workshop => workshop.share_id === blueprint.share_id)) {
-          allWorkshops.push(blueprint);
+      // Ensure share_id is unique if id is already used
+      standaloneBlueprintsData.forEach(blueprintWorkshop => {
+        if (!allWorkshops.some(ws => ws.id === blueprintWorkshop.id || (ws.share_id && ws.share_id === blueprintWorkshop.share_id))) {
+          allWorkshops.push(blueprintWorkshop);
         }
       });
       
       // Sort by updated_at
-      allWorkshops.sort((a, b) => 
-        new Date(b.updated_at || b.created_at).getTime() - 
-        new Date(a.updated_at || a.created_at).getTime()
+      allWorkshops.sort((a, b) => {
+          const dateA = new Date(a.updated_at || a.created_at || 0).getTime();
+          const dateB = new Date(b.updated_at || b.created_at || 0).getTime();
+          return dateB - dateA;
+        }
       );
       
-      setWorkshops(allWorkshops);
+      setWorkshops(allWorkshops as any); // Use 'as any' temporarily if type issues persist, refine later
     } catch (error) {
       console.error('Error fetching workshops:', error);
       toast.error("Failed to load workshops");

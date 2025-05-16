@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -10,6 +9,7 @@ import { List, Copy, ExternalLink, Mail, Users, Calendar, Clock } from 'lucide-r
 import { ConciseBlueprint } from '@/types/blueprint';
 import { toast } from '@/components/ui/use-toast';
 import { Navbar } from '@/components/Navbar';
+import type { Blueprint as FullBlueprintType } from '@/components/workshop/types/workshop'; // Alias to avoid conflict
 
 const fetchBlueprint = async (shareId: string | undefined): Promise<ConciseBlueprint | null> => {
   if (!shareId) {
@@ -18,6 +18,38 @@ const fetchBlueprint = async (shareId: string | undefined): Promise<ConciseBluep
   
   console.log("Fetching blueprint with share_id:", shareId);
   
+  // First, try to find in workshops table by share_id
+  const { data: workshopData, error: workshopError } = await supabase
+    .from('workshops')
+    .select('generated_blueprint, share_id, name') // Added name for title fallback
+    .eq('share_id', shareId)
+    .maybeSingle();
+    
+  if (workshopError) {
+    console.error('Error fetching workshop by share_id:', workshopError);
+    // Don't throw yet, try generated_blueprints table
+  }
+  
+  if (workshopData && workshopData.generated_blueprint) {
+    console.log("Blueprint found in workshops table via share_id:", workshopData.generated_blueprint);
+    const fullBlueprint = workshopData.generated_blueprint as unknown as FullBlueprintType; // Cast to FullBlueprintType
+    
+    const conciseBlueprint: ConciseBlueprint = {
+      workshopTitle: fullBlueprint.title || workshopData.name || "Untitled Meeting",
+      objectives: (typeof fullBlueprint.objective === 'string' ? [fullBlueprint.objective] : fullBlueprint.objective) || (fullBlueprint as any).objectives || [], // Handle both single objective and objectives array
+      agendaItems: fullBlueprint.agenda || (fullBlueprint as any).steps?.map((s: any) => s.name) || [],
+      attendeesList: fullBlueprint.attendees ? fullBlueprint.attendees.map(a => a.name || a.email || "Unknown Attendee") : [],
+      basicTimeline: (fullBlueprint.steps || []).map(step => ({
+        activity: step.name,
+        durationEstimate: `${step.duration || 'N/A'}` // Ensure duration is string
+      })),
+      meetingContext: fullBlueprint.description
+    };
+    return conciseBlueprint;
+  }
+
+  // If not found in workshops or no generated_blueprint, try generated_blueprints table
+  console.log("No blueprint in workshop or workshop not found by share_id, checking generated_blueprints table...");
   const { data, error } = await supabase
     .from('generated_blueprints')
     .select('blueprint_data, share_id')
@@ -25,53 +57,16 @@ const fetchBlueprint = async (shareId: string | undefined): Promise<ConciseBluep
     .maybeSingle();
 
   if (error) {
-    console.error('Error fetching blueprint:', error);
-    throw new Error(error.message);
+    console.error('Error fetching blueprint from generated_blueprints:', error);
+    throw new Error(error.message); // Throw if error here, as it's the last resort
   }
 
   if (!data || !data.blueprint_data) {
-    console.log("No blueprint found in generated_blueprints, checking workshops table...");
-    
-    // If not found in generated_blueprints, try to find in workshops table
-    const { data: workshopData, error: workshopError } = await supabase
-      .from('workshops')
-      .select('generated_blueprint, share_id')
-      .eq('share_id', shareId)
-      .maybeSingle();
-      
-    if (workshopError) {
-      console.error('Error fetching workshop:', workshopError);
-      throw new Error(workshopError.message);
-    }
-    
-    if (!workshopData || !workshopData.generated_blueprint) {
-      console.log("No blueprint found for share_id:", shareId);
-      return null; // Blueprint not found or blueprint_data is null
-    }
-    
-    console.log("Blueprint found in workshops table:", workshopData.generated_blueprint);
-    
-    // Convert the workshop's generated_blueprint to ConciseBlueprint format
-    const fullBlueprint = workshopData.generated_blueprint;
-    
-    // Create a concise version from the full blueprint
-    const conciseBlueprint: ConciseBlueprint = {
-      workshopTitle: fullBlueprint.title || "Untitled Meeting",
-      objectives: fullBlueprint.objectives || [],
-      agendaItems: fullBlueprint.agenda || [],
-      attendeesList: fullBlueprint.attendees ? fullBlueprint.attendees.map(a => a.name) : [],
-      basicTimeline: (fullBlueprint.steps || []).map(step => ({
-        activity: step.name,
-        durationEstimate: `${step.duration} min`
-      })),
-      meetingContext: fullBlueprint.description
-    };
-    
-    return conciseBlueprint;
+    console.log("No blueprint found for share_id:", shareId, "in generated_blueprints table either.");
+    return null; 
   }
   
   console.log("Blueprint found in generated_blueprints table:", data.blueprint_data);
-  
   return data.blueprint_data as unknown as ConciseBlueprint;
 };
 
@@ -82,7 +77,7 @@ const BlueprintViewer: React.FC = () => {
   console.log("BlueprintViewer rendering with shareId:", shareId);
   
   const { data: blueprint, isLoading, error } = useQuery<ConciseBlueprint | null>({
-    queryKey: ['blueprint', shareId],
+    queryKey: ['blueprintViewer', shareId], // Changed queryKey to avoid conflict with other useQuery for 'blueprint'
     queryFn: () => fetchBlueprint(shareId),
   });
 
@@ -95,10 +90,12 @@ const BlueprintViewer: React.FC = () => {
   };
 
   const handleOpenInApp = () => {
+    // Navigate to the main workshop page with the ID (which could be a share_id)
     if (shareId) {
       navigate(`/workshop?id=${shareId}`);
     } else {
-      navigate('/workshop');
+      // Fallback if somehow shareId is not available, though unlikely here
+      navigate('/workshop'); 
     }
   };
 
@@ -129,12 +126,14 @@ const BlueprintViewer: React.FC = () => {
   if (!blueprint) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-gray-50 p-4">
-        <Card className="w-full max-w-lg bg-white shadow-xl">
+        <Navbar /> {/* Added Navbar here for consistency */}
+        <Card className="w-full max-w-lg bg-white shadow-xl mt-8">
           <CardHeader>
             <CardTitle>Blueprint Not Found</CardTitle>
           </CardHeader>
           <CardContent>
             <p>The requested blueprint could not be found. Please check the link and try again.</p>
+            <Button onClick={() => navigate('/workshop')} className="mt-4">Go to My Blueprints</Button>
           </CardContent>
         </Card>
       </div>
@@ -142,7 +141,6 @@ const BlueprintViewer: React.FC = () => {
   }
 
   const mailtoLink = `mailto:agenda@teho.ai?subject=Regarding Teho.ai Blueprint for: ${encodeURIComponent(blueprint.workshopTitle)}&body=Hi Teho.ai team,%0D%0A%0D%0AI'd like to try teho.ai for my next meeting. Here's the context from the blueprint:%0D%0A%0D%0AWorkshop Title: ${encodeURIComponent(blueprint.workshopTitle)}%0D%0AObjectives: ${blueprint.objectives.map(obj => `- ${encodeURIComponent(obj)}`).join('%0D%0A')}%0D%0A%0D%0ALooking forward to hearing from you!`;
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 py-8 px-4 sm:px-6 lg:px-8 text-white">
@@ -213,13 +211,8 @@ const BlueprintViewer: React.FC = () => {
         </CardContent>
 
         <CardFooter className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-6 border-t border-slate-700">
-          <Button asChild size="lg" className="bg-sky-500 hover:bg-sky-600 text-white w-full sm:w-auto">
-            <a href={mailtoLink}>
-              <Mail className="mr-2 h-4 w-4" /> Try teho.ai for your next meeting!
-            </a>
-          </Button>
-          <Button variant="outline" onClick={handleOpenInApp} size="lg" className="text-sky-400 border-sky-500 hover:bg-sky-500/10 hover:text-sky-300 w-full sm:w-auto">
-            <ExternalLink className="mr-2 h-4 w-4" /> Open in teho.ai
+          <Button variant="default" onClick={handleOpenInApp} size="lg" className="bg-sky-500 hover:bg-sky-600 text-white w-full sm:w-auto">
+            <ExternalLink className="mr-2 h-4 w-4" /> Open in teho.ai App
           </Button>
         </CardFooter>
       </Card>
