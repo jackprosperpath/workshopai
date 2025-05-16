@@ -5,7 +5,7 @@ import { WorkshopHistory } from "@/components/workshop/WorkshopHistory";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import type { ConciseBlueprint } from "@/types/blueprint";
-import type { Blueprint } from "@/components/workshop/types/workshop";
+import type { Blueprint, BlueprintStep } from "@/components/workshop/types/workshop";
 
 interface WorkshopListProps {
   onCreateWorkshop: () => void;
@@ -108,13 +108,13 @@ export function WorkshopList({ onCreateWorkshop }: WorkshopListProps) {
               generated_blueprint: {
                 title: conciseBp.workshopTitle,
                 description: conciseBp.meetingContext || "",
-                objectives: conciseBp.objectives || [],
-                agenda: conciseBp.agendaItems || [],
+                objective: conciseBp.objectives ? conciseBp.objectives.join("; ") : "", // Ensure objective is a string
+                agenda: conciseBp.agendaItems || [], // Kept as agenda for now, matches Blueprint.agenda
                 attendees: conciseBp.attendeesList ? conciseBp.attendeesList.map(name => ({ name, email: "", role: "Attendee" })) : [],
                 steps: conciseBp.basicTimeline ? conciseBp.basicTimeline.map(step => ({
                   name: step.activity,
                   description: "",
-                  duration: parseInt(step.durationEstimate) || 5,
+                  duration: (parseInt(step.durationEstimate) || 5).toString(), // Ensure duration is string
                   materials: [],
                   facilitation_notes: ""
                 })) : [],

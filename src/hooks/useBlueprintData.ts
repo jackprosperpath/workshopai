@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Blueprint, BlueprintStep } from "@/components/workshop/types/workshop"; // Added BlueprintStep
+import type { Blueprint, BlueprintStep } from "@/components/workshop/types/workshop";
 import type { ConciseBlueprint } from "@/types/blueprint";
 
 export function useBlueprintData(workshopId: string) {
@@ -29,7 +28,7 @@ export function useBlueprintData(workshopId: string) {
         if (isValidUuid) {
           const { data: workshopById, error: workshopByIdError } = await supabase
             .from('workshops')
-            .select('id, generated_blueprint, name, share_id') // Added share_id
+            .select('id, generated_blueprint, name, share_id')
             .eq('id', workshopId)
             .maybeSingle();
             
@@ -41,7 +40,7 @@ export function useBlueprintData(workshopId: string) {
         if (!workshopData) {
           const { data: workshopByShareId, error: workshopByShareIdError } = await supabase
             .from('workshops')
-            .select('id, generated_blueprint, name, share_id') // Added share_id
+            .select('id, generated_blueprint, name, share_id')
             .eq('share_id', workshopId)
             .maybeSingle();
             
@@ -75,11 +74,11 @@ export function useBlueprintData(workshopId: string) {
             const fullBlueprint: Blueprint = {
               title: conciseBp.workshopTitle,
               description: conciseBp.meetingContext || "",
-              objective: conciseBp.objectives.join(SemicolonSpace()), // Corrected: SemicolonSpace() is called and passed to join.
+              objective: conciseBp.objectives.join(SemicolonSpace()),
               steps: conciseBp.basicTimeline.map(step => ({
                 name: step.activity,
                 description: "", 
-                duration: parseInt(step.durationEstimate) || 0, 
+                duration: (parseInt(step.durationEstimate) || 0).toString(), 
                 materials: [], 
                 facilitation_notes: "",
               })),
@@ -115,4 +114,3 @@ export function useBlueprintData(workshopId: string) {
 
 // Helper for joining objectives, can be moved to a utils file
 const SemicolonSpace = () => "; ";
-

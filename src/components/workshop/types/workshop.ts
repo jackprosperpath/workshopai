@@ -1,5 +1,5 @@
-
 export type Attendee = {
+  name?: string; // Added optional name property
   role: string;
   email?: string;
 };
