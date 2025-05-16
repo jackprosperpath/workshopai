@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Blueprint, BlueprintStep } from "@/components/workshop/types/workshop";
 // Updated import path for ConciseBlueprint
-import type { ConciseBlueprint } from "@/supabase/functions/process-calendar-invite/types/workshop"; 
+import type { ConciseBlueprint } from "@/types/blueprint"; 
 
 
 export function useBlueprintData(workshopId: string) {
@@ -72,7 +73,7 @@ export function useBlueprintData(workshopId: string) {
               ...step,
               facilitation_notes: step.facilitation_notes || "",
               description: step.description || "",
-              materials: step.materials || [], // This line is now valid with the updated BlueprintStep type
+              materials: step.materials || [], 
               duration: step.duration || "0",
             }));
           }

@@ -6,10 +6,10 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { List, Copy, ExternalLink, Mail, Users, Calendar, Clock } from 'lucide-react';
-import { ConciseBlueprint } from '@/types/blueprint';
+import { ConciseBlueprint, ConciseBlueprintAgendaItem } from '@/types/blueprint'; // Ensure ConciseBlueprintAgendaItem is imported if used directly
 import { toast } from '@/components/ui/use-toast';
 import { Navbar } from '@/components/Navbar';
-import type { Blueprint as FullBlueprintType } from '@/components/workshop/types/workshop'; // Alias to avoid conflict
+import type { Blueprint as FullBlueprintType, BlueprintStep } from '@/components/workshop/types/workshop'; // Alias to avoid conflict
 
 const fetchBlueprint = async (shareId: string | undefined): Promise<ConciseBlueprint | null> => {
   if (!shareId) {
@@ -32,16 +32,23 @@ const fetchBlueprint = async (shareId: string | undefined): Promise<ConciseBluep
   
   if (workshopData && workshopData.generated_blueprint) {
     console.log("Blueprint found in workshops table via share_id:", workshopData.generated_blueprint);
-    const fullBlueprint = workshopData.generated_blueprint as unknown as FullBlueprintType; // Cast to FullBlueprintType
+    const fullBlueprint = workshopData.generated_blueprint as unknown as FullBlueprintType; 
     
     const conciseBlueprint: ConciseBlueprint = {
       workshopTitle: fullBlueprint.title || workshopData.name || "Untitled Meeting",
-      objectives: (typeof fullBlueprint.objective === 'string' ? [fullBlueprint.objective] : fullBlueprint.objective) || (fullBlueprint as any).objectives || [], // Handle both single objective and objectives array
-      agendaItems: fullBlueprint.agenda || (fullBlueprint as any).steps?.map((s: any) => s.name) || [],
+      objectives: (typeof fullBlueprint.objective === 'string' ? [fullBlueprint.objective] : (fullBlueprint.objective ? [fullBlueprint.objective] : [])) || (fullBlueprint as any).objectives || [],
+      agendaItems: (fullBlueprint.steps || []).map((s: BlueprintStep): ConciseBlueprintAgendaItem => ({
+        name: s.name,
+        details: s.description || "No details provided.",
+        // BlueprintStep doesn't have method/methodExplanation directly, so provide defaults or map if available elsewhere
+        method: (s as any).method || "N/A", 
+        methodExplanation: (s as any).methodExplanation || "No explanation provided.",
+        tip: s.facilitation_notes || "No tips provided."
+      })),
       attendeesList: fullBlueprint.attendees ? fullBlueprint.attendees.map(a => a.name || a.email || "Unknown Attendee") : [],
       basicTimeline: (fullBlueprint.steps || []).map(step => ({
         activity: step.name,
-        durationEstimate: `${step.duration || 'N/A'}` // Ensure duration is string
+        durationEstimate: `${step.duration || 'N/A'}` 
       })),
       meetingContext: fullBlueprint.description
     };
@@ -77,7 +84,7 @@ const BlueprintViewer: React.FC = () => {
   console.log("BlueprintViewer rendering with shareId:", shareId);
   
   const { data: blueprint, isLoading, error } = useQuery<ConciseBlueprint | null>({
-    queryKey: ['blueprintViewer', shareId], // Changed queryKey to avoid conflict with other useQuery for 'blueprint'
+    queryKey: ['blueprintViewer', shareId], 
     queryFn: () => fetchBlueprint(shareId),
   });
 
@@ -90,11 +97,9 @@ const BlueprintViewer: React.FC = () => {
   };
 
   const handleOpenInApp = () => {
-    // Navigate to the main workshop page with the ID (which could be a share_id)
     if (shareId) {
       navigate(`/workshop?id=${shareId}`);
     } else {
-      // Fallback if somehow shareId is not available, though unlikely here
       navigate('/workshop'); 
     }
   };
@@ -181,7 +186,7 @@ const BlueprintViewer: React.FC = () => {
             <h3 className="text-xl font-semibold mb-2 text-sky-300 flex items-center"><Calendar className="mr-2 h-5 w-5 text-sky-400" />Agenda Items</h3>
             <ul className="list-decimal list-inside pl-5 space-y-1 text-slate-300">
               {blueprint.agendaItems.map((item, index) => (
-                <li key={index}>{item}</li>
+                <li key={index}>{item.name}</li> {/* Changed to item.name */}
               ))}
             </ul>
           </div>

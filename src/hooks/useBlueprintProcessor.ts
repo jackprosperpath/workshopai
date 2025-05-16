@@ -35,6 +35,19 @@ export function useBlueprintProcessor({
     setErrorMessage(null);
     
     try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        console.error("User not authenticated:", userError);
+        toast({
+          title: "Authentication Error",
+          description: "You must be logged in to create a workshop.",
+          variant: "destructive",
+        });
+        throw new Error("User not authenticated. Cannot create workshop.");
+      }
+      const ownerId = user.id;
+
       // First, create or update the workshop record
       let workshopDbId = workshopId;
       
@@ -49,13 +62,14 @@ export function useBlueprintProcessor({
             duration: formState.duration,
             workshop_type: formState.workshopType,
             share_id: Math.random().toString(36).substring(2, 8),
+            owner_id: ownerId, // Added owner_id
           })
           .select('id')
           .single();
           
         if (createError) {
           console.error("Error creating workshop:", createError);
-          throw new Error("Failed to create workshop record.");
+          throw new Error(`Failed to create workshop record: ${createError.message}`);
         }
         
         workshopDbId = newWorkshop.id;
