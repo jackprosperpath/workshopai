@@ -3,10 +3,10 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useBlueprintData } from "@/hooks/useBlueprintData";
 import { BlueprintContent } from "./BlueprintContent";
-import { Share2, Info, Clock } from "lucide-react";
+import { Share2, Info, Clock, AlertCircle } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -62,8 +62,26 @@ export function BlueprintDetails({ workshopId }: BlueprintDetailsProps) {
   if (error) {
     return (
       <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error Loading Blueprint</AlertTitle>
         <AlertDescription>
-          Failed to load blueprint data. Please try again later.
+          We couldn't load the blueprint data. The ID may be invalid or the blueprint might have been deleted.
+          <div className="mt-2 text-sm opacity-80">
+            Technical details: {error.message}
+          </div>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  // If no blueprint was found but also no error
+  if (!blueprint) {
+    return (
+      <Alert variant="warning" className="bg-amber-50 border-amber-200">
+        <AlertCircle className="h-4 w-4 text-amber-600" />
+        <AlertTitle className="text-amber-700">Blueprint Not Found</AlertTitle>
+        <AlertDescription className="text-amber-600">
+          We couldn't find a blueprint with the provided ID. Please check that the URL is correct.
         </AlertDescription>
       </Alert>
     );
@@ -96,35 +114,29 @@ export function BlueprintDetails({ workshopId }: BlueprintDetailsProps) {
             </TabsList>
             
             <TabsContent value="blueprint">
-              {blueprint ? (
-                <BlueprintContent 
-                  blueprint={blueprint} 
-                  activeTab="blueprint"
-                  setActiveTab={() => {}} // No-op function as we're in view-only mode
-                  errorMessage={null}
-                  workshopId={workshopId}
-                  workshopName={blueprint.title || "Untitled"}
-                  setWorkshopName={() => {}} // No-op function 
-                  problem=""
-                  setProblem={() => {}}
-                  metrics={[]}
-                  metricInput=""
-                  setMetricInput={() => {}}
-                  addMetric={() => {}}
-                  removeMetric={() => {}}
-                  duration={60}
-                  setDuration={() => {}}
-                  workshopType="online"
-                  setWorkshopType={() => {}}
-                  loading={false}
-                  onGenerate={() => {}}
-                  attendees={blueprint.attendees || []}
-                />
-              ) : (
-                <div className="text-center py-12">
-                  <div className="text-gray-500">No blueprint data available</div>
-                </div>
-              )}
+              <BlueprintContent 
+                blueprint={blueprint} 
+                activeTab="blueprint"
+                setActiveTab={() => {}} // No-op function as we're in view-only mode
+                errorMessage={null}
+                workshopId={workshopId}
+                workshopName={blueprint.title || "Untitled"}
+                setWorkshopName={() => {}} // No-op function 
+                problem=""
+                setProblem={() => {}}
+                metrics={[]}
+                metricInput=""
+                setMetricInput={() => {}}
+                addMetric={() => {}}
+                removeMetric={() => {}}
+                duration={60}
+                setDuration={() => {}}
+                workshopType="online"
+                setWorkshopType={() => {}}
+                loading={false}
+                onGenerate={() => {}}
+                attendees={blueprint.attendees || []}
+              />
             </TabsContent>
             
             <TabsContent value="info">

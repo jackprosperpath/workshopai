@@ -12,7 +12,7 @@ import { CalendarInviteInfo } from "@/components/workshop/CalendarInviteInfo";
 import { CalendarIntegrationInfo } from "@/components/workshop/CalendarIntegrationInfo";
 import { BlueprintDetails } from "@/components/workshop/blueprint/BlueprintDetails";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
+import { Terminal, AlertCircle } from "lucide-react";
 
 const Workshop = () => {
   const [searchParams] = useSearchParams();
@@ -24,6 +24,7 @@ const Workshop = () => {
     if (isAuthenticating) return;
 
     if (workshopId) {
+      console.log("Workshop page: Loading workshop with ID:", workshopId);
       getWorkshop(workshopId);
     }
   }, [workshopId, isAuthenticating, getWorkshop]);
@@ -81,4 +82,3 @@ const Workshop = () => {
 }
 
 export default Workshop;
-
