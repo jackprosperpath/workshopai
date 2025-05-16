@@ -1,30 +1,18 @@
+
 import { CardTitle, CardDescription } from "@/components/ui/card";
 
 interface BlueprintHeaderProps {
-  currentStep: number;
+  // currentStep was here, but is no longer needed as per usage in BlueprintGenerator
 }
 
-export function BlueprintHeader({ currentStep }: BlueprintHeaderProps) {
+export function BlueprintHeader({}: BlueprintHeaderProps) { // Props can be removed if empty, or kept for future additions
   return (
     <>
       <CardTitle>Create Meeting Blueprint</CardTitle>
       <CardDescription>
         Follow these steps to define your AI-generated meeting blueprint
       </CardDescription>
-      <div className="flex justify-between items-center mt-4">
-        <div className="flex items-center space-x-2">
-          <div className={`rounded-full w-8 h-8 flex items-center justify-center ${currentStep === 1 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>1</div>
-          <div className="h-0.5 w-12 bg-muted"></div>
-          <div className={`rounded-full w-8 h-8 flex items-center justify-center ${currentStep === 2 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>2</div>
-          <div className="h-0.5 w-12 bg-muted"></div>
-          <div className={`rounded-full w-8 h-8 flex items-center justify-center ${currentStep === 3 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>3</div>
-        </div>
-        <div className="text-muted-foreground text-sm">
-          {currentStep === 1 && "Objectives"}
-          {currentStep === 2 && "People & Time"}
-          {currentStep === 3 && "Context"}
-        </div>
-      </div>
+      {/* The div containing step indicators and step-specific text has been removed */}
     </>
   );
 }

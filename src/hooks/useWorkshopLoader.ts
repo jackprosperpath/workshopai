@@ -1,13 +1,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import type { Blueprint, Attendee } from "@/components/workshop/types/workshop";
-import type { UseWorkshopFormStateSetters } from './useWorkshopFormState'; // We'll define this type if needed, or pass individual setters
+import type { Blueprint } from "@/components/workshop/types/workshop";
+// Removed import for UseWorkshopFormStateSetters as it's not exported or used.
 
 interface UseWorkshopLoaderProps {
   workshopIdParam?: string | null;
   setWorkshopId: (id: string | null) => void;
-  setFormStates: (data: { // Corresponds to the setFormStates in useWorkshopFormState
+  setFormStates: (data: {
     name?: string;
     problem?: string;
     metrics?: string[];
