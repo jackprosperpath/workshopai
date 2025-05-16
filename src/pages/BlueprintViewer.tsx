@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { List, Copy, ExternalLink, Mail, Users, Calendar, Clock } from 'lucide-react';
 import { ConciseBlueprint } from '@/types/blueprint'; // Using the new client-side type
 import { toast } from '@/components/ui/use-toast'; // Corrected import path for use-toast
+import { Navbar } from '@/components/Navbar';
 
 const fetchBlueprint = async (shareId: string | undefined): Promise<ConciseBlueprint | null> => {
   if (!shareId) {
@@ -42,6 +43,7 @@ const fetchBlueprint = async (shareId: string | undefined): Promise<ConciseBluep
 
 const BlueprintViewer: React.FC = () => {
   const { shareId } = useParams<{ shareId: string }>();
+  const navigate = useNavigate();
   
   console.log("BlueprintViewer rendering with shareId:", shareId);
   
@@ -56,6 +58,16 @@ const BlueprintViewer: React.FC = () => {
       title: "Link Copied!",
       description: "The blueprint link has been copied to your clipboard.",
     });
+  };
+
+  const handleOpenInApp = () => {
+    // If we're viewing a shared blueprint, we should find the corresponding workshop
+    // and redirect to the workshop page
+    if (shareId) {
+      navigate(`/workshop?id=${shareId}`);
+    } else {
+      navigate('/workshop');
+    }
   };
 
   if (isLoading) {
@@ -174,10 +186,8 @@ const BlueprintViewer: React.FC = () => {
               <Mail className="mr-2 h-4 w-4" /> Try teho.ai for your next meeting!
             </a>
           </Button>
-          <Button variant="outline" asChild size="lg" className="text-sky-400 border-sky-500 hover:bg-sky-500/10 hover:text-sky-300 w-full sm:w-auto">
-            <a href="/">
-              <ExternalLink className="mr-2 h-4 w-4" /> Open in teho.ai
-            </a>
+          <Button variant="outline" onClick={handleOpenInApp} size="lg" className="text-sky-400 border-sky-500 hover:bg-sky-500/10 hover:text-sky-300 w-full sm:w-auto">
+            <ExternalLink className="mr-2 h-4 w-4" /> Open in teho.ai
           </Button>
         </CardFooter>
       </Card>

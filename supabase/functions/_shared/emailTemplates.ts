@@ -92,6 +92,11 @@ export async function sendBlueprintReadyEmail(
   const siteUrl = Deno.env.get('SITE_URL') || 'https://app.teho.ai';
   const logoUrl = `${siteUrl}/logo-teho-dark.svg`; // Assuming a dark logo variant for light email backgrounds
 
+  // Make sure we're using the /workshop route instead of /blueprint/:shareId
+  const workshopUrl = blueprintShareUrl.includes('/blueprint/') 
+    ? blueprintShareUrl.replace('/blueprint/', '/workshop?id=')
+    : blueprintShareUrl;
+
   const htmlContent = `
     <!DOCTYPE html>
     <html lang="en">
@@ -135,7 +140,7 @@ export async function sendBlueprintReadyEmail(
                   <p>${workshopDescription}</p>
                 </div>
                 <div class="button-container">
-                  <a href="${blueprintShareUrl}" target="_blank" class="button">
+                  <a href="${workshopUrl}" target="_blank" class="button">
                     View & Share Blueprint
                   </a>
                 </div>
@@ -175,7 +180,7 @@ Great news! We've used AI to generate a blueprint for your meeting: "${workshopT
 
 ${workshopDescription}
 
-View & Share Your Blueprint: ${blueprintShareUrl}
+View & Share Your Blueprint: ${workshopUrl}
 
 You can share this link with attendees or collaborators to give them a clear overview of the plan.
 
