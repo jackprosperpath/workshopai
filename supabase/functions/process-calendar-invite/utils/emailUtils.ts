@@ -5,7 +5,7 @@ import type { Blueprint } from "../types/workshop.ts";
 /**
  * Email template for agenda confirmation email
  */
-function agendaEmail({
+function agendaEmail({ // This function is duplicated here and in _shared/emailTemplates.ts. Consider removing one.
   hostName,
   agendaPreview,
   editorUrl,
@@ -51,7 +51,7 @@ ${blueprintPreview.materials && blueprintPreview.materials.length > 0
           <h2 style="margin-bottom:15px;color:#1f2937;">🎉 Your Teho.ai agenda is ready</h2>
           
           <p style="margin-bottom:20px;">Hi ${hostName || "there"},<br>
-          We turned your calendar invite into a focused, time‑boxed agenda. Click below to review & tweak:</p>
+          We turned your calendar invite into a focused, time‑boxed agenda using Teho.ai. Click below to review & tweak:</p>
           
           <div style="text-align:center;margin:30px 0;">
             <a href="${editorUrl}"
@@ -112,9 +112,9 @@ export async function sendConfirmationEmail(
 
     // Send the email
     const { data, error } = await resend.emails.send({
-      from: "Teho Agenda Assistant <agenda@teho.ai>",
+      from: "Teho.ai Agenda Assistant <agenda@teho.ai>", // Updated brand name and email
       to: email,
-      subject: `Workshop Created: ${subject}`,
+      subject: `Teho.ai Workshop Created: ${subject}`, // Updated brand name
       html: agendaEmail({
         hostName: email.split('@')[0],
         agendaPreview: description,

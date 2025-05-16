@@ -1,4 +1,3 @@
-
 export function agendaEmail({
   hostName,
   agendaPreview,
@@ -45,7 +44,7 @@ ${blueprintPreview.materials && blueprintPreview.materials.length > 0
           <h2 style="margin-bottom:15px;color:#1f2937;">🎉 Your Teho.ai agenda is ready</h2>
           
           <p style="margin-bottom:20px;">Hi ${hostName || "there"},<br>
-          We turned your calendar invite into a focused, time‑boxed agenda. Click below to review & tweak:</p>
+          We turned your calendar invite into a focused, time‑boxed agenda using Teho.ai. Click below to review & tweak:</p>
           
           <div style="text-align:center;margin:30px 0;">
             <a href="${editorUrl}"

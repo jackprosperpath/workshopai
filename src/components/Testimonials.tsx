@@ -3,19 +3,19 @@ import { Star } from "lucide-react";
 
 const testimonials = [
   {
-    quote: "Converge.ai has transformed how our team works with AI models. The collaborative approach has increased our efficiency by 3x.",
+    quote: "Teho.ai has transformed how our team works with AI models. The collaborative approach has increased our efficiency by 3x.", // Updated
     author: "Sarah Chen",
     role: "AI Product Manager",
     company: "TechCorp",
   },
   {
-    quote: "The best tool we've found for getting everyone on the same page with AI development. It's become an essential part of our workflow.",
+    quote: "The best tool we've found for getting everyone on the same page with AI development. Teho.ai has become an essential part of our workflow.", // Updated
     author: "Michael Rodriguez",
     role: "Engineering Lead",
     company: "InnovateLab",
   },
   {
-    quote: "Finally, a solution that brings together technical and non-technical team members in AI development. Game-changer!",
+    quote: "Finally, a solution that brings together technical and non-technical team members in AI development. Teho.ai is a game-changer!", // Updated
     author: "Emily Watson",
     role: "Operations Director",
     company: "FutureScale",
@@ -31,7 +31,7 @@ export const Testimonials = () => {
             Loved by <span className="text-primary">Teams</span>
           </h2>
           <p className="text-lg text-gray-600">
-            Join hundreds of teams already using Converge.ai
+            Join hundreds of teams already using Teho.ai {/* Updated */}
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">

@@ -1,4 +1,5 @@
-# Welcome to your Lovable project
+
+# Welcome to your Teho.ai project
 
 ## Project info
 
@@ -63,6 +64,7 @@ This project is built with:
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/ef9a132e-993c-40e0-ab98-e458447616ab) and click on Share -> Publish.
+This project is powered by Teho.ai.
 
 ## Can I connect a custom domain to my Lovable project?
 
