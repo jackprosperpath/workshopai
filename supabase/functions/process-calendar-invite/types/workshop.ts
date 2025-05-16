@@ -1,16 +1,24 @@
 // Defines the structure for a concise blueprint generated from calendar invites
 
-export interface ConciseBlueprintStep {
-  activity: string;
-  durationEstimate: string;
+export interface ConciseBlueprintAgendaItem {
+  name: string;
+  details: string;
+  method: string;
+  methodExplanation: string;
+  tip: string;
+}
+
+export interface ConciseBlueprintTimelineStep {
+  activity: string; // Should match a name in ConciseBlueprintAgendaItem
+  durationEstimate: string; // e.g., "10-15 minutes"
 }
 
 export interface ConciseBlueprint {
   workshopTitle: string;
   objectives: string[];
-  agendaItems: string[];
+  agendaItems: ConciseBlueprintAgendaItem[];
   attendeesList?: string[]; // List of attendee emails or a summary
-  basicTimeline: ConciseBlueprintStep[];
+  basicTimeline: ConciseBlueprintTimelineStep[];
   // Optional: include original meeting description if helpful for context, or derived summary
   meetingContext?: string; 
 }
