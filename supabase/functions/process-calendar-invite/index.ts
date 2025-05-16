@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 import { Resend } from "npm:resend@3.1.0";
@@ -114,15 +115,43 @@ serve(async (req) => {
         processed_at: new Date().toISOString() 
       })
       .eq('id', inviteId);
+
+    // Create a workshop entry for easier integration with the main app
+    const { data: workshopData, error: workshopError } = await supabase
+      .from('workshops')
+      .insert({
+        name: summary || blueprintContent.workshopTitle || "Untitled Meeting",
+        problem: description || blueprintContent.meetingContext || "",
+        duration: durationMinutes,
+        share_id: generatedBlueprintRecord.share_id,  // Use the same share_id for consistency
+        owner_id: email,  // Use email as owner since we don't have user ID yet
+        generated_blueprint: blueprintContent,
+        invitation_source_id: inviteId
+      })
+      .select()
+      .single();
+
+    if (workshopError) {
+      console.error("Error creating workshop from blueprint:", workshopError);
+      // Continue anyway since we have the generated blueprint
+    } else {
+      console.log("Created workshop from blueprint:", workshopData.id);
+      
+      // Update the inbound_invite with the workshop_id reference
+      await supabase
+        .from('inbound_invites')
+        .update({ workshop_id: workshopData.id })
+        .eq('id', inviteId);
+    }
     
     // Send confirmation email to the organizer with a link to view the blueprint
-    const blueprintShareUrl = `${siteUrl}/blueprint/${generatedBlueprintRecord.share_id}`;
+    const shareId = generatedBlueprintRecord.share_id;
     await sendConfirmationEmail(
       resend, 
       email, 
       summary, 
       description, 
-      blueprintShareUrl, 
+      shareId, // Just pass the share_id
       blueprintContent 
     );
     
@@ -133,7 +162,8 @@ serve(async (req) => {
         message: 'Blueprint generated and notification sent successfully',
         inviteId: inviteId,
         blueprintId: generatedBlueprintRecord.id,
-        blueprintShareId: generatedBlueprintRecord.share_id
+        blueprintShareId: shareId,
+        workshopId: workshopData?.id
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

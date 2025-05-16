@@ -28,14 +28,24 @@ export async function sendConfirmationEmail(
     workshopDescriptionForEmail = blueprintContent.meetingContext || meetingDescription.substring(0, 150) + (meetingDescription.length > 150 ? "..." : "");
   }
 
-
   try {
+    // Extract just the share ID from the URL if needed
+    const shareId = blueprintShareUrl.includes('/') 
+      ? blueprintShareUrl.split('/').pop() 
+      : blueprintShareUrl;
+      
+    const siteUrl = Deno.env.get('SITE_URL') || 'https://app.teho.ai';
+    // Ensure we have a complete URL with the site URL and the share ID
+    const fullBlueprintUrl = shareId.startsWith('http') 
+      ? shareId 
+      : `${siteUrl}/workshop?id=${shareId}`;
+
     await sendBlueprintReadyEmail(
       resend,
       recipientEmail,
       workshopTitle,
       workshopDescriptionForEmail, // Use the adapted description
-      blueprintShareUrl
+      fullBlueprintUrl
     );
     console.log(`Confirmation email successfully sent to ${recipientEmail}`);
   } catch (error) {

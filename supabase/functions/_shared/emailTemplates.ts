@@ -92,10 +92,15 @@ export async function sendBlueprintReadyEmail(
   const siteUrl = Deno.env.get('SITE_URL') || 'https://app.teho.ai';
   const logoUrl = `${siteUrl}/logo-teho-dark.svg`; // Assuming a dark logo variant for light email backgrounds
 
-  // Make sure we're using the /workshop route instead of /blueprint/:shareId
-  const workshopUrl = blueprintShareUrl.includes('/blueprint/') 
-    ? blueprintShareUrl.replace('/blueprint/', '/workshop?id=')
-    : blueprintShareUrl;
+  // Make sure we're using the workshop route with the complete share_id
+  const shareId = blueprintShareUrl.includes('/blueprint/') 
+    ? blueprintShareUrl.split('/blueprint/')[1]
+    : blueprintShareUrl.includes('/workshop?id=')
+      ? blueprintShareUrl.split('/workshop?id=')[1]
+      : blueprintShareUrl;
+      
+  // Construct the proper workshop URL
+  const workshopUrl = `${siteUrl}/workshop?id=${shareId}`;
 
   const htmlContent = `
     <!DOCTYPE html>

@@ -7,8 +7,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { List, Copy, ExternalLink, Mail, Users, Calendar, Clock } from 'lucide-react';
-import { ConciseBlueprint } from '@/types/blueprint'; // Using the new client-side type
-import { toast } from '@/components/ui/use-toast'; // Corrected import path for use-toast
+import { ConciseBlueprint } from '@/types/blueprint';
+import { toast } from '@/components/ui/use-toast';
 import { Navbar } from '@/components/Navbar';
 
 const fetchBlueprint = async (shareId: string | undefined): Promise<ConciseBlueprint | null> => {
@@ -20,9 +20,9 @@ const fetchBlueprint = async (shareId: string | undefined): Promise<ConciseBluep
   
   const { data, error } = await supabase
     .from('generated_blueprints')
-    .select('blueprint_data')
+    .select('blueprint_data, share_id')
     .eq('share_id', shareId)
-    .maybeSingle(); // Use maybeSingle to handle no data found gracefully
+    .maybeSingle();
 
   if (error) {
     console.error('Error fetching blueprint:', error);
@@ -30,14 +30,48 @@ const fetchBlueprint = async (shareId: string | undefined): Promise<ConciseBluep
   }
 
   if (!data || !data.blueprint_data) {
-    console.log("No blueprint found for share_id:", shareId);
-    return null; // Blueprint not found or blueprint_data is null
+    console.log("No blueprint found in generated_blueprints, checking workshops table...");
+    
+    // If not found in generated_blueprints, try to find in workshops table
+    const { data: workshopData, error: workshopError } = await supabase
+      .from('workshops')
+      .select('generated_blueprint, share_id')
+      .eq('share_id', shareId)
+      .maybeSingle();
+      
+    if (workshopError) {
+      console.error('Error fetching workshop:', workshopError);
+      throw new Error(workshopError.message);
+    }
+    
+    if (!workshopData || !workshopData.generated_blueprint) {
+      console.log("No blueprint found for share_id:", shareId);
+      return null; // Blueprint not found or blueprint_data is null
+    }
+    
+    console.log("Blueprint found in workshops table:", workshopData.generated_blueprint);
+    
+    // Convert the workshop's generated_blueprint to ConciseBlueprint format
+    const fullBlueprint = workshopData.generated_blueprint;
+    
+    // Create a concise version from the full blueprint
+    const conciseBlueprint: ConciseBlueprint = {
+      workshopTitle: fullBlueprint.title || "Untitled Meeting",
+      objectives: fullBlueprint.objectives || [],
+      agendaItems: fullBlueprint.agenda || [],
+      attendeesList: fullBlueprint.attendees ? fullBlueprint.attendees.map(a => a.name) : [],
+      basicTimeline: (fullBlueprint.steps || []).map(step => ({
+        activity: step.name,
+        durationEstimate: `${step.duration} min`
+      })),
+      meetingContext: fullBlueprint.description
+    };
+    
+    return conciseBlueprint;
   }
   
-  console.log("Blueprint found:", data.blueprint_data);
+  console.log("Blueprint found in generated_blueprints table:", data.blueprint_data);
   
-  // The blueprint_data from the DB should match ConciseBlueprint structure
-  // Cast to unknown first, then to ConciseBlueprint to satisfy TypeScript
   return data.blueprint_data as unknown as ConciseBlueprint;
 };
 
@@ -61,8 +95,6 @@ const BlueprintViewer: React.FC = () => {
   };
 
   const handleOpenInApp = () => {
-    // If we're viewing a shared blueprint, we should find the corresponding workshop
-    // and redirect to the workshop page
     if (shareId) {
       navigate(`/workshop?id=${shareId}`);
     } else {
