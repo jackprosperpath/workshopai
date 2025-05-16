@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -25,12 +24,13 @@ const fetchBlueprint = async (shareId: string | undefined): Promise<ConciseBluep
     throw new Error(error.message);
   }
 
-  if (!data) {
-    return null; // Blueprint not found
+  if (!data || !data.blueprint_data) {
+    return null; // Blueprint not found or blueprint_data is null
   }
   
   // The blueprint_data from the DB should match ConciseBlueprint structure
-  return data.blueprint_data as ConciseBlueprint;
+  // Cast to unknown first, then to ConciseBlueprint to satisfy TypeScript
+  return data.blueprint_data as unknown as ConciseBlueprint;
 };
 
 const BlueprintViewer: React.FC = () => {
