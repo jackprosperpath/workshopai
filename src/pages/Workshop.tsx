@@ -24,7 +24,7 @@ const Workshop = () => {
     if (workshopId) {
       getWorkshop(workshopId);
     }
-  }, [workshopId, isAuthenticating]);
+  }, [workshopId, isAuthenticating, getWorkshop]);
 
   if (isAuthenticating) {
     return <WorkshopLoading message="Authenticating..." />;
@@ -54,8 +54,9 @@ const Workshop = () => {
             <div className="flex flex-col gap-2 mb-6">
               <WorkshopActions />
               <WorkshopNameEditor
-                name={workshopName}
-                onSave={(name) => updateWorkshopName(workshopId, name)}
+                initialName={workshopName}
+                workshopId={workshopId}
+                onNameUpdate={(name) => updateWorkshopName(workshopId, name)}
               />
             </div>
             

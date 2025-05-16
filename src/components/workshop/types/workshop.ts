@@ -25,6 +25,7 @@ export type Blueprint = {
   expected_outcomes?: string[];
   follow_up?: string[];
   followupActions?: string[]; // For backward compatibility
+  attendees?: Attendee[]; // Adding attendees property that was missing
 };
 
 export type TeamMemberRole = {

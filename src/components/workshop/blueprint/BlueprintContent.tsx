@@ -19,7 +19,7 @@ interface BlueprintContentProps {
   metricInput: string;
   setMetricInput: (value: string) => void;
   addMetric: () => void;
-  removeMetric: (index: number) => void; // Added
+  removeMetric: (index: number) => void;
   duration: number;
   setDuration: (value: number) => void;
   workshopType: 'online' | 'in-person';
@@ -45,7 +45,7 @@ export function BlueprintContent({
   metricInput,
   setMetricInput,
   addMetric,
-  removeMetric, // Added
+  removeMetric,
   duration,
   setDuration,
   workshopType,
@@ -77,7 +77,7 @@ export function BlueprintContent({
             metricInput={metricInput}
             setMetricInput={setMetricInput}
             addMetric={addMetric}
-            removeMetric={removeMetric} // Added pass-through
+            removeMetric={removeMetric}
             duration={duration}
             setDuration={setDuration}
             workshopType={workshopType}
@@ -103,4 +103,3 @@ export function BlueprintContent({
     </div>
   );
 }
-

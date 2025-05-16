@@ -17,6 +17,7 @@ interface BlueprintDetailsProps {
 export function BlueprintDetails({ workshopId }: BlueprintDetailsProps) {
   const { blueprint, isLoading, error } = useBlueprintData(workshopId);
   const [shareUrl, setShareUrl] = useState("");
+  const [activeTab, setActiveTab] = useState("blueprint");
   
   useEffect(() => {
     if (workshopId) {
@@ -96,7 +97,29 @@ export function BlueprintDetails({ workshopId }: BlueprintDetailsProps) {
             
             <TabsContent value="blueprint">
               {blueprint ? (
-                <BlueprintContent blueprint={blueprint} />
+                <BlueprintContent 
+                  blueprint={blueprint} 
+                  activeTab="blueprint"
+                  setActiveTab={() => {}} // No-op function as we're in view-only mode
+                  errorMessage={null}
+                  workshopId={workshopId}
+                  workshopName={blueprint.title || "Untitled"}
+                  setWorkshopName={() => {}} // No-op function 
+                  problem=""
+                  setProblem={() => {}}
+                  metrics={[]}
+                  metricInput=""
+                  setMetricInput={() => {}}
+                  addMetric={() => {}}
+                  removeMetric={() => {}}
+                  duration={60}
+                  setDuration={() => {}}
+                  workshopType="online"
+                  setWorkshopType={() => {}}
+                  loading={false}
+                  onGenerate={() => {}}
+                  attendees={blueprint.attendees || []}
+                />
               ) : (
                 <div className="text-center py-12">
                   <div className="text-gray-500">No blueprint data available</div>
