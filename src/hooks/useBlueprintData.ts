@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Blueprint } from "@/components/workshop/types/workshop";
+import type { Blueprint, BlueprintStep } from "@/components/workshop/types/workshop"; // Added BlueprintStep
 import type { ConciseBlueprint } from "@/types/blueprint";
 
 export function useBlueprintData(workshopId: string) {
@@ -74,21 +75,20 @@ export function useBlueprintData(workshopId: string) {
             const fullBlueprint: Blueprint = {
               title: conciseBp.workshopTitle,
               description: conciseBp.meetingContext || "",
-              objective: conciseBp.objectives.join SemicolonSpace(), // Assuming objective is a single string
+              objective: conciseBp.objectives.join(SemicolonSpace()), // Corrected: SemicolonSpace() is called and passed to join.
               steps: conciseBp.basicTimeline.map(step => ({
                 name: step.activity,
-                description: "", // Default or map from conciseBp if available
-                duration: step.durationEstimate, // Already a string
-                materials: [], // Default or map from conciseBp if available
-                facilitation_notes: "", // Default
+                description: "", 
+                duration: parseInt(step.durationEstimate) || 0, 
+                materials: [], 
+                facilitation_notes: "",
               })),
               attendees: conciseBp.attendeesList ? conciseBp.attendeesList.map(name => ({
-                name, // Add name property
-                email: "", // Default
-                role: "Attendee" // Default
+                name, 
+                email: "", 
+                role: "Attendee" 
               })) : [],
-              materials: [], // Default or map from conciseBp if available
-              // Add other optional fields from Blueprint if needed, with defaults
+              materials: [], 
             };
             setBlueprint(fullBlueprint);
           } else {
@@ -115,3 +115,4 @@ export function useBlueprintData(workshopId: string) {
 
 // Helper for joining objectives, can be moved to a utils file
 const SemicolonSpace = () => "; ";
+
