@@ -1,5 +1,5 @@
-
-import { EventData } from "./parseIcs.ts";
+import type { Blueprint } from "../types/workshop.ts";
+import type { EventData } from "./parseIcs.ts";
 
 /**
  * Store invitation in the database
@@ -37,7 +37,38 @@ export async function storeInvitation(
 }
 
 /**
+ * Store generated blueprint in the database
+ */
+export async function storeGeneratedBlueprint(
+  supabase: any,
+  inboundInviteId: string,
+  blueprintData: Blueprint
+): Promise<{ id: string; share_id: string }> {
+  const shareId = crypto.randomUUID().substring(0, 12); // Generate a unique share ID
+
+  const { data, error } = await supabase
+    .from('generated_blueprints')
+    .insert({
+      inbound_invite_id: inboundInviteId,
+      blueprint_data: blueprintData,
+      share_id: shareId,
+    })
+    .select('id, share_id')
+    .single();
+
+  if (error) {
+    console.error('Error storing generated blueprint:', error);
+    throw error;
+  }
+
+  console.log("Generated blueprint stored with ID:", data.id, "and share_id:", data.share_id);
+  return data;
+}
+
+/**
  * Create a workshop from invitation
+ * Note: This function is not used in the MVP calendar-to-blueprint pipeline
+ * but kept for potential other uses.
  */
 export async function createWorkshopFromInvite(
   supabase: any,
@@ -75,6 +106,8 @@ export async function createWorkshopFromInvite(
 
 /**
  * Update invitation with workshop ID
+ * Note: This function is not used in the MVP calendar-to-blueprint pipeline
+ * but kept for potential other uses.
  */
 export async function updateInvitationWithWorkshop(
   supabase: any, 

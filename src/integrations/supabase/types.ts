@@ -9,6 +9,41 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      generated_blueprints: {
+        Row: {
+          blueprint_data: Json
+          created_at: string
+          id: string
+          inbound_invite_id: string | null
+          share_id: string
+          updated_at: string
+        }
+        Insert: {
+          blueprint_data: Json
+          created_at?: string
+          id?: string
+          inbound_invite_id?: string | null
+          share_id: string
+          updated_at?: string
+        }
+        Update: {
+          blueprint_data?: Json
+          created_at?: string
+          id?: string
+          inbound_invite_id?: string | null
+          share_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_blueprints_inbound_invite_id_fkey"
+            columns: ["inbound_invite_id"]
+            isOneToOne: false
+            referencedRelation: "inbound_invites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inbound_invites: {
         Row: {
           attendees: Json | null

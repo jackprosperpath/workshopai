@@ -1,4 +1,3 @@
-
 import type { Blueprint } from "../types/workshop.ts";
 
 // Define our simplified Blueprint type (matching the frontend type)
@@ -24,14 +23,12 @@ export interface Blueprint {
  */
 export async function generateBlueprintFromInvite(
   supabase: any,
-  workshopId: string,
   summary: string,
   description: string,
   durationMinutes: number,
   attendees: string[]
 ): Promise<Blueprint> {
-  console.log(`Generating blueprint for workshop: ${workshopId}`);
-  console.log(`Summary: ${summary}`);
+  console.log(`Generating blueprint for invite: ${summary}`);
   console.log(`Description: ${description}`);
   console.log(`Duration: ${durationMinutes} minutes`);
   console.log(`Attendees: ${attendees.join(', ')}`);
@@ -62,7 +59,7 @@ export async function generateBlueprintFromInvite(
         duration: durationMinutes,
         workshopType: "online", // Default to online for calendar invites
         constraints: "Generated from calendar invite",
-        metrics: ["Successful workshop completion"],
+        metrics: ["Successful workshop completion"], // Placeholder, can be improved
         attendees: formattedAttendees
       }
     });
@@ -74,70 +71,21 @@ export async function generateBlueprintFromInvite(
     
     console.log("Blueprint generation response:", data);
     
-    // If we got a blueprint back, store it with the workshop
+    // If we got a blueprint back, return it
     if (data?.blueprint) {
-      console.log("Updating workshop with generated blueprint");
-      // Update the workshop with the generated blueprint
-      const { error: updateError } = await supabase
-        .from('workshops')
-        .update({ 
-          generated_blueprint: data.blueprint,
-          problem: cleanDescription || summary,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', workshopId);
-      
-      if (updateError) {
-        console.error("Error updating workshop with generated blueprint:", updateError);
-      } else {
-        console.log("Workshop updated with generated blueprint successfully");
-      }
-      
-      return data.blueprint;
+      console.log("Blueprint generated successfully by AI service.");
+      return data.blueprint as Blueprint; // Cast to Blueprint
     }
     
-    // If there's no blueprint data, create a simple one
-    console.log("No blueprint data returned, creating default blueprint");
-    const simpleBlueprint = createDefaultBlueprint(summary, description, durationMinutes);
-    
-    // Update the workshop with the simple blueprint
-    const { error: fallbackError } = await supabase
-      .from('workshops')
-      .update({ 
-        generated_blueprint: simpleBlueprint,
-        problem: cleanDescription || summary,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', workshopId);
-    
-    if (fallbackError) {
-      console.error("Error updating workshop with default blueprint:", fallbackError);
-    } else {
-      console.log("Workshop updated with default blueprint successfully");
-    }
-    
+    // If there's no blueprint data from AI, create a simple default one
+    console.log("No blueprint data returned from AI, creating default blueprint");
+    const simpleBlueprint = createDefaultBlueprint(summary, cleanDescription, durationMinutes);
     return simpleBlueprint;
     
   } catch (error) {
     console.error("Error generating blueprint:", error);
     // Create a fallback blueprint
     const fallbackBlueprint = createDefaultBlueprint(summary, description, durationMinutes);
-    
-    // Try to update the workshop with fallback blueprint
-    try {
-      await supabase
-        .from('workshops')
-        .update({ 
-          generated_blueprint: fallbackBlueprint,
-          problem: description || summary,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', workshopId);
-      console.log("Workshop updated with fallback blueprint after error");
-    } catch (updateError) {
-      console.error("Failed to update workshop with fallback blueprint:", updateError);
-    }
-    
     return fallbackBlueprint;
   }
 }

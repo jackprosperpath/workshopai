@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 import { Resend } from "npm:resend@3.1.0";
@@ -7,14 +6,13 @@ import ical from "npm:ical@0.8.0";
 import { corsHeaders } from "./utils/corsHeaders.ts";
 import { parseRequestData } from "./utils/parseRequest.ts";
 import { parseIcsData } from "./utils/parseIcs.ts";
-import { findExistingUser } from "./utils/userManagement.ts";
 import { 
-  storeInvitation, 
-  createWorkshopFromInvite, 
-  updateInvitationWithWorkshop 
+  storeInvitation,
+  storeGeneratedBlueprint
 } from "./utils/databaseOperations.ts";
 import { sendConfirmationEmail } from "./utils/emailUtils.ts";
 import { generateBlueprintFromInvite } from "./utils/blueprintGenerator.ts";
+import type { Blueprint } from "./types/workshop.ts";
 
 // Main request handler
 serve(async (req) => {
@@ -56,7 +54,6 @@ serve(async (req) => {
     const { rawIcs, email } = await parseRequestData(body);
     
     // Parse the ICS data and extract event information
-    const parsedIcs = ical.parseICS(rawIcs);
     const { summary, description, startTime, endTime, durationMinutes, attendees, status } = parseIcsData(rawIcs);
     
     // Log extracted information
@@ -71,11 +68,11 @@ serve(async (req) => {
     
     // Check if the event is active (not cancelled or declined)
     if (status === 'CANCELLED') {
-      console.log("Event is cancelled, skipping workshop creation");
+      console.log("Event is cancelled, skipping blueprint generation");
       return new Response(
         JSON.stringify({
           success: false,
-          message: 'Event is cancelled, skipping workshop creation',
+          message: 'Event is cancelled, skipping blueprint generation',
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -84,60 +81,59 @@ serve(async (req) => {
       );
     }
     
-    // Check if the organizer already has a Teho account
-    const ownerId = await findExistingUser(supabase, email);
-    console.log("User lookup result:", ownerId ? `Found user: ${ownerId}` : "No user found");
-
     // Store the invitation in the database
     const inviteId = await storeInvitation(
       supabase, 
       rawIcs, 
-      parsedIcs, 
+      ical.parseICS(rawIcs), 
       email, 
       { summary, description, startTime, endTime, attendees, status }
     );
 
-    // Create a workshop from this invitation
-    const workshopData = await createWorkshopFromInvite(
-      supabase,
-      ownerId,
-      summary,
-      description,
-      durationMinutes,
-      inviteId
-    );
-    
-    // Update the invitation with the workshop ID
-    await updateInvitationWithWorkshop(supabase, inviteId, workshopData.id);
-    
     // Generate a blueprint based on the calendar invite information
-    const blueprint = await generateBlueprintFromInvite(
+    const blueprintContent: Blueprint = await generateBlueprintFromInvite(
       supabase,
-      workshopData.id,
       summary,
       description,
       durationMinutes,
       attendees
     );
     
-    // Send confirmation email to the organizer
-    const workshopUrl = `${siteUrl}/workshop?id=${workshopData.share_id}`;
+    // Store the generated blueprint
+    const generatedBlueprintRecord = await storeGeneratedBlueprint(
+      supabase,
+      inviteId,
+      blueprintContent
+    );
+    
+    // Update the inbound_invites status to 'processed' (or a new status like 'blueprint_generated')
+    await supabase
+      .from('inbound_invites')
+      .update({ 
+        status: 'blueprint_generated', 
+        processed_at: new Date().toISOString() 
+      })
+      .eq('id', inviteId);
+    
+    // Send confirmation email to the organizer with a link to view the blueprint
+    const blueprintShareUrl = `${siteUrl}/blueprint/${generatedBlueprintRecord.share_id}`;
     await sendConfirmationEmail(
       resend, 
       email, 
       summary, 
       description, 
-      workshopUrl, 
-      blueprint // Pass the blueprint data to the email function
+      blueprintShareUrl, 
+      blueprintContent 
     );
     
     // Return success response
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Workshop created successfully',
-        workshopId: workshopData.id,
-        shareId: workshopData.share_id
+        message: 'Blueprint generated and notification sent successfully',
+        inviteId: inviteId,
+        blueprintId: generatedBlueprintRecord.id,
+        blueprintShareId: generatedBlueprintRecord.share_id
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
