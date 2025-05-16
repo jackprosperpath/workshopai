@@ -15,6 +15,7 @@ import { EmptyBlueprintState } from './blueprint/EmptyBlueprintState';
 import { useWorkshopFormState } from '@/hooks/useWorkshopFormState';
 import { useWorkshopLoader } from '@/hooks/useWorkshopLoader';
 import { useBlueprintProcessor } from '@/hooks/useBlueprintProcessor';
+import { useBlueprintSynchronization } from '@/hooks/useBlueprintSynchronization';
 
 interface BlueprintGeneratorProps {
   workshopIdParam?: string | null;
@@ -44,7 +45,7 @@ export function BlueprintGenerator({
     initialProblem,
     initialDuration,
     initialAttendees,
-    initialMetrics: [], // Assuming metrics are also part of initial load if available
+    initialMetrics: [], 
     onWorkshopNameChange,
   });
 
@@ -58,8 +59,9 @@ export function BlueprintGenerator({
   const {
     generateWorkshopBlueprint,
     saveWorkshopSettings,
-    loading: processingLoading, // aliasing to avoid conflict with loadingWorkshop
+    loading: processingLoading,
     errorMessage: processingErrorMessage,
+    generatedBlueprint, // Make sure to get the generated blueprint from the processor
   } = useBlueprintProcessor({
     workshopId,
     formState: {
@@ -75,8 +77,18 @@ export function BlueprintGenerator({
     setActiveTab,
   });
 
+  // Use the blueprint synchronization hook to update blueprint state
+  useBlueprintSynchronization(
+    generatedBlueprint, 
+    blueprint, 
+    setBlueprint, 
+    onBlueprintGenerated
+  );
+  
+  // Effect to notify parent when blueprint is loaded or changes
   useEffect(() => {
     if (blueprint && onBlueprintGenerated) {
+      console.log("Blueprint changed, notifying parent component:", blueprint);
       setActiveTab("blueprint"); // Move tab setting here for consistency if blueprint is generated/loaded
       onBlueprintGenerated(blueprint);
     }
@@ -88,6 +100,24 @@ export function BlueprintGenerator({
       setActiveTab("settings");
     }
   }, [blueprint, activeTab]);
+
+  const handleBlueprintUpdate = async (updatedBlueprint: Blueprint) => {
+    setBlueprint(updatedBlueprint);
+    if (workshopId) {
+      try {
+        await supabase.from('workshops').update({ 
+          generated_blueprint: updatedBlueprint
+        }).eq('id', workshopId);
+        
+        // Notify parent component about the update
+        if (onBlueprintGenerated) {
+          onBlueprintGenerated(updatedBlueprint);
+        }
+      } catch (error) {
+        console.error("Error saving updated blueprint:", error);
+      }
+    }
+  };
 
   const renderContent = () => {
     if (loadingWorkshop) {
@@ -123,13 +153,7 @@ export function BlueprintGenerator({
       );
     }
     if (activeTab === "blueprint" && blueprint) {
-      return <GeneratedBlueprint blueprint={blueprint} onBlueprintUpdate={async (updatedBlueprint) => { 
-        setBlueprint(updatedBlueprint);
-        if(workshopId) {
-          // Consider moving this save to useBlueprintProcessor if it's a common action
-          await supabase.from('workshops').update({ generated_blueprint: updatedBlueprint}).eq('id', workshopId);
-        }
-      }} />;
+      return <GeneratedBlueprint blueprint={blueprint} onBlueprintUpdate={handleBlueprintUpdate} />;
     }
     if (activeTab === "blueprint" && !blueprint) {
       return <EmptyBlueprintState onNavigateToSettings={() => setActiveTab("settings")} />;
@@ -152,7 +176,6 @@ export function BlueprintGenerator({
   return (
     <Card className="w-full max-w-3xl mx-auto">
       <CardHeader>
-        {/* BlueprintHeader no longer needs currentStep */}
         <BlueprintHeader /> 
         {workshopId && <CalendarSourceInfo workshopId={workshopId} />}
         <BlueprintTabs 

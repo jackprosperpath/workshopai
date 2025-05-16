@@ -1,18 +1,18 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast"; // Using ui/toast as in BlueprintGenerator
+import { toast } from "@/components/ui/use-toast";
 import type { Blueprint, Attendee } from "@/components/workshop/types/workshop";
 
 interface UseBlueprintProcessorProps {
   workshopId: string | null;
-  formState: { // Current values of form fields
+  formState: {
     workshopName: string;
     problem: string;
     metrics: string[];
     duration: number;
     workshopType: 'online' | 'in-person';
-    attendees: Attendee[];
+    attendees?: Attendee[];
   };
   setParentBlueprint: (blueprint: Blueprint | null) => void;
   setParentWorkshopId: (id: string | null) => void;
@@ -26,61 +26,114 @@ export function useBlueprintProcessor({
   setParentWorkshopId,
   setActiveTab,
 }: UseBlueprintProcessorProps) {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [generatedBlueprint, setGeneratedBlueprint] = useState<Blueprint | null>(null);
 
-  const generateWorkshopBlueprint = async () => {
-    if (!formState.problem) {
-      toast({ title: "Objective Missing", description: "Please specify a workshop objective.", variant: "destructive" });
-      return;
-    }
+  const generateWorkshopBlueprint = useCallback(async () => {
     setLoading(true);
     setErrorMessage(null);
+    
     try {
-      const response = await supabase.functions.invoke("generate-workshop-blueprint", {
-        body: {
-          workshopId: workshopId, // workshopId can be null if creating a new one
-          name: formState.workshopName,
-          problem: formState.problem,
-          metrics: formState.metrics,
-          duration: formState.duration,
-          workshop_type: formState.workshopType,
-          attendees: formState.attendees.map(a => ({ email: a.email, role: a.role })),
-        },
-      });
-
-      if (response.error) throw response.error;
-      if (!response.data) throw new Error("No data returned from blueprint generation.");
+      // First, create or update the workshop record
+      let workshopDbId = workshopId;
       
-      if (response.data.workshopId && !workshopId) {
-        setParentWorkshopId(response.data.workshopId);
+      if (!workshopDbId) {
+        // Create a new workshop record
+        const { data: newWorkshop, error: createError } = await supabase
+          .from('workshops')
+          .insert({
+            name: formState.workshopName || 'Untitled Workshop',
+            problem: formState.problem,
+            metrics: formState.metrics,
+            duration: formState.duration,
+            workshop_type: formState.workshopType,
+            share_id: Math.random().toString(36).substring(2, 8),
+          })
+          .select('id')
+          .single();
+          
+        if (createError) {
+          console.error("Error creating workshop:", createError);
+          throw new Error("Failed to create workshop record.");
+        }
+        
+        workshopDbId = newWorkshop.id;
+        setParentWorkshopId(workshopDbId);
       }
+      
+      // Call the generate-workshop-blueprint edge function
+      const { data, error } = await supabase
+        .functions
+        .invoke('generate-workshop-blueprint', {
+          body: {
+            context: formState.problem,
+            objective: formState.problem,
+            duration: formState.duration,
+            workshopType: formState.workshopType,
+            metrics: formState.metrics,
+            attendees: formState.attendees || [],
+          }
+        });
 
-      const newBlueprint = response.data.blueprint as Blueprint;
-      setParentBlueprint(newBlueprint);
-      toast({ title: "Blueprint Generated!", description: "Your Instant AI Meeting Blueprint is ready." });
+      if (error) throw error;
+      
+      if (!data || !data.blueprint) {
+        throw new Error("Invalid response from blueprint generator");
+      }
+      
+      console.log("Generated blueprint:", data.blueprint);
+      const generatedBp = data.blueprint as Blueprint;
+      
+      // Update the workshop record with the generated blueprint
+      const { error: updateError } = await supabase
+        .from('workshops')
+        .update({
+          generated_blueprint: generatedBp,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', workshopDbId);
+
+      if (updateError) {
+        console.error("Error updating workshop with blueprint:", updateError);
+        throw new Error("Failed to save generated blueprint.");
+      }
+      
+      // Update local state
+      setGeneratedBlueprint(generatedBp);
+      setParentBlueprint(generatedBp);
       setActiveTab("blueprint");
-    } catch (error: any) {
-      console.error("Error generating blueprint:", error);
-      setErrorMessage(error.message || "Failed to generate blueprint. Please try again.");
+      
       toast({
-        title: "Error",
-        description: error.message || "Could not generate blueprint.",
+        title: "Blueprint Generated!",
+        description: "Your workshop blueprint has been created successfully.",
+      });
+      
+    } catch (err: any) {
+      console.error("Blueprint generation error:", err);
+      setErrorMessage(err.message || "Failed to generate workshop blueprint");
+      toast({
+        title: "Blueprint Generation Failed",
+        description: err.message || "Failed to generate workshop blueprint",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    workshopId, 
+    formState, 
+    setParentBlueprint, 
+    setParentWorkshopId,
+    setActiveTab
+  ]);
 
-  const saveWorkshopSettings = async () => {
-    if (!workshopId) {
-      toast({ title: "Error", description: "Blueprint ID is missing.", variant: "destructive" });
-      return;
-    }
+  const saveWorkshopSettings = useCallback(async () => {
+    if (!workshopId) return;
+    
     setLoading(true);
     setErrorMessage(null);
+    
     try {
       const { error } = await supabase
         .from('workshops')
@@ -90,30 +143,35 @@ export function useBlueprintProcessor({
           metrics: formState.metrics,
           duration: formState.duration,
           workshop_type: formState.workshopType,
-          // attendees are typically part of generated_blueprint or managed separately
+          updated_at: new Date().toISOString()
         })
         .eq('id', workshopId);
 
       if (error) throw error;
-
-      toast({ title: "Settings Saved", description: "Blueprint settings have been updated." });
-    } catch (error: any) {
-      console.error("Error saving settings:", error);
-      setErrorMessage(error.message || "Failed to save settings.");
+      
       toast({
-        title: "Error",
-        description: error.message || "Could not save settings.",
+        title: "Workshop Updated",
+        description: "Your workshop settings have been saved.",
+      });
+      
+    } catch (err: any) {
+      console.error("Workshop update error:", err);
+      setErrorMessage(err.message || "Failed to update workshop settings");
+      toast({
+        title: "Update Failed",
+        description: err.message || "Failed to update workshop settings",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [workshopId, formState]);
 
   return {
+    loading,
+    errorMessage,
     generateWorkshopBlueprint,
     saveWorkshopSettings,
-    loading, // Renamed from processingLoading for clarity
-    errorMessage, // Renamed from processingError
+    generatedBlueprint,
   };
 }

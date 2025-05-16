@@ -7,8 +7,16 @@ export interface ConciseBlueprintStep {
 export interface ConciseBlueprint {
   workshopTitle: string;
   objectives: string[];
-  agendaItems: string[];
+  agendaItems: ConciseBlueprintAgendaItem[];
   attendeesList?: string[];
   basicTimeline: ConciseBlueprintStep[];
   meetingContext?: string;
+}
+
+export interface ConciseBlueprintAgendaItem {
+  name: string;
+  details: string;
+  method: string;
+  methodExplanation: string;
+  tip: string;
 }

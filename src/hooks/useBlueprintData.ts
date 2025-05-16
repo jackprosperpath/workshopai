@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Blueprint, BlueprintStep } from "@/components/workshop/types/workshop";
 // Updated import path for ConciseBlueprint
-import type { ConciseBlueprint } from "../../supabase/functions/process-calendar-invite/types/workshop"; 
+import type { ConciseBlueprint } from "@/supabase/functions/process-calendar-invite/types/workshop"; 
 
 
 export function useBlueprintData(workshopId: string) {
@@ -154,4 +153,3 @@ export function useBlueprintData(workshopId: string) {
 
 // Helper for joining objectives, can be moved to a utils file
 const SemicolonSpace = () => "; ";
-
