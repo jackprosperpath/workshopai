@@ -9,7 +9,8 @@ import { BlueprintHeader } from './blueprint/BlueprintHeader';
 import { WorkshopSetupForm } from './blueprint/WorkshopSetupForm';
 import { GeneratedBlueprint } from './blueprint/GeneratedBlueprint';
 import { BlueprintTabs } from './blueprint/BlueprintTabs';
-import { CalendarSourceInfo, CalendarSourceInfoProps } from './blueprint/CalendarSourceInfo'; // Ensure props are exported if needed elsewhere, or just use here
+import { CalendarSourceInfo } from './blueprint/CalendarSourceInfo';
+import { EmptyBlueprintState } from './blueprint/EmptyBlueprintState'; // Added this import
 
 interface BlueprintGeneratorProps {
   workshopIdParam?: string | null;
@@ -142,7 +143,7 @@ export function BlueprintGenerator({
       }
 
       setBlueprint(response.data.blueprint);
-      toast({ title: "Blueprint Generated!", description: "Your meeting blueprint is ready." });
+      toast({ title: "Blueprint Generated!", description: "Your Instant AI Meeting Blueprint is ready." });
       setActiveTab("blueprint");
     } catch (error: any) {
       console.error("Error generating blueprint:", error);
@@ -220,20 +221,25 @@ export function BlueprintGenerator({
           workshopType={workshopType}
           setWorkshopType={setWorkshopType}
           loading={loading}
-          onGenerate={generateBlueprint} // This will be used by PromptCanvas via WorkshopContext
+          onGenerate={generateBlueprint} 
           attendees={attendees}
           updateAttendees={setAttendees}
         />
       );
     }
     if (activeTab === "blueprint" && blueprint) {
-      return <GeneratedBlueprint blueprint={blueprint} />;
+      return <GeneratedBlueprint blueprint={blueprint} onBlueprintUpdate={async (updatedBlueprint) => { 
+        setBlueprint(updatedBlueprint);
+        if(workshopId) {
+          await supabase.from('workshops').update({ generated_blueprint: updatedBlueprint}).eq('id', workshopId);
+        }
+      }} />;
     }
     // If blueprint is null and tab is blueprint, show empty state or message
     if (activeTab === "blueprint" && !blueprint) {
       return <EmptyBlueprintState onNavigateToSettings={() => setActiveTab("settings")} />;
     }
-    return <div className="text-center p-4">Select a tab or generate a blueprint to begin.</div>;
+    return <div className="text-center p-4">Select a tab or generate an Instant AI Meeting Blueprint to begin.</div>;
   };
 
   if (!workshopId && workshopIdParam) { 
@@ -263,7 +269,7 @@ export function BlueprintGenerator({
         <CardFooter className="flex justify-end">
           <Button onClick={workshopId ? handleSaveSettings : generateBlueprint} disabled={loading || !problem} /* Disable generate if problem is empty */>
             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {workshopId ? (loading ? 'Saving...' : 'Save Blueprint Setup') : (loading ? 'Generating...' : 'Generate Blueprint')}
+            {workshopId ? (loading ? 'Saving...' : 'Save Blueprint Setup') : (loading ? 'Generating...' : 'Generate Instant AI Meeting Blueprint')}
           </Button>
         </CardFooter>
       )}
